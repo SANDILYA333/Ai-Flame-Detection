@@ -1,873 +1,717 @@
-# SIH26162 — Architecture & Technical Design
+# SIH26162 --- Architecture & Technical Design
 
 ## 0. Architecture Objective
 
 Build the smallest technically sophisticated architecture that can:
 
-1. ingest NASA FIRMS thermal observations;
-2. normalize and validate them;
-3. group detections into events and persistent sources;
-4. enrich events with OSM/industrial and land-cover context;
-5. retrieve satellite context;
-6. compute interpretable features;
-7. classify events;
-8. calibrate confidence and support abstention;
-9. generate evidence;
-10. expose GIS-ready intelligence.
+1.  ingest NASA FIRMS observations;
+2.  preserve raw provenance;
+3.  normalize and validate observations;
+4.  form thermal events;
+5.  track recurring/persistent sources;
+6.  enrich events with industrial/context and land-cover data;
+7.  retrieve satellite context when available;
+8.  compute interpretable features;
+9.  establish deterministic baselines;
+10. classify events/sources where ML is justified;
+11. calibrate confidence and support abstention;
+12. generate evidence and uncertainty;
+13. expose GIS-ready intelligence.
 
-The architecture must optimize for **correctness, reproducibility, latency, explainability and hackathon execution speed** rather than enterprise complexity.
+The architecture optimizes for **correctness, reproducibility,
+explainability, measured performance and hackathon execution speed**
+rather than enterprise complexity.
 
----
+------------------------------------------------------------------------
 
 # 1. Recommended Stack
 
-| Layer | Technology | Role | Why |
-|---|---|---|---|
-| Frontend | Next.js + TypeScript | GIS analyst application | Fast development, strong web ecosystem |
-| Map | MapLibre GL JS | Interactive map | Open-source, vector-tile friendly |
-| Backend API | FastAPI | API + orchestration | Python-native geospatial/ML ecosystem |
-| Validation | Pydantic | Request/data validation | Strong typed boundaries |
-| Database | PostgreSQL + PostGIS | Events, geometry, infrastructure metadata | Mature spatial queries and relational integrity |
-| Cache/queue | Redis | Short-lived cache and job coordination | Lower operational complexity than Kafka for MVP |
-| Worker | Python worker process | Ingestion/enrichment/inference | Keeps heavy work outside request handlers |
-| ML | scikit-learn + XGBoost initially | Baseline/tabular classification | Strong for heterogeneous engineered features |
-| Deep learning | PyTorch, only if justified | Satellite image branch | Use only after baseline proves the need |
-| Raster processing | Rasterio + GDAL | Satellite raster operations | Mature geospatial stack |
-| Vector processing | GeoPandas + Shapely | ETL/analysis | Fast development |
-| Object storage | S3-compatible storage / MinIO | Raster assets, exports, model artifacts | Separates large objects from metadata |
-| Experiment tracking | MLflow | Model/evaluation tracking | Reproducibility |
-| API schema | OpenAPI | Contract | Native FastAPI support |
-| Containerization | Docker | Reproducible services | Easy deployment |
-| Reverse proxy | Caddy/Nginx | TLS/routing | Production-like deployment |
-| Monitoring | Prometheus + Grafana, optional | Metrics | Add only after core pipeline works |
+  ------------------------------------------------------------------------------------------
+  Layer             Technology            Role                             Why
+  ----------------- --------------------- -------------------------------- -----------------
+  Frontend          Next.js + TypeScript  Analyst GIS application          Fast development
+                                                                           and strong web
+                                                                           ecosystem
+
+  Map               MapLibre GL JS        GIS visualization                Open-source and
+                                                                           flexible
+
+  API               FastAPI               Typed API boundary               Python-native
+                                                                           geospatial/ML
+                                                                           ecosystem
+
+  Validation        Pydantic              Runtime validation               Explicit data
+                                                                           contracts
+
+  Database          PostgreSQL + PostGIS  Events, sources, geometry,       Spatial
+                                          metadata                         indexing +
+                                                                           relational
+                                                                           integrity
+
+  Cache/job         Redis                 Short-lived cache and jobs       Lower MVP
+  coordination                                                             complexity than
+                                                                           Kafka
+
+  Worker            Python worker         Ingestion/enrichment/inference   Keeps heavy work
+                                                                           out of HTTP
+
+  ML                scikit-learn +        Engineered-feature models        Strong baseline
+                    XGBoost/LightGBM                                       for heterogeneous
+                                                                           tabular features
+
+  Deep learning     PyTorch, conditional  Satellite-image branch           Only if benchmark
+                                                                           evidence
+                                                                           justifies it
+
+  Raster            Rasterio + GDAL       Raster operations                Mature geospatial
+                                                                           tooling
+
+  Vector            GeoPandas + Shapely   ETL/analysis                     Fast geospatial
+                                                                           development
+
+  Object storage    S3-compatible / MinIO Large artifacts                  Keeps large files
+                                                                           outside DB
+
+  Experiment        MLflow                Model/evaluation tracking        Reproducibility
+  tracking                                                                 
+
+  Contracts         OpenAPI               API contract                     Native FastAPI
+                                                                           support
+
+  Containers        Docker                Reproducible deployment          Simple deployment
+
+  Proxy             Caddy/Nginx           TLS/routing                      Deployment
+                                                                           boundary
+
+  Monitoring        Prometheus/Grafana,   Operational metrics              Add after core
+                    optional                                               pipeline
+  ------------------------------------------------------------------------------------------
 
 ### Deliberate decision
 
 Do **not** introduce Kafka initially.
 
-The project has a data pipeline, but a distributed event-streaming platform is not automatically required. Redis-backed jobs are sufficient for a hackathon-scale MVP. Kafka can be introduced later if measured throughput requires it.
+Use Redis-backed jobs. Reconsider only if measured throughput,
+durability or multi-worker coordination requirements exceed the MVP
+design.
 
----
+------------------------------------------------------------------------
 
-# 2. System Boundary
+# 2. System Architecture
 
-```text
-                  EXTERNAL DATA
-                       |
-       +---------------+----------------+
-       |               |                |
-    NASA FIRMS        OSM        Satellite catalogs
-       |               |                |
-       +---------------+----------------+
-                       |
-                [Ingestion Layer]
-                       |
-                [Validation Layer]
-                       |
-                [Event Store]
-                       |
-       +---------------+----------------+
-       |               |                |
- [Temporal]       [Spatial]       [Context]
- [Persistence]    [Clustering]    [Enrichment]
-       |               |                |
-       +---------------+----------------+
-                       |
-                [Feature Builder]
-                       |
-              +--------+---------+
-              |                  |
-         [Rules]              [ML]
-              |                  |
-              +--------+---------+
-                       |
-              [Calibration/Abstain]
-                       |
-                [Evidence Engine]
-                       |
-             [Intelligence Store]
-                       |
-                 [FastAPI API]
-                       |
-                 [GIS Frontend]
+``` text
+                         EXTERNAL SOURCES
+       ┌────────────────────┼──────────────────────┐
+       │                    │                      │
+   NASA FIRMS              OSM              Satellite catalogs/
+ thermal observations   infrastructure       imagery assets
+       │                    │                      │
+       └────────────────────┼──────────────────────┘
+                            ↓
+                    INGESTION BOUNDARY
+                            ↓
+                RAW + PROVENANCE STORAGE
+                            ↓
+                 VALIDATION / NORMALIZATION
+                            ↓
+                    DETECTION STORE
+                            ↓
+                 EVENT FORMATION ENGINE
+                            ↓
+             ┌──────────────┼──────────────┐
+             ↓              ↓              ↓
+        Temporal        Spatial         Context
+        persistence     clustering       enrichment
+             └──────────────┼──────────────┘
+                            ↓
+                    FEATURE BUILDER
+                            ↓
+              ┌─────────────┴─────────────┐
+              ↓                           ↓
+        Deterministic                  ML model
+          baselines                  (if justified)
+              └─────────────┬─────────────┘
+                            ↓
+                    CALIBRATION
+                            ↓
+                    ABSTENTION
+                            ↓
+                  EVIDENCE ENGINE
+                            ↓
+              INTELLIGENCE / SOURCE STORE
+                            ↓
+                       FASTAPI
+                            ↓
+                     GIS FRONTEND
 ```
 
----
+------------------------------------------------------------------------
 
-# 3. Repository Boundaries
+# 3. Canonical Domain Model
 
-Recommended:
+## 3.1 Detection
 
-```text
-/
-├── apps/
-│   └── web/                    # Analyst GIS application
-│
-├── services/
-│   ├── api/                    # FastAPI application
-│   ├── worker/                 # Background processing
-│   └── ml/                     # Model/inference code
-│
-├── packages/
-│   ├── schemas/                # Shared contracts
-│   ├── geospatial/             # Spatial utilities
-│   └── evidence/               # Evidence generation
-│
-├── data/
-│   ├── raw/                    # Local development inputs
-│   ├── interim/                # Processed intermediate artifacts
-│   └── samples/                # Small committed demo data only
-│
-├── models/                     # Versioned model metadata/artifacts
-├── scripts/                    # Data/bootstrap/evaluation scripts
-├── tests/
-├── docs/
-└── docker/
+One source observation from FIRMS.
+
+Fields include:
+
+-   source
+-   satellite
+-   instrument
+-   acquisition timestamp
+-   latitude/longitude
+-   brightness temperatures where available
+-   FRP where available
+-   confidence
+-   scan/track where available
+-   day/night
+-   product/version
+-   ingestion timestamp
+-   source identifier/hash
+
+## 3.2 Thermal Event
+
+A spatio-temporal grouping of detections believed to represent one
+episode.
+
+Fields:
+
+-   event_id
+-   detection_ids
+-   geometry
+-   start_time
+-   end_time
+-   duration
+-   detection_count
+-   spatial footprint
+-   centroid
+-   FRP statistics
+-   source provenance
+-   event formation algorithm/version
+
+## 3.3 Persistent Source
+
+A longer-lived spatial entity associated with repeated events.
+
+Fields:
+
+-   source_id
+-   linked_event_ids
+-   geometry
+-   first_seen
+-   last_seen
+-   active_days
+-   recurrence statistics
+-   spatial stability
+-   temporal signature
+-   context
+-   attribution state
+
+## 3.4 Context
+
+Context is stored independently:
+
+-   industrial facility geometry/type
+-   land-cover class
+-   nearby infrastructure
+-   satellite observation metadata
+-   distance/proximity measures
+-   source freshness
+-   provenance
+
+## 3.5 Intelligence Result
+
+Never collapse the ontology into one flat class.
+
+Store separate dimensions:
+
+``` text
+phenomenon
+context
+persistence_state
+attribution_strength
+confidence
+uncertainty
+evidence
+model_version
 ```
 
-### Boundary rule
+------------------------------------------------------------------------
 
-The API must not perform expensive satellite download, large raster processing, clustering over historical data, or model training synchronously.
+# 4. Classification Ontology
 
----
+## Phenomenon
 
-# 4. Storage Model
+``` text
+fire
+flare
+industrial_thermal_source
+agricultural_burn
+vegetation_wildfire
+other_thermal_anomaly
+unknown
+```
+
+## Context
+
+``` text
+industrial
+oil_gas
+power
+mining
+agricultural
+forest_vegetation
+urban
+other
+unknown
+```
+
+## Persistence
+
+``` text
+transient
+recurring
+persistent
+insufficient_history
+```
+
+## Attribution
+
+``` text
+strong
+moderate
+weak
+unknown
+```
+
+This prevents context or persistence from becoming accidental class
+labels.
+
+------------------------------------------------------------------------
+
+# 5. Data Storage
 
 ## PostgreSQL + PostGIS
 
 Store:
 
-- FIRMS detection metadata;
-- event clusters;
-- persistent sources;
-- industrial facilities;
-- land-cover summaries;
-- feature vectors;
-- predictions;
-- evidence;
-- model version;
-- audit metadata.
+-   detections
+-   events
+-   persistent sources
+-   facility metadata
+-   geometries
+-   land-cover summaries
+-   model predictions
+-   evidence metadata
+-   provenance
+-   evaluation records
+-   configuration/version metadata
 
 ## Object storage
 
 Store:
 
-- satellite image/raster assets;
-- generated map artifacts;
-- model binaries;
-- evaluation reports;
-- large exports.
+-   downloaded raster assets
+-   generated map artifacts
+-   model files
+-   experiment artifacts
+-   exports
+-   large raw files when appropriate
 
-## Redis
+## Raw data rule
+
+Raw source observations must remain immutable.
+
+Derived data may be versioned/recomputed.
+
+------------------------------------------------------------------------
+
+# 6. Data Contracts
+
+Every external source gets a canonical internal schema.
+
+Example:
+
+``` python
+class FirmsDetection(BaseModel):
+    latitude: float
+    longitude: float
+    acquisition_time: datetime
+    frp_mw: float | None
+    brightness_ti4_k: float | None
+    brightness_ti5_k: float | None
+    confidence: str | None
+    satellite: str
+    instrument: str
+    source_version: str
+```
+
+Do not allow vendor-specific field names to leak through the
+application.
+
+------------------------------------------------------------------------
+
+# 7. Geospatial Rules
+
+## CRS
+
+-   `EPSG:4326` for API interchange where appropriate.
+-   Geography/projected CRS for distance/area calculations.
+
+Never use naïve Euclidean distance directly on latitude/longitude.
+
+## Spatial precision
+
+Maintain:
+
+``` text
+detection_geometry
+event_geometry
+source_geometry
+facility_geometry
+distance_to_facility
+attribution_confidence
+```
+
+Never replace one geometry with another merely because they are nearby.
+
+------------------------------------------------------------------------
+
+# 8. FIRMS Data Handling
+
+NASA FIRMS provides active-fire/thermal-anomaly products including VIIRS
+375 m products. NASA notes that detections are satellite observations
+and may represent fire, hot smoke, agriculture or other sources; pixel
+size does not imply that the entire pixel is burning.
+
+Engineering implications:
+
+1.  FIRMS is an observation source, not ground truth.
+2.  Preserve satellite/product/version metadata.
+3.  Preserve acquisition time separately from ingestion time.
+4.  Preserve NRT/RT/URT/standard product identity.
+5.  Cache immutable historical results.
+6.  Respect NASA access limits.
+7.  Keep credentials server-side.
+8.  Distinguish external-data latency from internal processing latency.
+
+------------------------------------------------------------------------
+
+# 9. Context Enrichment
+
+## Industrial/OSM
+
+Use OSM as contextual evidence.
 
 Store:
 
-- job state;
-- short-lived API cache;
-- deduplication keys;
-- rate-limit state;
-- transient processing state.
+-   feature type
+-   geometry
+-   tags
+-   source timestamp if available
+-   query/version metadata
+-   distance to event/source
 
----
+Never convert:
 
-# 5. Core Data Model
-
-## `firms_detections`
-
-```text
-id
-source
-satellite
-instrument
-latitude
-longitude
-acq_datetime
-bright_ti4
-bright_ti5
-frp
-confidence
-scan
-track
-day_night
-version
-ingested_at
-raw_hash
+``` text
+OSM industrial polygon nearby
 ```
 
-## `thermal_events`
+into:
 
-```text
-id
-centroid
-start_time
-end_time
-detection_count
-spatial_radius
-mean_frp
-max_frp
-mean_brightness
-night_ratio
-persistence_score
-status
-created_at
-updated_at
+``` text
+confirmed industrial fire
 ```
-
-## `persistent_sources`
-
-```text
-id
-geometry
-first_seen
-last_seen
-active_days
-detection_count
-mean_frp
-frp_variance
-spatial_stability
-source_type
-confidence
-```
-
-## `industrial_assets`
-
-```text
-id
-osm_id
-geometry
-name
-industrial_type
-tags
-source
-retrieved_at
-```
-
-## `context_features`
-
-```text
-event_id
-industrial_distance_m
-industrial_asset_count
-landcover_class
-vegetation_fraction
-water_fraction
-built_fraction
-road_distance_m
-facility_density
-satellite_available
-cloud_fraction
-feature_version
-```
-
-## `predictions`
-
-```text
-id
-event_id
-model_version
-predicted_class
-probability_vector
-confidence
-abstained
-created_at
-```
-
-## `evidence_items`
-
-```text
-id
-event_id
-type
-value
-strength
-source
-timestamp
-```
-
----
-
-# 6. Event Identity
-
-Never use only latitude/longitude as event identity.
-
-A detection belongs to an event if:
-
-- temporal proximity is within a configurable window;
-- spatial distance is within a configurable radius;
-- optionally, contextual consistency supports the grouping.
-
-Use clustering such as:
-
-- DBSCAN/HDBSCAN for exploratory event grouping;
-- geodesic distance;
-- time-window constraints.
-
-### Important
-
-A persistent flare should become one **persistent source** with many events/detections, not thousands of separate alerts.
-
----
-
-# 7. Persistence Engine
-
-Compute:
-
-```text
-persistence_score =
-    f(
-      active_days,
-      detection_count,
-      temporal_span,
-      spatial_stability,
-      observation_frequency
-    )
-```
-
-Do not hard-code the final formula before evaluation.
-
-### Candidate features
-
-- active days / observed days;
-- longest continuous run;
-- mean inter-detection interval;
-- centroid standard deviation;
-- radius of gyration;
-- FRP stability;
-- day/night ratio;
-- seasonal consistency.
-
----
-
-# 8. Context Enrichment
-
-## OSM
-
-Query nearby:
-
-- industrial land-use polygons;
-- factories/works;
-- power plants;
-- oil/gas infrastructure where mapped;
-- mining features;
-- pipelines;
-- storage/industrial facilities;
-- roads and settlements when relevant.
-
-OSM is **context**, not ground truth.
-
-### Proximity features
-
-Examples:
-
-```text
-distance_to_nearest_industrial_area
-distance_to_power_plant
-distance_to_mine
-distance_to_oil_gas_asset
-industrial_asset_count_500m
-industrial_asset_count_1km
-```
-
-Use multiple radii because a 375 m observation pixel and a facility polygon do not have identical footprints.
-
----
-
-# 9. Satellite Context
-
-## Primary candidates
-
-### Sentinel-2
-
-Use for:
-
-- land/vegetation context;
-- visible/SWIR evidence;
-- burn-scar/contextual change;
-- industrial site characterization.
-
-It has 10 m bands and a nominal 5-day revisit for the constellation.
-
-### Landsat Collection 2
-
-Use for:
-
-- historical context;
-- surface reflectance;
-- surface temperature where available;
-- longer time series.
-
-### NASA HLS
-
-Use when higher observation frequency from harmonized Landsat/Sentinel data is useful.
-
-### Important constraint
-
-Optical imagery is not guaranteed at event time.
-
-Clouds and revisit gaps mean:
-
-```text
-satellite evidence unavailable
-```
-
-must be a valid state.
-
-Do not invent evidence.
-
----
-
-# 10. Data Pipeline
-
-```text
-FIRMS API
-  ↓
-Raw response
-  ↓
-Schema validation
-  ↓
-Deduplication
-  ↓
-Canonical detection record
-  ↓
-Event clustering
-  ↓
-OSM enrichment
-  ↓
-Land-cover enrichment
-  ↓
-Satellite search
-  ↓
-Feature extraction
-  ↓
-Classification
-  ↓
-Calibration
-  ↓
-Persistence update
-  ↓
-Evidence generation
-  ↓
-PostGIS
-  ↓
-API
-```
-
----
-
-# 11. FIRMS Ingestion Design
-
-NASA FIRMS provides area APIs and multiple sources including VIIRS NOAA-20, NOAA-21, Suomi-NPP and MODIS variants.
-
-The API requires a MAP_KEY.
-
-The documented area API supports:
-
-```text
-/api/area/csv/[MAP_KEY]/[SOURCE]/[AREA_COORDINATES]/[DAY_RANGE]
-```
-
-and historical queries can include a date.
-
-### Ingestion safeguards
-
-- retry with exponential backoff;
-- validate source/version;
-- record ingestion timestamp;
-- preserve source record;
-- hash raw record for deduplication;
-- never silently overwrite observations;
-- track API failures;
-- respect NASA service limits.
-
----
-
-# 12. Geospatial Precision Policy
-
-This is critical.
-
-A FIRMS point represents the center of a nominal sensor pixel/detection, not an exact facility location.
-
-Therefore the UI/API should distinguish:
-
-- **detection coordinate**
-- **event centroid**
-- **probable source area**
-- **nearby facility**
-- **confidence**
-
-Do not state:
-
-> “The fire is exactly at Factory X.”
-
-Prefer:
-
-> “The thermal event overlaps/occurs within the vicinity of mapped industrial facility X; attribution confidence is Y.”
-
----
-
-# 13. ML Architecture
-
-## Stage 1 — Baseline
-
-Use a transparent tabular classifier.
-
-Candidates:
-
-- Logistic Regression
-- Random Forest
-- XGBoost / LightGBM
-
-Recommended starting point:
-
-**XGBoost or LightGBM-style gradient boosting on engineered event features.**
-
-Why:
-
-- heterogeneous numerical/categorical features;
-- small-to-medium labelled dataset;
-- fast training;
-- strong baseline;
-- feature importance;
-- easier debugging than deep vision models.
-
-## Stage 2 — Satellite image branch
-
-Only if baseline is insufficient.
-
-Candidate architecture:
-
-```text
-Satellite patch
-    ↓
-CNN / pretrained vision encoder
-    ↓
-embedding
-    +
-tabular event features
-    ↓
-fusion model
-    ↓
-classification
-```
-
-Do not start here.
-
----
-
-# 14. Feature Groups
-
-## FIRMS
-
-- FRP
-- brightness temperature
-- brightness difference
-- confidence
-- day/night
-- scan
-- track
-- sensor
-- satellite
-
-## Temporal
-
-- active days
-- detection count
-- temporal span
-- inter-arrival time
-- recurrence
-- weekday/month/season
-- night ratio
-
-## Spatial
-
-- cluster radius
-- centroid drift
-- detection density
-- neighboring hotspot density
-- spatial stability
-
-## Infrastructure
-
-- nearest industrial asset distance
-- asset type
-- industrial density
-- power-plant proximity
-- mining proximity
-- oil/gas proximity
 
 ## Land cover
 
-- vegetation fraction
-- built-up fraction
-- cropland fraction
-- forest fraction
-- water proximity
+Use a documented land-cover product such as ESA WorldCover when
+suitable.
 
-## Satellite
+Store:
 
-- cloud fraction
-- spectral indices
-- texture
-- recent change
-- thermal/spectral indicators where available
+-   product/version
+-   class
+-   sampling geometry
+-   retrieval date
+-   confidence/quality metadata if available
 
----
+## Satellite context
 
-# 15. Training/Validation Protocol
+Satellite imagery is a required **capability/integration path**, but
+imagery availability is not a prerequisite for every inference.
 
-## The biggest mistake to avoid
+Use a tiered strategy:
 
-Do not randomly split individual detections if detections from the same persistent source appear in both train and test.
-
-That causes leakage.
-
-## Better split
-
-Group by:
-
-- source;
-- facility;
-- geographic region;
-- event cluster.
-
-Preferred:
-
-```text
-Train: regions/sources A,B,C
-Validation: sources D
-Test: unseen sources/regions E
+``` text
+Tier 1: FIRMS + temporal + spatial features
+Tier 2: land cover + industrial context
+Tier 3: satellite imagery when available
+Tier 4: advanced vision model only if justified
 ```
 
-Use spatial and temporal holdouts.
+------------------------------------------------------------------------
 
----
+# 10. Event Formation
 
-# 16. Evaluation
+Do not train directly on raw points if the product task is event/source
+intelligence.
 
-## Primary
+Pipeline:
 
-- Precision
-- Recall
-- F1
-- Macro F1
-- PR-AUC
-- confusion matrix
-
-## Industrial class
-
-Because industrial attribution is the central requirement:
-
-- industrial precision;
-- industrial recall;
-- industrial F1;
-- false-positive rate.
-
-## Persistence
-
-- source-level precision;
-- source-level recall;
-- persistence F1;
-- track continuity.
-
-## Calibration
-
-- reliability diagram;
-- Expected Calibration Error;
-- Brier score.
-
-## Coverage
-
-Measure:
-
-```text
-accuracy vs coverage
+``` text
+detections
+→ spatial-temporal clustering
+→ thermal events
+→ source tracking
 ```
 
-as the confidence threshold changes.
+Clustering parameters must be configurable and versioned.
 
-A system that abstains on ambiguous events can be stronger than one that classifies everything incorrectly.
+Every event must retain its source detections.
 
----
+------------------------------------------------------------------------
+
+# 11. Persistence Engine
+
+Compute:
+
+-   detection count
+-   active days
+-   observation span
+-   recurrence
+-   temporal gaps
+-   mean/median/max FRP
+-   FRP variability
+-   spatial stability
+-   centroid drift
+-   day/night distribution
+-   seasonal behavior where enough history exists
+
+Persistence is an independent feature/state.
+
+Example:
+
+``` text
+repeated detections
++ stable footprint
++ industrial context
+→ stronger persistent-source attribution
+```
+
+This remains probabilistic evidence, not proof.
+
+------------------------------------------------------------------------
+
+# 12. Feature Groups
+
+## FIRMS features
+
+-   confidence
+-   FRP
+-   brightness temperatures
+-   scan/track
+-   day/night
+-   satellite
+-   acquisition timing
+
+## Temporal features
+
+-   active days
+-   recurrence
+-   duration
+-   gaps
+-   periodicity
+-   day/night pattern
+
+## Spatial features
+
+-   cluster size
+-   spatial density
+-   centroid drift
+-   footprint stability
+
+## Context features
+
+-   distance to industrial facilities
+-   facility type
+-   land-cover class
+-   nearby road/rail/infrastructure context
+
+## Satellite features
+
+Only where imagery is available and quality is sufficient.
+
+------------------------------------------------------------------------
+
+# 13. Model Strategy
+
+Use the following sequence:
+
+``` text
+Rule baseline
+      ↓
+Feature baseline
+      ↓
+XGBoost/LightGBM
+      ↓
+Calibration
+      ↓
+Abstention
+      ↓
+Advanced vision only if justified
+```
+
+The model must not be selected because it sounds advanced.
+
+It must beat a meaningful baseline under a defensible evaluation
+protocol.
+
+------------------------------------------------------------------------
+
+# 14. Leakage Prevention
+
+Random point-level train/test splits are prohibited.
+
+Evaluation must prevent:
+
+-   spatial leakage
+-   temporal leakage
+-   source leakage
+-   repeated-event leakage
+
+Recommended split dimensions:
+
+``` text
+geographic holdout
++
+temporal holdout
++
+persistent-source holdout where feasible
+```
+
+If multiple detections belong to one event/source, they must not be
+scattered across train and test.
+
+------------------------------------------------------------------------
+
+# 15. Shortcut-Learning Tests
+
+Run ablations:
+
+``` text
+A: FIRMS only
+B: FIRMS + temporal
+C: FIRMS + temporal + industrial context
+D: FIRMS + temporal + land cover
+E: FIRMS + satellite
+F: all features
+```
+
+The goal is to demonstrate which evidence actually contributes.
+
+Also test whether the model collapses when industrial-context features
+are removed.
+
+------------------------------------------------------------------------
+
+# 16. Calibration and Abstention
+
+A model prediction must produce:
+
+``` text
+class probabilities
+calibrated confidence
+uncertainty state
+```
+
+Possible result:
+
+``` text
+predicted class = unknown
+reason = insufficient evidence
+```
+
+Coverage must be evaluated jointly with reliability.
+
+Do not force low-evidence cases into a confident class merely to improve
+coverage.
+
+------------------------------------------------------------------------
 
 # 17. Evidence Engine
 
-Evidence must be deterministic where possible.
+Evidence must be generated deterministically from stored features and
+source records.
 
-### Evidence categories
+Evidence can include:
 
-1. FIRMS observation evidence
-2. Temporal evidence
-3. Spatial evidence
-4. Infrastructure evidence
-5. Land-cover evidence
-6. Satellite evidence
-7. Model evidence
-8. Uncertainty
+-   repeated detections
+-   stable location
+-   industrial proximity
+-   land-cover context
+-   satellite availability/quality
+-   temporal signature
+-   FRP behavior
+-   model contribution where supported
 
-### Example
+Never let an LLM invent factual evidence.
 
-```text
-Classification:
-Persistent industrial source
+An LLM may summarize already-verified evidence later, but the underlying
+evidence must come from the data pipeline.
 
-Supporting evidence:
-+ 27 detections across 19 active days
-+ 210 m from mapped industrial facility
-+ spatial radius 160 m
-+ repeated nighttime observations
-+ high persistence score
+------------------------------------------------------------------------
 
-Limiting evidence:
-- optical image unavailable for 3 observations due to cloud
+# 18. API Boundaries
+
+Example resources:
+
+``` text
+GET /detections
+GET /events
+GET /events/{id}
+GET /sources
+GET /sources/{id}
+GET /events/{id}/evidence
+GET /events/{id}/timeline
+GET /layers/industrial
+GET /layers/land-cover
+POST /jobs/ingest
+POST /jobs/enrich
+POST /jobs/classify
 ```
 
-This is much more defensible than:
+Heavy work must run through workers.
 
-> “AI says gas flare.”
+API handlers remain focused on:
 
----
-
-# 18. Explainability
-
-Use:
-
-- feature importance;
-- SHAP for tabular model;
-- nearest/reference event comparisons;
-- explicit rule evidence;
-- confidence calibration.
-
-Do not use an LLM to invent explanations.
-
-An LLM may later convert structured evidence into natural language, but the underlying evidence must originate from the pipeline.
-
----
-
-# 19. API Contract
-
-Recommended endpoints:
-
-```text
-GET  /health
-
-GET  /events
-GET  /events/{event_id}
-
-GET  /sources
-GET  /sources/{source_id}
-
-GET  /events/{event_id}/evidence
-
-GET  /events/{event_id}/timeline
-
-GET  /map/events
-
-GET  /map/sources
-
-POST /ingestion/run
-
-GET  /models/current
-
-GET  /metrics
+``` text
+validate → authorize → invoke service → return result
 ```
 
-### API rule
+------------------------------------------------------------------------
 
-Every endpoint must:
+# 19. Performance Targets
 
-1. validate input;
-2. enforce access policy;
-3. perform bounded work;
-4. return predictable schemas;
-5. avoid long-running computation.
+Initial engineering targets:
 
----
+-   bounded FIRMS ingestion: \<30 s
+-   enrichment: \<30 s/event in batch mode
+-   classification: \<1 s/event excluding external downloads
+-   end-to-end demo event: \<2 min when required external data is
+    available
+-   10,000-event offline batch: \<5 min
 
-# 20. Security
+These are **engineering targets**, not SIH requirements.
 
-Minimum:
+------------------------------------------------------------------------
 
-- environment variables for secrets;
-- no API keys in frontend;
-- authentication for non-public analyst functions;
-- input validation;
-- rate limiting;
-- audit logs;
-- signed/controlled exports;
-- least-privilege service accounts;
-- dependency scanning;
-- no sensitive operational credentials in Git.
+# 20. Deployment
 
----
+Hackathon deployment:
 
-# 21. Reliability
-
-The pipeline should tolerate:
-
-- FIRMS API failure;
-- OSM timeout;
-- satellite catalog unavailable;
-- malformed records;
-- duplicate records;
-- partial enrichment;
-- model failure.
-
-A single missing enrichment should not destroy the event.
-
-Use:
-
-```text
-event_status:
-  detected
-  enriching
-  enriched
-  classified
-  partial
-  failed
-```
-
----
-
-# 22. Observability
-
-Track:
-
-- ingestion success rate;
-- records ingested;
-- duplicates;
-- enrichment latency;
-- satellite lookup failures;
-- model latency;
-- queue depth;
-- classification coverage;
-- abstention rate;
-- API latency.
-
----
-
-# 23. Performance Targets
-
-Initial internal targets:
-
-- FIRMS ingestion: <30 s for a bounded demo area
-- event enrichment: <30 s/event in batch mode
-- classification: <1 s/event excluding external downloads
-- end-to-end demo event: target <2 min where external data is available
-- 10,000-event offline batch: target <5 min
-
-These are engineering targets, not SIH requirements.
-
-External API latency should be reported separately from internal processing latency.
-
----
-
-# 24. Deployment
-
-## Hackathon
-
-Use Docker Compose:
-
-```text
+``` text
 web
 api
 worker
@@ -876,132 +720,158 @@ redis
 object-storage
 ```
 
-Optional:
+Optional only when justified:
 
-```text
+``` text
 mlflow
 prometheus
 grafana
 ```
 
-Do not deploy optional infrastructure until required.
+Use Docker Compose for the MVP.
 
----
+------------------------------------------------------------------------
 
-# 25. Architecture Invariants
+# 21. Architecture Invariants
 
-1. Heavy processing never happens inside an HTTP request.
-2. Raw source observations are never silently mutated.
-3. Every prediction has a model version.
-4. Every prediction has evidence and uncertainty metadata.
-5. OSM is contextual evidence, not ground truth.
-6. FIRMS coordinates are not treated as exact facility coordinates.
-7. Satellite absence is represented explicitly.
-8. Model evaluation uses source/spatially separated test data.
-9. No classifier is allowed to force a low-confidence prediction.
-10. Large raster artifacts do not live directly in PostgreSQL.
-11. API boundaries validate external input.
-12. Data provenance is preserved.
+1.  Heavy processing never happens inside an HTTP request.
+2.  Raw observations are immutable.
+3.  Every derived artifact has provenance.
+4.  Every prediction has model/version metadata.
+5.  Every prediction has evidence and uncertainty metadata.
+6.  OSM is contextual evidence, not ground truth.
+7.  FIRMS coordinates are not treated as exact facility coordinates.
+8.  Satellite absence is represented explicitly.
+9.  Evaluation prevents source/spatial/temporal leakage.
+10. Low-confidence predictions may abstain.
+11. Large raster artifacts do not live directly in PostgreSQL.
+12. External inputs are validated at boundaries.
+13. External API failures are observable.
+14. No metric is optimized by changing evaluation rules after seeing the
+    result.
+15. Context features must be tested for shortcut learning.
+16. Classification ontology is separate from persistence/context
+    dimensions.
 
----
+------------------------------------------------------------------------
 
-# 26. Implementation Order
+# 22. Implementation Order
 
-## Phase 1 — Data spine
+## Phase 0 --- Scientific contract
 
-- FIRMS downloader
-- schema
-- PostGIS
-- raw storage
-- deduplication
+Before substantial ML:
 
-## Phase 2 — Event intelligence
+-   freeze ontology
+-   define event/source semantics
+-   define ground-truth schema
+-   define evaluation split
+-   define geospatial error metric
+-   define acceptance criteria
 
-- spatial clustering
-- temporal grouping
-- persistent source tracker
+## Phase 1 --- Data spine
 
-## Phase 3 — Context
+-   FIRMS downloader
+-   raw capture
+-   canonical schema
+-   validation
+-   PostGIS
+-   deduplication
 
-- OSM
-- land cover
-- satellite catalog
-- feature builder
+## Phase 2 --- Event intelligence
 
-## Phase 4 — Baseline intelligence
+-   clustering
+-   temporal grouping
+-   persistent-source tracker
 
-- heuristic baseline
-- XGBoost/LightGBM model
-- evaluation
-- calibration
+## Phase 3 --- Context
 
-## Phase 5 — Evidence
+-   OSM
+-   land cover
+-   satellite catalog/context
+-   feature builder
 
-- evidence schema
-- evidence generation
-- uncertainty
+## Phase 4 --- Baseline intelligence
 
-## Phase 6 — GIS integration
+-   heuristic baselines
+-   feature baseline
+-   XGBoost/LightGBM
+-   grouped evaluation
+-   calibration
 
-- map endpoints
-- event details
-- timeline
-- source watchlist
+## Phase 5 --- Evidence
 
-## Phase 7 — Advanced model
+-   evidence schema
+-   deterministic evidence generation
+-   uncertainty
+-   provenance
 
-Only if metrics show the baseline is inadequate.
+## Phase 6 --- GIS integration
 
----
+-   map endpoints
+-   event details
+-   timeline
+-   source watchlist
+-   map overlays
 
-# 27. ADRs
+## Phase 7 --- Advanced model
 
-## ADR-001 — PostGIS as primary geospatial store
+Only if baseline performance and error analysis justify it.
+
+------------------------------------------------------------------------
+
+# 23. ADRs
+
+## ADR-001 --- PostGIS
 
 **Decision:** PostgreSQL + PostGIS.
 
-**Reason:** spatial indexing, joins, relational integrity and mature production ecosystem.
+**Reason:** spatial indexing, joins and relational integrity.
 
-## ADR-002 — Redis instead of Kafka for MVP
+## ADR-002 --- Redis over Kafka for MVP
 
 **Decision:** Redis-backed jobs.
 
-**Reason:** lower operational burden and sufficient scale for a bounded hackathon pipeline.
+**Reason:** lower operational complexity for bounded hackathon
+workloads.
 
-## ADR-003 — Tabular ML before deep vision
+## ADR-003 --- Tabular ML before deep vision
 
 **Decision:** engineered-feature model first.
 
-**Reason:** ground truth is the bottleneck; a sophisticated vision model cannot rescue weak labels.
+**Reason:** ground truth is the limiting factor; model complexity cannot
+rescue weak labels.
 
-## ADR-004 — Evidence-first predictions
+## ADR-004 --- Evidence-first predictions
 
-**Decision:** every prediction must expose evidence and uncertainty.
+**Decision:** every prediction exposes evidence and uncertainty.
 
-**Reason:** analyst trust and judge differentiation.
+**Reason:** analyst trust, auditability and differentiation.
 
-## ADR-005 — Abstention is a first-class outcome
+## ADR-005 --- Abstention
 
-**Decision:** model may return `uncertain`.
+**Decision:** `unknown/uncertain` is a valid result.
 
-**Reason:** open-world thermal anomalies cannot be completely classified from available data.
+**Reason:** open-world thermal anomalies cannot always be classified
+reliably.
 
----
+## ADR-006 --- Orthogonal ontology
 
-# 28. External Standards/Resources
+**Decision:** phenomenon, context, persistence and attribution are
+separate dimensions.
 
-- NASA FIRMS active fire documentation
-- NASA Earthdata VIIRS 375 m documentation
-- NASA FIRMS API
-- ESA Sentinel-2 mission
-- USGS Landsat Collection 2
-- NASA Harmonized Landsat Sentinel-2
-- ESA WorldCover
-- OpenStreetMap
-- Overpass API
-- OGC STAC
-- OGC API Features
-- PostGIS
-- GDAL/Rasterio
+**Reason:** prevents scientifically invalid mixing of event type,
+infrastructure type and temporal behavior.
 
-See `ai-workflow-rules.md` for research and implementation discipline.
+## ADR-007 --- Satellite as optional evidence per event
+
+**Decision:** satellite integration is supported, but missing imagery
+does not automatically invalidate an inference.
+
+**Reason:** cloud cover, acquisition gaps and access constraints make
+universal imagery availability unrealistic.
+
+## ADR-008 --- Context-ablation requirement
+
+**Decision:** context contribution must be measured with ablation tests.
+
+**Reason:** prevents shortcut learning from industrial proximity alone.

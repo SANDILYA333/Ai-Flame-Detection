@@ -1,67 +1,76 @@
-# SIH26162 — Code Standards
+# SIH26162 --- Code Standards
 
 ## 1. Core Engineering Principles
 
-1. Prefer correctness over cleverness.
-2. Keep modules small and single-purpose.
-3. Fix root causes instead of layering workarounds.
-4. Do not mix API, data access, ML and geospatial transformation logic in one module.
-5. Every important data transformation must be testable independently.
-6. Preserve provenance.
-7. Make uncertainty explicit.
-8. Never hide external API failures.
-9. Prefer deterministic processing where possible.
-10. Avoid introducing infrastructure without a measured need.
+1.  Prefer correctness over cleverness.
+2.  Keep modules small and single-purpose.
+3.  Fix root causes instead of layering workarounds.
+4.  Separate API, data access, geospatial transformation, feature
+    engineering and ML logic.
+5.  Every important transformation must be independently testable.
+6.  Preserve source provenance.
+7.  Make uncertainty explicit.
+8.  Never hide external API failures.
+9.  Prefer deterministic processing where possible.
+10. Avoid infrastructure without a measured need.
+11. Never optimize a benchmark by changing the evaluation protocol.
+12. Never encode a contextual shortcut as a factual label.
+13. Do not silently turn observations into ground truth.
+14. Do not claim geographic precision beyond the source data.
 
----
+------------------------------------------------------------------------
 
 # 2. Python
 
-## Required
+Required:
 
-- Python 3.11+ unless dependency constraints require otherwise.
-- Type hints for public functions.
-- `ruff` for linting/formatting.
-- `pytest` for tests.
-- Pydantic for external data validation.
-- `mypy` or an equivalent static checker for critical modules.
+-   Python 3.11+ unless dependency constraints require otherwise.
+-   Type hints for public functions.
+-   Ruff for linting/formatting.
+-   Pytest for tests.
+-   Pydantic for external data validation.
+-   Mypy or equivalent for critical modules.
 
-## Avoid
+Avoid:
 
-- untyped dictionaries across system boundaries;
-- global mutable state;
-- hidden network calls;
-- giant utility modules;
-- `except Exception: pass`;
-- silently coercing malformed data.
+-   untyped dictionaries across boundaries;
+-   global mutable state;
+-   hidden network calls;
+-   giant utility modules;
+-   `except Exception: pass`;
+-   silent coercion of malformed data;
+-   model code that reads directly from production tables without an
+    explicit feature/data-access boundary.
 
----
+------------------------------------------------------------------------
 
 # 3. TypeScript
 
-## Required
+Required:
 
-- strict TypeScript;
-- no unnecessary `any`;
-- typed API responses;
-- shared schemas where practical;
-- runtime validation for unknown external payloads.
+-   strict TypeScript;
+-   no unnecessary `any`;
+-   typed API responses;
+-   runtime validation for unknown external payloads;
+-   shared schemas where practical.
 
-## Frontend rule
+Frontend state must distinguish:
 
-Map state, server state and UI state should be separated.
+-   server state;
+-   map state;
+-   UI state.
 
 Do not put the entire application state into one global store.
 
----
+------------------------------------------------------------------------
 
 # 4. Data Contracts
 
-Every external data source gets a canonical internal schema.
+Every external source receives a canonical internal schema.
 
 Example:
 
-```python
+``` python
 class FirmsDetection(BaseModel):
     latitude: float
     longitude: float
@@ -75,508 +84,353 @@ class FirmsDetection(BaseModel):
     source_version: str
 ```
 
-Never allow vendor-specific field names to leak throughout the application.
+Vendor-specific field names must not leak through the application.
 
----
+------------------------------------------------------------------------
 
-# 5. Geospatial Standards
+# 5. Domain Model Rules
 
-## Coordinate reference system
+The following are different entities:
+
+``` text
+Detection
+Event
+Persistent Source
+Context
+Intelligence Result
+```
+
+Do not collapse them into one record.
+
+A detection belongs to an event only through the event-formation
+process.
+
+A source is a longer-lived entity linked to multiple events.
+
+Context does not automatically become a label.
+
+------------------------------------------------------------------------
+
+# 6. Ontology Rules
+
+Never use one field such as:
+
+``` text
+class = "persistent_gas_flare"
+```
+
+as the only representation.
+
+Use orthogonal fields:
+
+``` text
+phenomenon = flare
+context = oil_gas
+persistence_state = persistent
+attribution_strength = strong
+```
+
+This prevents mixing fundamentally different concepts.
+
+------------------------------------------------------------------------
+
+# 7. Geospatial Standards
 
 Use:
 
-- `EPSG:4326` for API interchange where appropriate.
-- Projected CRS for distance/area calculations.
+-   `EPSG:4326` for API interchange where appropriate.
+-   PostGIS geography/geodesic calculations or suitable projected CRS
+    for distance/area.
 
-Never calculate precise meter distances directly from latitude/longitude using naïve Euclidean distance.
+Never calculate precise meter distances using naïve latitude/longitude
+Euclidean arithmetic.
 
-Use:
+Never assign:
 
-- PostGIS geography;
-- geodesic calculations;
-- appropriate projected CRS.
-
----
-
-# 6. Spatial Precision Rules
-
-Never write:
-
-```text
+``` text
 event.location = facility.location
 ```
 
-unless the system has actual evidence for that relationship.
-
-Instead store:
-
-```text
-detection_point
-event_centroid
-facility_geometry
-distance_to_facility
-attribution_confidence
-```
-
-This prevents false precision.
-
----
-
-# 7. FIRMS Data Handling
-
-Every ingestion record must preserve:
-
-- source;
-- satellite;
-- acquisition timestamp;
-- version;
-- original identifier/hash;
-- ingestion timestamp.
-
-Do not mix:
-
-- NRT;
-- RT;
-- URT;
-- standard products
-
-without recording the processing version.
-
----
-
-# 8. External API Rules
-
-Every external integration must have:
-
-- timeout;
-- retry policy;
-- rate-limit handling;
-- structured error;
-- provenance metadata;
-- test fixture;
-- fallback behavior.
-
-Never make an external API call from a request handler if the operation can be asynchronous.
-
----
-
-# 9. NASA FIRMS Rules
-
-1. Store the MAP_KEY only in server-side secrets.
-2. Never expose it to the browser.
-3. Respect NASA transaction limits.
-4. Avoid repeated downloads of unchanged data.
-5. Cache immutable historical results.
-6. Record the source/version.
-7. Distinguish data latency from processing latency.
-8. Treat FIRMS as an observation source, not ground truth.
-
----
-
-# 10. OSM Rules
-
-OSM is contextual.
-
-Do not interpret:
-
-```text
-OSM says industrial
-```
-
-as:
-
-```text
-there is definitely an active industrial fire.
-```
+unless an independently defensible relationship exists.
 
 Store:
 
-- OSM object ID;
-- tags;
-- geometry;
-- retrieval time;
-- query parameters.
-
-OSM data may be incomplete or outdated.
-
----
-
-# 11. Satellite Data Rules
-
-For every satellite asset record:
-
-```text
-source
-collection
-acquisition_time
-processing_level
-cloud metadata
-geometry
-asset URL
-retrieval_time
+``` text
+detection_geometry
+event_geometry
+source_geometry
+facility_geometry
+distance
+attribution_confidence
 ```
 
-Never silently substitute one satellite product for another.
+------------------------------------------------------------------------
 
-If a requested image is unavailable:
+# 8. FIRMS Data Rules
 
-```text
-satellite_evidence.status = unavailable
+Every ingestion record must preserve:
+
+-   source
+-   satellite
+-   instrument
+-   acquisition timestamp
+-   product type/version
+-   original identifier/hash
+-   ingestion timestamp
+-   raw provenance
+
+Rules:
+
+1.  FIRMS is an observation source, not ground truth.
+2.  Preserve NRT/RT/URT/standard identity.
+3.  Do not silently overwrite raw observations.
+4.  Cache immutable historical data where appropriate.
+5.  Keep API credentials server-side.
+6.  Respect rate/transaction limits.
+7.  Distinguish acquisition time from processing/ingestion time.
+8.  Never interpret a pixel centroid as an exact incident coordinate.
+
+------------------------------------------------------------------------
+
+# 9. External API Rules
+
+Every integration must have:
+
+-   timeout;
+-   retry policy;
+-   rate-limit handling;
+-   structured error;
+-   provenance metadata;
+-   test fixture;
+-   fallback behavior where meaningful.
+
+Never hide external failure.
+
+If satellite imagery is unavailable, the system must represent:
+
+``` text
+satellite_evidence_status = unavailable
 ```
 
-not:
+rather than silently pretending imagery was analyzed.
 
-```text
-satellite_evidence = inferred
-```
+------------------------------------------------------------------------
 
----
+# 10. OSM / Context Rules
 
-# 12. ML Code Standards
-
-## Separation
-
-Keep:
-
-```text
-features/
-training/
-evaluation/
-inference/
-calibration/
-explainability/
-```
-
-separate.
-
-## Reproducibility
-
-Record:
-
-- dataset version;
-- feature version;
-- model version;
-- random seed;
-- training date;
-- evaluation split;
-- hyperparameters.
-
----
-
-# 13. Data Leakage Rules
-
-This is one of the highest-risk areas.
-
-Never perform:
-
-```text
-random row split
-```
-
-when repeated detections from the same source exist.
-
-Prefer grouped/spatial/temporal splits.
-
-Every evaluation report must state:
-
-```text
-split strategy
-grouping key
-train period
-test period
-geographic separation
-```
-
----
-
-# 14. Model Output Contract
-
-Every prediction must contain:
-
-```text
-model_version
-predicted_class
-probabilities
-confidence
-abstained
-top_evidence
-uncertainty
-timestamp
-```
-
-A model that returns only a class label is not acceptable.
-
----
-
-# 15. Explainability Rules
-
-The explanation must be generated from actual features.
+OSM is contextual evidence.
 
 Allowed:
 
-- SHAP feature contribution;
-- feature thresholds;
-- temporal statistics;
-- spatial relationships;
-- evidence records.
+``` text
+distance_to_industrial_facility
+facility_type
+nearby_infrastructure_count
+```
 
 Not allowed:
 
-- an LLM inventing a reason;
-- text claims not traceable to source data.
-
----
-
-# 16. Confidence Rules
-
-Confidence is not the same as correctness.
-
-The project must distinguish:
-
-- model probability;
-- calibrated confidence;
-- data quality;
-- evidence completeness.
-
-Example:
-
-```text
-Model confidence: 0.93
-Evidence completeness: 0.61
-Final analyst confidence: moderate
+``` text
+OSM facility nearby → confirmed industrial fire
 ```
 
-This is preferable to a single misleading 93% number.
+Context features must be tested for shortcut learning.
 
----
+Required experiment:
 
-# 17. Evidence Completeness
-
-Define evidence completeness as:
-
-```text
-available expected evidence / expected evidence
+``` text
+FIRMS only
+vs
+FIRMS + temporal
+vs
+FIRMS + context
+vs
+FIRMS + satellite
+vs
+all
 ```
 
-Possible evidence slots:
+------------------------------------------------------------------------
 
-- FIRMS
-- temporal
-- spatial
-- infrastructure
-- land cover
-- satellite
+# 11. ML Rules
 
-A missing satellite image should reduce evidence completeness but should not automatically invalidate the event.
+1.  Establish a deterministic baseline first.
+2.  Establish a simple feature baseline before complex models.
+3.  Use grouped/spatial/temporal evaluation.
+4.  Prevent source/event leakage.
+5.  Calibrate probabilities where probabilities are exposed.
+6.  Permit abstention.
+7.  Track model version.
+8.  Store feature/pipeline version.
+9.  Preserve evaluation dataset version.
+10. Never optimize for accuracy alone.
+11. Do not force every event into a class.
+12. Do not introduce deep vision without benchmark evidence.
+13. Do not use an LLM as the primary classifier.
+14. Do not train against weak labels and report them as
+    hard-ground-truth performance.
 
----
+------------------------------------------------------------------------
 
-# 18. Testing
+# 12. Ground-Truth Rules
 
-## Unit tests
+Ground truth must have provenance.
 
-Test:
+Minimum fields:
 
-- coordinate validation;
-- event clustering;
-- persistence calculation;
-- feature construction;
-- confidence logic;
-- evidence generation.
-
-## Integration tests
-
-Test:
-
-- FIRMS fixture → database;
-- OSM fixture → enrichment;
-- event → prediction;
-- prediction → evidence;
-- API → PostGIS.
-
-## End-to-end test
-
-Use a fixed historical event fixture.
-
-```text
-input FIRMS
-→ event
-→ enrichment
-→ model
-→ evidence
-→ API response
-```
-
----
-
-# 19. Data Tests
-
-Validate:
-
-- null rates;
-- coordinate bounds;
-- timestamp validity;
-- duplicate rate;
-- impossible FRP values;
-- invalid confidence values;
-- geometry validity.
-
----
-
-# 20. Model Tests
-
-Every model release must have:
-
-- confusion matrix;
-- precision/recall/F1;
-- PR-AUC;
-- calibration;
-- per-class metrics;
-- error analysis;
-- spatial holdout;
-- temporal holdout.
-
----
-
-# 21. API Standards
-
-Every route:
-
-1. validates inputs;
-2. authenticates where required;
-3. authorizes access;
-4. calls service layer;
-5. returns typed response.
-
-Do not put business logic directly in route handlers.
-
----
-
-# 22. Error Handling
-
-Use predictable errors:
-
-```json
-{
-  "error": {
-    "code": "SATELLITE_DATA_UNAVAILABLE",
-    "message": "No valid contextual imagery was available for this event.",
-    "retryable": false
-  }
-}
-```
-
-Never expose internal stack traces.
-
----
-
-# 23. Logging
-
-Structured logs should include:
-
-```text
-timestamp
-service
+``` text
 event_id
-request_id
-operation
-duration_ms
-status
-error_code
+label
+label_source
+source_url
+source_date
+geographic_evidence
+temporal_evidence
+label_confidence
+annotator
+annotation_notes
 ```
 
-Do not log:
+Label tiers:
 
-- API keys;
-- credentials;
-- unnecessary personal information;
-- full large payloads.
+-   Tier A: authoritative
+-   Tier B: strong independent evidence
+-   Tier C: proxy/weak
 
----
+Tier C must not be treated as equivalent to Tier A.
 
-# 24. Database Rules
+------------------------------------------------------------------------
 
-- migrations only;
-- no manual production schema edits;
-- indexes for spatial/time queries;
-- foreign keys where meaningful;
-- geometry constraints;
-- timestamps in UTC;
-- soft deletion only when justified.
+# 13. Evaluation Rules
 
----
+Random point-level splits are prohibited for the final benchmark.
 
-# 25. Spatial Indexing
+Where possible:
 
-Use PostGIS spatial indexes for:
+-   hold out geography;
+-   hold out time;
+-   hold out persistent sources.
 
-- FIRMS detections;
-- event geometry;
-- industrial assets;
-- persistent sources.
+All test sets must be versioned.
 
-Common query pattern:
+Report:
 
-```text
-find industrial assets within radius of event
+-   precision;
+-   recall;
+-   macro F1;
+-   PR-AUC where relevant;
+-   calibration;
+-   coverage/risk;
+-   false-positive rate;
+-   persistence-source performance;
+-   latency.
+
+Never change the split or label policy merely to improve a number.
+
+------------------------------------------------------------------------
+
+# 14. Evidence Rules
+
+Evidence must be derived from verified system state.
+
+Allowed:
+
+``` text
+"19 active days"
+"facility within configured distance"
+"stable spatial footprint"
+"optical imagery unavailable"
 ```
 
-must use a spatial index.
+Not allowed:
 
----
+``` text
+LLM-generated reason not supported by stored data
+```
 
-# 26. Performance
+An LLM may summarize existing evidence only if the underlying facts are
+already present and validated.
 
-Do not optimize prematurely.
+------------------------------------------------------------------------
 
-Measure first.
+# 15. Security
 
-Optimize in this order:
+-   Secrets only in environment/secret storage.
+-   Never expose FIRMS MAP_KEY or equivalent credentials to the browser.
+-   Validate all external input.
+-   Enforce authorization before mutations.
+-   Log security-relevant failures.
+-   Do not log credentials or sensitive tokens.
+-   Keep audit/provenance metadata separate from user-facing prose.
 
-1. repeated external downloads;
-2. database queries;
-3. raster processing;
-4. Python loops;
-5. serialization;
-6. model inference.
+------------------------------------------------------------------------
 
-Prefer vectorized geospatial operations.
+# 16. Testing
 
----
+Every major pipeline stage needs tests.
 
-# 27. File Organization
+Minimum:
 
-```text
-services/api/
-  routes/
+-   schema validation tests;
+-   FIRMS parsing fixtures;
+-   deduplication tests;
+-   CRS/distance tests;
+-   event clustering tests;
+-   persistence tests;
+-   feature-generation tests;
+-   API contract tests;
+-   external API failure tests;
+-   model inference tests;
+-   calibration tests;
+-   evidence correctness tests;
+-   leakage tests.
+
+Include synthetic fixtures for edge cases.
+
+------------------------------------------------------------------------
+
+# 17. File Organization
+
+``` text
+apps/
+  web/
+
+services/
+  api/
+    routes/
+    schemas/
+    services/
+    repositories/
+
+  worker/
+    jobs/
+    ingestion/
+    enrichment/
+    persistence/
+
+  ml/
+    features/
+    training/
+    evaluation/
+    inference/
+    calibration/
+
+packages/
   schemas/
-  services/
-  repositories/
-
-services/worker/
-  jobs/
-  ingestion/
-  enrichment/
-  persistence/
-
-services/ml/
-  features/
-  training/
-  evaluation/
-  inference/
-  calibration/
-
-packages/geospatial/
-packages/evidence/
+  geospatial/
+  evidence/
 ```
 
----
+The exact repository structure may evolve, but domain boundaries must
+remain intact.
 
-# 28. Git Standards
+------------------------------------------------------------------------
 
-Commit units should be meaningful:
+# 18. Git Standards
 
-```text
+Meaningful commits:
+
+``` text
 feat: add FIRMS ingestion schema
 feat: add event clustering
 feat: add OSM enrichment
@@ -585,83 +439,101 @@ feat: add baseline classifier
 test: add spatial holdout evaluation
 ```
 
-Avoid commits such as:
+Avoid:
 
-```text
+``` text
 stuff
 changes
 final
 final2
 ```
 
----
+------------------------------------------------------------------------
 
-# 29. Protected Boundaries
+# 19. Protected Boundaries
 
 Do not:
 
-- rewrite the entire architecture to solve one bug;
-- modify unrelated modules during feature work;
-- replace working dependencies without justification;
-- change model evaluation rules to improve a benchmark number.
+-   rewrite the architecture to solve one bug;
+-   modify unrelated modules during feature work;
+-   replace dependencies without justification;
+-   change evaluation rules to improve benchmark numbers;
+-   bypass validation to make a demo work;
+-   hard-code a contextual assumption as a label.
 
----
+------------------------------------------------------------------------
 
-# 30. Definition of Done
+# 20. Definition of Done
 
 A feature is complete only when:
 
-- code works;
-- tests exist;
-- external failures are handled;
-- provenance is preserved;
-- documentation is updated;
-- progress tracker is updated;
-- build passes;
-- no architecture invariant is violated.
+-   code works end-to-end within its defined scope;
+-   tests exist;
+-   external failures are handled;
+-   provenance is preserved;
+-   uncertainty is preserved;
+-   documentation is updated;
+-   progress tracker is updated;
+-   build passes;
+-   no architecture invariant is violated.
 
----
+------------------------------------------------------------------------
 
-# 31. Anti-Patterns
+# 21. Anti-Patterns
 
 ### Bad
 
-```text
+``` text
 FIRMS → LLM → "Industrial Fire"
 ```
 
 ### Good
 
-```text
+``` text
 FIRMS
+→ event formation
 → temporal/spatial features
-→ infrastructure/land context
-→ ML/rules
+→ context
+→ deterministic baseline
+→ ML
 → calibration
+→ abstention
 → evidence
 → analyst
 ```
 
 ### Bad
 
-```text
+``` text
 Random train/test split
 ```
 
 ### Good
 
-```text
+``` text
 Spatial + temporal + source-grouped evaluation
 ```
 
 ### Bad
 
-```text
+``` text
 375 m pixel = exact facility
 ```
 
 ### Good
 
-```text
-pixel/detection + contextual relationship + uncertainty
+``` text
+Observation + contextual relationship + uncertainty
+```
+
+### Bad
+
+``` text
+Industrial facility nearby = industrial fire
+```
+
+### Good
+
+``` text
+Industrial proximity = contextual evidence
 ```

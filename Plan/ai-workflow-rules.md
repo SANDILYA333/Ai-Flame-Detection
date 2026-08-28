@@ -1,4 +1,4 @@
-# SIH26162 — AI / Development Workflow Rules
+# SIH26162 --- AI / Development Workflow Rules
 
 ## 1. Operating Philosophy
 
@@ -6,245 +6,247 @@ Build this project using a **spec-driven, evidence-first workflow**.
 
 The context files define:
 
-- what the product is;
-- what the architecture is;
-- what code quality means;
-- what the current state is.
+-   what the product is;
+-   what the architecture is;
+-   what engineering quality means;
+-   what is currently decided;
+-   what remains unresolved.
 
-Do not invent product behavior simply because it sounds useful.
+Do not invent product behavior merely because it sounds useful.
 
 When a requirement is unclear:
 
-1. identify the ambiguity;
-2. record it in `progress-tracker.md`;
-3. choose the smallest defensible assumption;
-4. implement behind a replaceable boundary.
+1.  identify the ambiguity;
+2.  record it in `progress-tracker.md`;
+3.  choose the smallest defensible assumption only when implementation
+    cannot wait;
+4.  isolate the assumption behind a replaceable boundary;
+5.  never silently convert the assumption into a fact.
 
----
+------------------------------------------------------------------------
 
-# 2. Six Thinking Hats as a Development Gate
+# 2. Decision Status Vocabulary
 
-Every major architecture or product decision should be reviewed using:
+Every major decision must be one of:
 
-## White Hat — Evidence
+-   **FACT** --- directly supported by an authoritative source or
+    measured result.
+-   **VERIFIED** --- independently confirmed through reliable research.
+-   **ASSUMPTION** --- currently accepted but not yet validated.
+-   **PROVISIONAL** --- implementation choice intentionally left
+    replaceable.
+-   **RECOMMENDATION** --- strategic choice made by the team.
+-   **OPEN QUESTION** --- must be resolved before a dependent decision
+    is frozen.
 
-Ask:
+Never present an assumption as a fact.
 
-- What do we actually know?
-- What is official?
-- What is measured?
-- What is missing?
-- What source supports the claim?
+------------------------------------------------------------------------
 
-## Red Hat — Human trust
+# 3. Six Thinking Hats Development Gate
 
-Ask:
+Every major product, data or architecture decision should be reviewed
+through all six hats.
 
-- Would an analyst trust this?
-- What would feel misleading?
-- What would cause a user to ignore the system?
-
-## Black Hat — Failure
-
-Ask:
-
-- What can go wrong?
-- What false positive is dangerous?
-- What data dependency can fail?
-- Where can the model leak information?
-
-## Yellow Hat — Value
+## White Hat --- Evidence
 
 Ask:
 
-- What creates actual operational value?
-- What makes this worth deploying?
-- What is the strongest judge-visible outcome?
+-   What do we actually know?
+-   What is official?
+-   What is measured?
+-   What is missing?
+-   What source supports the claim?
 
-## Green Hat — Innovation
-
-Ask:
-
-- Is there a better way?
-- Can we expose a new type of intelligence?
-- Can we reduce manual work?
-
-## Blue Hat — Control
+## Red Hat --- Human trust
 
 Ask:
 
-- What is the next smallest verifiable step?
-- What metric determines success?
-- What should we explicitly not build?
+-   Would an analyst trust this?
+-   What would feel misleading?
+-   What would make the system look overconfident?
 
----
+## Black Hat --- Failure
 
-# 3. Research Rules
+Ask:
 
-Research must be source-first.
+-   What can fail?
+-   What false positive is dangerous?
+-   Where can data leakage occur?
+-   What happens when external data disappears?
 
-## Tier 1 — Primary
+## Yellow Hat --- Value
+
+Ask:
+
+-   What creates actual operational value?
+-   What directly satisfies SIH?
+-   What makes the demo memorable?
+
+## Green Hat --- Alternatives
+
+Ask:
+
+-   Is there a simpler solution?
+-   Is there a better representation?
+-   Can we expose stronger intelligence without more infrastructure?
+
+## Blue Hat --- Control
+
+Ask:
+
+-   What is the smallest next experiment?
+-   What metric determines success?
+-   What should explicitly not be built?
+-   What decision must be frozen before implementation?
+
+------------------------------------------------------------------------
+
+# 4. Research Rules
+
+## Tier 1 --- Primary
 
 Prefer:
 
-- official SIH portal;
-- NASA FIRMS/Earthdata;
-- ESA;
-- USGS;
-- OGC;
-- OpenStreetMap documentation;
-- official dataset documentation.
+-   official SIH portal;
+-   NASA FIRMS/Earthdata;
+-   ESA;
+-   USGS;
+-   OGC;
+-   official OpenStreetMap documentation;
+-   official dataset documentation.
 
-## Tier 2 — Scientific
-
-Use:
-
-- peer-reviewed papers;
-- established remote-sensing research;
-- validation studies.
-
-## Tier 3 — Community/secondary
+## Tier 2 --- Scientific
 
 Use:
 
-- GitHub;
-- technical blogs;
-- tutorials.
+-   peer-reviewed papers;
+-   established remote-sensing research;
+-   validation studies.
 
-Use these for implementation ideas, not as authoritative scientific claims when primary sources exist.
+## Tier 3 --- Secondary
 
----
+Use:
 
-# 4. Source Register
+-   GitHub;
+-   technical blogs;
+-   tutorials.
 
-The following resources should anchor implementation.
+Secondary sources may help implementation but should not be used as
+authoritative evidence when primary sources exist.
+
+------------------------------------------------------------------------
+
+# 5. Source Register
 
 ## SIH
 
-Official SIH 2026 portal:
+Official portal:
 
-```text
+``` text
 https://sih.gov.in/sih2026PS
 ```
 
-SIH26162 is explicitly listed as:
+SIH26162:
 
-> AI-Based Detection and Classification of Industrial Fires and Persistent Thermal Sources Using NASA FIRMS, OSM & Satellite Data
+``` text
+AI-Based Detection and Classification of Industrial Fires and Persistent Thermal Sources Using NASA FIRMS, OSM & Satellite Data
+```
 
-The official deliverables explicitly require industrial-fire segregation and GIS visualization.
+Official deliverables:
+
+1.  industrial-fire classification/segregation from forest/natural
+    fires;
+2.  GIS storage and visualization as a map overlay.
+
+The project metadata must use:
+
+``` text
+Organization: NTRO
+Category: Software
+Theme: Miscellaneous
+```
 
 ## NASA FIRMS
 
-Active fire data:
-
-```text
+``` text
 https://firms.modaps.eosdis.nasa.gov/active_fire/
 ```
 
-FIRMS API:
-
-```text
-https://firms.modaps.eosdis.nasa.gov/api/area/
+``` text
+https://firms.modaps.eosdis.nasa.gov/content/active_fire/
 ```
 
-VIIRS fire hotspot documentation:
+NASA documentation must be treated as authoritative for FIRMS behavior.
 
-```text
-https://firms.modaps.eosdis.nasa.gov/content/descriptions/FIRMS_VIIRS_Firehotspots.html
+Important principle:
+
+``` text
+FIRMS detection ≠ confirmed industrial fire
 ```
 
-NASA's documentation identifies:
-
-- brightness temperatures;
-- scan/track;
-- acquisition time;
-- confidence;
-- FRP;
-- day/night;
-- satellite;
-- processing version.
+NASA notes that active-fire/thermal-anomaly detections may represent
+fire, hot smoke, agriculture or other sources and that spatial
+resolution/view geometry/confidence matter.
 
 ## Sentinel-2
 
-ESA Sentinel-2:
-
-```text
+``` text
 https://www.esa.int/Applications/Observing_the_Earth/Copernicus/Sentinel-2
 ```
 
 ## Landsat
 
-USGS Landsat Collection 2:
-
-```text
+``` text
 https://www.usgs.gov/landsat-missions/landsat-collection-2
 ```
 
 ## HLS
 
-NASA Harmonized Landsat Sentinel-2:
-
-```text
+``` text
 https://hls.gsfc.nasa.gov/
 ```
 
 ## ESA WorldCover
 
-```text
+``` text
 https://esa-worldcover.org/en
 ```
 
+WorldCover provides global 10 m land-cover products for 2020 and 2021.
+
 ## OpenStreetMap
 
-```text
+``` text
 https://www.openstreetmap.org/
 ```
 
-Overpass API:
+## Overpass
 
-```text
+``` text
 https://wiki.openstreetmap.org/wiki/Overpass_API
 ```
 
 ## OGC STAC
 
-```text
+``` text
 https://www.ogc.org/standards/stac/
 ```
 
-## OGC API Features
+STAC standardizes metadata/cataloguing for spatiotemporal geospatial
+assets.
 
-```text
-https://ogcapi.ogc.org/features/
-```
+------------------------------------------------------------------------
 
----
+# 6. Ground-Truth Strategy
 
-# 5. Critical Research Findings
-
-## FIRMS is not ground truth
-
-NASA itself warns that satellite-derived active-fire/thermal-anomaly detections have limited accuracy and can represent fire, hot smoke, agriculture or other sources.
-
-Therefore:
-
-```text
-FIRMS detection ≠ confirmed industrial fire
-```
-
-This is a foundational rule.
-
----
-
-# 6. Ground Truth Strategy
-
-Ground truth is the hardest part of the project.
+Ground truth is a first-class engineering dependency.
 
 Build a **reference event registry**.
 
-Each labelled event should contain:
+Minimum fields:
 
-```text
+``` text
 event_id
 label
 label_source
@@ -252,652 +254,381 @@ source_url
 source_date
 geographic_evidence
 temporal_evidence
-confidence
+label_confidence
 annotator
 annotation_notes
 ```
 
 ## Label hierarchy
 
-### Tier A — authoritative
+### Tier A --- authoritative
 
-- official incident reports;
-- government releases;
-- company incident disclosures;
-- credible regulatory reports.
+-   government/official incident reports;
+-   credible regulatory records;
+-   company incident disclosures where appropriate.
 
-### Tier B — strong independent evidence
+### Tier B --- strong independent evidence
 
-- reputable news reports with location/time;
-- multiple independent sources;
-- validated event databases.
+-   reputable reporting with time/location;
+-   multiple independent sources;
+-   validated reference databases.
 
-### Tier C — weak/proxy
+### Tier C --- weak/proxy
 
-- inferred from spatial context;
-- OSM tags;
-- unsourced reports.
+-   OSM proximity;
+-   inferred context;
+-   unsourced reports.
 
-Tier C should not be treated as hard ground truth.
+Tier C may support exploration or weak supervision but must not be
+treated as equivalent to hard ground truth.
 
----
+------------------------------------------------------------------------
 
-# 7. Weak Supervision
+# 7. Ground-Truth Feasibility Gate
 
-Where true labels are unavailable, use weak labels only for:
+Before committing to a complex ML model, determine:
 
-- model pretraining;
-- exploratory analysis;
-- feature engineering.
+-   selected geography;
+-   historical period;
+-   number of candidate events;
+-   number of high-confidence labelled events;
+-   class distribution;
+-   spatial coverage;
+-   temporal coverage;
+-   label provenance distribution.
 
-Do not report weak-label performance as real-world performance.
+If sufficient labels do not exist:
+
+``` text
+reduce taxonomy
+→ use deterministic baselines
+→ use weak supervision for exploration only
+→ keep uncertainty explicit
+```
+
+Never manufacture labels to satisfy a target metric.
+
+------------------------------------------------------------------------
+
+# 8. Ontology Freeze Gate
+
+Before training:
+
+Freeze:
+
+``` text
+phenomenon
+context
+persistence
+attribution
+```
+
+Do not mix them into one flat label.
 
 Example:
 
-```text
-OSM industrial polygon + persistent FIRMS
+``` text
+phenomenon = flare
+context = oil_gas
+persistence = persistent
+attribution = strong
 ```
 
-can create a **candidate industrial source**.
+------------------------------------------------------------------------
 
-It cannot automatically create:
+# 9. Event and Source Semantics
 
-```text
-confirmed industrial fire
-```
-
----
-
-# 8. Data Acquisition Strategy
-
-## Stage A
-
-Build a bounded Indian demonstration region.
-
-Choose regions containing:
-
-- industrial complexes;
-- oil/gas infrastructure;
-- thermal plants;
-- mining;
-- agricultural areas;
-- forest regions.
-
-This provides class diversity.
-
-## Stage B
-
-Expand to multiple regions.
-
-## Stage C
-
-Test on geographically unseen regions.
-
----
-
-# 9. Dataset Construction
-
-## Positive industrial events
-
-Candidates:
-
-- documented industrial incidents;
-- persistent flare sites;
-- thermal power facilities;
-- mining areas with validated thermal activity.
-
-## Natural fires
-
-Candidates:
-
-- wildfire/fire-event reference sources;
-- FIRMS events spatially associated with forest/vegetation burn areas;
-- documented wildfire events.
-
-## Agricultural burning
-
-Candidates:
-
-- agricultural land;
-- seasonal burn patterns;
-- documented agricultural fires.
-
-## Other
-
-Include:
-
-- volcanoes;
-- false detections;
-- uncertain events;
-- non-fire hot surfaces.
-
-The “other” set is essential for testing false positives.
-
----
-
-# 10. Event-Level Labels
-
-Never train directly on raw FIRMS points if the task is event classification.
-
-Preferred:
-
-```text
-detections
-→ events
-→ labels
-```
-
-The same event can contain multiple FIRMS detections.
-
----
-
-# 11. Baseline Before AI
-
-Before training ML, implement:
-
-```text
-Baseline 1:
-FIRMS confidence threshold
-
-Baseline 2:
-Industrial proximity rule
-
-Baseline 3:
-Persistence threshold
-
-Baseline 4:
-Rule combination
-```
-
-Then compare ML against them.
-
-If ML cannot beat the baseline meaningfully, do not add complexity.
-
----
-
-# 12. Model Development Sequence
-
-## Model 0
-
-Rules only.
-
-## Model 1
-
-Logistic Regression.
-
-## Model 2
-
-Random Forest.
-
-## Model 3
-
-Gradient boosting.
-
-## Model 4
-
-Gradient boosting + calibrated probabilities.
-
-## Model 5
-
-Multimodal model with satellite imagery.
-
-Only proceed when the previous stage's failure justifies the next stage.
-
----
-
-# 13. Model Evaluation Protocol
-
-Every experiment must record:
-
-```text
-experiment_id
-dataset_version
-feature_version
-model
-hyperparameters
-train/test split
-metrics
-confusion matrix
-calibration
-errors
-```
-
-## Required splits
-
-### Temporal split
-
-Train on earlier dates, test on later dates.
-
-### Spatial split
-
-Train on some regions, test on unseen regions.
-
-### Source split
-
-Persistent source/facility does not appear in both train and test.
-
----
-
-# 14. Error Analysis
-
-After every model:
-
-1. inspect false industrial positives;
-2. inspect false industrial negatives;
-3. inspect persistent-source errors;
-4. inspect uncertain events;
-5. inspect region-specific performance;
-6. inspect day/night differences;
-7. inspect cloud-affected cases.
-
-Do not immediately tune hyperparameters.
-
-First understand the error.
-
----
-
-# 15. Feature Ablation
-
-Run:
-
-```text
-FIRMS only
-FIRMS + temporal
-FIRMS + temporal + OSM
-FIRMS + temporal + land cover
-FIRMS + temporal + satellite
-All features
-```
-
-This proves whether each data source actually adds value.
-
-This is extremely important for the SIH presentation.
-
----
-
-# 16. Evidence Ablation
-
-Also test:
-
-```text
-No context
-OSM only
-Temporal only
-OSM + temporal
-OSM + satellite
-All evidence
-```
-
-The goal is to demonstrate that data fusion improves attribution.
-
----
-
-# 17. Confidence Calibration
-
-Raw model probabilities are not automatically trustworthy.
+Do not train directly on raw FIRMS points when the operational task is
+event/source intelligence.
 
 Use:
 
-- Platt scaling;
-- isotonic regression;
-- calibration curves.
-
-The final system should expose calibrated confidence.
-
----
-
-# 18. Abstention
-
-Implement:
-
-```text
-if confidence < threshold:
-    class = "uncertain"
+``` text
+detections
+→ events
+→ persistent sources
 ```
 
-Optimize threshold using validation data.
+All split logic must operate at the correct entity level.
+
+------------------------------------------------------------------------
+
+# 10. Baseline-First Rule
+
+Before ML:
+
+``` text
+Baseline 1: FIRMS confidence
+Baseline 2: industrial proximity
+Baseline 3: persistence
+Baseline 4: combined deterministic rules
+```
+
+Then:
+
+``` text
+simple feature model
+→ XGBoost/LightGBM
+```
+
+Only introduce deep vision if error analysis shows the baseline/tabular
+model is insufficient and enough labelled data exists.
+
+------------------------------------------------------------------------
+
+# 11. Leakage Prevention
+
+Never use a random point-level split for the final benchmark.
+
+Prevent:
+
+-   spatial leakage;
+-   temporal leakage;
+-   event leakage;
+-   persistent-source leakage;
+-   duplicated observation leakage.
+
+Preferred:
+
+``` text
+geographic holdout
++
+temporal holdout
++
+source/event grouping
+```
+
+------------------------------------------------------------------------
+
+# 12. Mandatory Ablation Study
+
+Run:
+
+``` text
+A: FIRMS only
+B: FIRMS + temporal
+C: FIRMS + temporal + industrial context
+D: FIRMS + temporal + land cover
+E: FIRMS + satellite
+F: all evidence
+```
+
+Purpose:
+
+-   determine which evidence adds value;
+-   detect shortcut learning;
+-   quantify context contribution;
+-   justify complexity.
+
+------------------------------------------------------------------------
+
+# 13. Context Shortcut Test
+
+Specifically test:
+
+> Can the model classify industrial events almost entirely from
+> proximity to an industrial facility?
+
+If yes, investigate whether it is learning:
+
+``` text
+facility proximity
+```
+
+instead of:
+
+``` text
+thermal phenomenon
+```
+
+The system must remain useful when context is incomplete.
+
+------------------------------------------------------------------------
+
+# 14. Model Evaluation
 
 Report:
 
-```text
-coverage
-precision
-recall
+-   precision;
+-   recall;
+-   macro F1;
+-   PR-AUC where appropriate;
+-   calibration;
+-   selective risk/coverage;
+-   false-positive rate;
+-   persistence-source F1;
+-   spatial attribution error where valid;
+-   latency.
+
+Accuracy is supplementary, not the sole metric.
+
+------------------------------------------------------------------------
+
+# 15. Coverage and Abstention
+
+Abstention is valid.
+
+The model may output:
+
+``` text
+unknown / uncertain
 ```
 
-as a curve.
+when evidence is insufficient.
 
-A judge should see that the system understands its own limits.
+Do not force coverage toward 95% if it materially degrades reliability.
 
----
+Use:
 
-# 19. Persistence Detection
-
-Start simple.
-
-### Candidate algorithm
-
-1. Normalize detections.
-2. Cluster by spatial proximity.
-3. Build time series.
-4. Calculate active days.
-5. Calculate spatial stability.
-6. Calculate FRP stability.
-7. Assign persistence score.
-8. Track source.
-
-Then compare against more advanced methods.
-
----
-
-# 20. Satellite Strategy
-
-Do not make satellite imagery mandatory for every inference.
-
-Use a tiered strategy:
-
-### Tier 1
-
-FIRMS + temporal + spatial + OSM.
-
-### Tier 2
-
-Add land cover.
-
-### Tier 3
-
-Add optical satellite imagery when available.
-
-### Tier 4
-
-Add advanced image model only if it improves evaluation.
-
-This makes the system resilient to cloud/revisit limitations.
-
----
-
-# 21. LLM Policy
-
-LLMs are **not** the primary classifier.
-
-They may be used for:
-
-- natural-language report generation;
-- evidence summarization;
-- analyst query interpretation;
-- converting structured evidence into readable briefings.
-
-They must not invent:
-
-- locations;
-- events;
-- causes;
-- evidence;
-- confidence.
-
-The source of truth is structured data.
-
----
-
-# 22. Implementation Workflow
-
-For every feature:
-
-### Step 1 — Define
-
-Write:
-
-```text
-goal
-inputs
-outputs
-acceptance criteria
-failure modes
+``` text
+risk vs coverage
 ```
 
-### Step 2 — Implement smallest slice
+to show the trade-off.
 
-Do not build the whole pipeline.
+------------------------------------------------------------------------
 
-### Step 3 — Test
+# 16. Satellite Strategy
 
-Unit + integration.
+Satellite imagery is a required integration capability but not a
+mandatory evidence source for every event.
 
-### Step 4 — Measure
+Use:
 
-Latency, correctness, data quality.
+``` text
+Tier 1: FIRMS + temporal + spatial
+Tier 2: land cover + industrial context
+Tier 3: satellite imagery when available
+Tier 4: advanced vision only if justified
+```
 
-### Step 5 — Update documentation
+Missing satellite imagery must be represented explicitly.
 
-Update:
+------------------------------------------------------------------------
 
-- architecture;
-- standards;
-- progress.
+# 17. Evidence Strategy
 
-### Step 6 — Move on
+Evidence is generated from verified data.
 
-Only after the feature is end-to-end verifiable.
+The evidence engine must be deterministic.
 
----
+Example:
 
-# 23. Feature Order
+``` text
+Evidence:
++ 19 active days
++ stable spatial footprint
++ industrial facility within configured threshold
+- optical imagery unavailable
+```
 
-## Sprint 1
+Never allow an LLM to invent evidence.
 
-### Unit 1
+If an LLM is later used, it may summarize already-validated evidence but
+cannot create facts.
 
-FIRMS ingestion.
+------------------------------------------------------------------------
 
-Acceptance:
+# 18. Performance Target Discipline
 
-- records fetched;
-- schema validated;
-- stored in PostGIS;
-- duplicates handled.
+Team targets from the conceptual benchmark sheet are treated as
+**stretch engineering targets**, not official SIH requirements.
 
-### Unit 2
+Do not claim:
 
-Event clustering.
+-   95% accuracy;
+-   95% precision;
+-   95% recall;
+-   \<500 m attribution error;
+-   \<2 min latency
 
-Acceptance:
+until a valid benchmark demonstrates them.
 
-- raw detections become events;
-- event statistics generated.
+Define the metric before measuring it.
 
-### Unit 3
+------------------------------------------------------------------------
 
-Persistence.
+# 19. Development Sequence
 
-Acceptance:
+### Phase 0 --- Scientific contract
 
-- repeated sources tracked;
-- timeline generated.
+-   ontology
+-   event semantics
+-   ground truth schema
+-   benchmark protocol
+-   geospatial error definition
 
----
+### Phase 1 --- Data spine
 
-## Sprint 2
+-   FIRMS ingestion
+-   raw storage
+-   validation
+-   deduplication
+-   PostGIS
 
-### Unit 4
+### Phase 2 --- Event intelligence
 
-OSM enrichment.
+-   clustering
+-   persistence
 
-Acceptance:
+### Phase 3 --- Context
 
-- nearby assets retrieved;
-- distances calculated;
-- provenance stored.
+-   OSM
+-   land cover
+-   satellite catalog/context
 
-### Unit 5
+### Phase 4 --- Baseline ML
 
-Land-cover enrichment.
+-   deterministic baselines
+-   feature model
+-   XGBoost/LightGBM
+-   calibration
+-   ablation
 
-Acceptance:
+### Phase 5 --- Evidence
 
-- land-cover context attached.
+-   evidence engine
+-   uncertainty
+-   provenance
 
-### Unit 6
+### Phase 6 --- GIS
 
-Feature builder.
+-   map APIs
+-   event details
+-   timelines
+-   source monitoring
 
-Acceptance:
+### Phase 7 --- Advanced model
 
-- deterministic feature vector produced.
+Only if justified by measured error.
 
----
+------------------------------------------------------------------------
 
-## Sprint 3
+# 20. Definition of Done for Every Unit
 
-### Unit 7
+Before moving to the next unit:
 
-Rule baseline.
+1.  current unit works end-to-end within scope;
+2.  tests exist;
+3.  architecture invariants hold;
+4.  provenance is preserved;
+5.  uncertainty is preserved;
+6.  documentation is updated;
+7.  progress tracker is updated;
+8.  build passes;
+9.  no unverified assumption has silently become a requirement.
 
-Acceptance:
+------------------------------------------------------------------------
 
-- baseline metrics generated.
+# 21. Protected Decisions
 
-### Unit 8
+Do not weaken these rules for a faster demo:
 
-ML baseline.
-
-Acceptance:
-
-- grouped/spatial/temporal evaluation completed.
-
-### Unit 9
-
-Calibration.
-
-Acceptance:
-
-- calibrated confidence;
-- abstention threshold.
-
----
-
-## Sprint 4
-
-### Unit 10
-
-Evidence engine.
-
-### Unit 11
-
-Satellite context.
-
-### Unit 12
-
-GIS API.
-
----
-
-## Sprint 5
-
-### Unit 13
-
-Analyst workflow.
-
-### Unit 14
-
-Historical replay.
-
-### Unit 15
-
-Demo hardening.
-
----
-
-# 24. Definition of Done for ML
-
-ML is not “done” when accuracy looks good.
-
-It is done when:
-
-- dataset is documented;
-- labels are traceable;
-- split avoids leakage;
-- baseline exists;
-- model beats baseline;
-- per-class metrics exist;
-- calibration exists;
-- errors are understood;
-- confidence threshold is selected;
-- evidence is generated;
-- model is versioned.
-
----
-
-# 25. Definition of Done for Data
-
-Data is done when:
-
-- source is documented;
-- license/usage is checked;
-- schema is stable;
-- provenance is preserved;
-- validation tests exist;
-- missingness is measured;
-- duplicates are handled;
-- update cadence is known.
-
----
-
-# 26. Definition of Done for Demo
-
-The demo is done when:
-
-- one known industrial event is correctly handled;
-- one persistent flare is tracked;
-- one natural fire is distinguished;
-- evidence is visible;
-- uncertainty is visible;
-- raw FIRMS can be compared with enriched output;
-- system can replay a historical event;
-- no internet dependency can unexpectedly destroy the entire demo.
-
-Maintain a local demo dataset as a fallback.
-
----
-
-# 27. Do Not Build Yet
-
-Do not build:
-
-- custom deep-learning architecture;
-- Kafka;
-- Kubernetes;
-- mobile app;
-- public user accounts;
-- social features;
-- LLM agent;
-- autonomous emergency dispatch;
-- global-scale ingestion;
-- real-time satellite image generation;
-- complex microservice mesh.
-
-These are distractions until the core intelligence works.
-
----
-
-# 28. Research Questions to Resolve
-
-1. What reference dataset gives the strongest industrial incident labels in India?
-2. How should flare/persistent sources be labelled separately from accidental industrial fires?
-3. Which land-cover product is most useful for the selected geography?
-4. What satellite imagery is accessible with acceptable latency?
-5. How much does OSM improve classification?
-6. How much does temporal persistence improve classification?
-7. How much does satellite imagery improve classification?
-8. What is the practical spatial attribution error?
-9. Which classes are fundamentally inseparable at FIRMS resolution?
-10. What confidence threshold gives the best precision/coverage trade-off?
-
----
-
-# 29. Strategic Rule
-
-Whenever someone proposes a feature, ask:
-
-> **Does this improve detection, attribution, persistence analysis, explainability, or analyst decision-making?**
-
-If not, it probably does not belong in the hackathon MVP.
+-   FIRMS is not ground truth.
+-   OSM is context, not ground truth.
+-   raw observations remain immutable.
+-   spatial/temporal/source leakage is prohibited.
+-   abstention is valid.
+-   evidence must be data-backed.
+-   geospatial precision must be honest.
+-   ML must beat a meaningful baseline before adding complexity.

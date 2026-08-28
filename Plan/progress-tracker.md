@@ -1,117 +1,142 @@
-# SIH26162 — Progress Tracker
+# SIH26162 --- Progress Tracker
 
 ## Current Phase
 
-- **Phase:** Specification and architecture planning
-- **Status:** In progress
-- **Implementation status:** Not yet started
-- **UI:** Intentionally deferred
+-   **Phase:** Specification refinement → scientific/data feasibility
+-   **Status:** In progress
+-   **Implementation status:** Not yet started
+-   **UI:** Intentionally deferred
 
----
+------------------------------------------------------------------------
 
 # Current Goal
 
-Build the technical and product specification for SIH26162 before implementation.
+Finish the scientific and engineering contract before substantial
+implementation.
 
-The immediate objective is to establish:
+The immediate objective is to lock:
 
-1. a precise product definition;
-2. a defensible data strategy;
-3. an event/persistent-source model;
-4. a geospatial architecture;
-5. a measurable ML evaluation protocol;
-6. an evidence-first intelligence pipeline;
-7. a development sequence that avoids overengineering.
+1.  official requirements;
+2.  product ontology;
+3.  event/source semantics;
+4.  demonstration geography;
+5.  ground-truth strategy;
+6.  evaluation protocol;
+7.  geospatial error definition;
+8.  data acquisition path;
+9.  baseline implementation sequence.
 
----
+------------------------------------------------------------------------
 
 # Completed
 
 ## Strategic understanding
 
-- [x] Official SIH26162 problem statement reviewed.
-- [x] Core requirement identified:
-  - classify/segregate industrial fires from natural/forest fires;
-  - GIS-based storage and visualization.
-- [x] Team-provided conceptual architecture reviewed.
-- [x] Team-provided must-do / must-not-do list reviewed.
-- [x] Team-provided target metrics reviewed.
-- [x] Team-provided bottlenecks reviewed.
-- [x] Six Thinking Hats applied to the product strategy.
-- [x] Initial external resource research completed.
+-   [x] Official SIH26162 problem reviewed.
+-   [x] Official deliverables identified.
+-   [x] Theme corrected to **Miscellaneous**.
+-   [x] Team conceptual architecture reviewed.
+-   [x] Team must-do/must-not-do list reviewed.
+-   [x] Team target metrics reviewed.
+-   [x] Team bottlenecks reviewed.
+-   [x] Six Thinking Hats applied.
+-   [x] External resource strategy established.
 
 ## Product
 
-- [x] Core product thesis defined.
-- [x] Primary user/beneficiary/decision-maker distinctions defined.
-- [x] Proposed classification taxonomy defined.
-- [x] Detection → event → source hierarchy defined.
-- [x] Evidence-first output defined.
-- [x] Persistent-source intelligence defined.
-- [x] Abstention/uncertainty defined as a first-class outcome.
+-   [x] Core product thesis defined.
+-   [x] Primary user / beneficiary / decision-maker distinction defined.
+-   [x] Evidence-first output defined.
+-   [x] Detection → Event → Persistent Source hierarchy defined.
+-   [x] Abstention defined as a valid outcome.
+-   [x] Product scope defined.
+-   [x] Official MUST requirements separated from strategic
+    enhancements.
+-   [x] Flat taxonomy replaced by orthogonal ontology.
 
 ## Architecture
 
-- [x] Recommended stack selected.
-- [x] System boundaries defined.
-- [x] Storage model defined.
-- [x] Core database entities defined.
-- [x] API boundary defined.
-- [x] ML architecture sequence defined.
-- [x] Deployment strategy defined.
-- [x] Architecture invariants defined.
+-   [x] Recommended stack selected.
+-   [x] System boundaries defined.
+-   [x] Storage model defined.
+-   [x] Canonical data contracts defined.
+-   [x] API boundary defined.
+-   [x] ML sequence defined.
+-   [x] Evidence engine defined.
+-   [x] Deployment strategy defined.
+-   [x] Architecture invariants defined.
+-   [x] Context-ablation requirement added.
+-   [x] Satellite availability treated as per-event evidence, not
+    universal prerequisite.
 
 ## Engineering
 
-- [x] Python/TypeScript standards defined.
-- [x] Geospatial precision rules defined.
-- [x] Data provenance rules defined.
-- [x] ML leakage prevention rules defined.
-- [x] Testing standards defined.
-- [x] AI/LLM usage policy defined.
+-   [x] Python/TypeScript standards defined.
+-   [x] Geospatial precision rules defined.
+-   [x] Provenance rules defined.
+-   [x] Leakage prevention rules defined.
+-   [x] Testing requirements defined.
+-   [x] AI/LLM usage policy defined.
+-   [x] Ground-truth provenance rules defined.
 
----
+------------------------------------------------------------------------
 
 # In Progress
 
-- [ ] Final geographic demonstration scope.
-- [ ] Ground-truth/reference event registry.
-- [ ] Final class taxonomy.
-- [ ] FIRMS historical data acquisition.
-- [ ] Industrial infrastructure reference dataset.
-- [ ] Satellite context access strategy.
-- [ ] Evaluation benchmark construction.
-- [ ] Baseline classifier.
-- [ ] Persistence algorithm.
-- [ ] GIS API.
-- [ ] Frontend/UI — intentionally deferred.
+## 1. Demonstration geography
 
----
-
-# Next Up
-
-## 1. Lock the demonstration geography
-
-Choose a bounded Indian study area containing multiple thermal-source types.
+Choose a bounded Indian study area containing multiple thermal-source
+types.
 
 Selection criteria:
 
-- industrial facilities;
-- oil/gas or petrochemical activity;
-- thermal power;
-- mining where possible;
-- agricultural land;
-- forest/fire-prone areas;
-- sufficient historical FIRMS detections.
+-   industrial facilities;
+-   oil/gas or petrochemical activity where available;
+-   thermal power;
+-   mining where available;
+-   agricultural land;
+-   forest/fire-prone areas;
+-   sufficient historical FIRMS detections;
+-   feasible reference-event coverage.
 
----
+**Acceptance:** geography is selected with a written evidence-based
+rationale.
 
-## 2. Build FIRMS data spine
+------------------------------------------------------------------------
+
+## 2. Ground-truth/reference registry
+
+Build the first reference-event table.
+
+Minimum fields:
+
+``` text
+event_id
+label
+label_source
+source_url
+source_date
+geographic_evidence
+temporal_evidence
+label_confidence
+annotator
+annotation_notes
+```
+
+**Acceptance:**
+
+-   every label has provenance;
+-   Tier A/B/C hierarchy is applied;
+-   no proxy label is silently treated as ground truth.
+
+------------------------------------------------------------------------
+
+## 3. FIRMS data spine
 
 Implement:
 
-```text
-FIRMS API
+``` text
+FIRMS
 → raw capture
 → validation
 → canonical schema
@@ -121,262 +146,230 @@ FIRMS API
 
 Acceptance:
 
-- reproducible ingestion;
-- source/version retained;
-- API failures visible;
-- historical data query works.
+-   reproducible ingestion;
+-   source/product/version retained;
+-   acquisition and ingestion timestamps separated;
+-   API failures visible;
+-   historical query works.
 
----
+------------------------------------------------------------------------
 
-## 3. Build event engine
+## 4. Event engine
 
 Implement:
 
-```text
+``` text
 detections
-→ spatial-temporal clustering
-→ thermal event
+→ spatio-temporal clustering
+→ thermal events
 ```
 
 Acceptance:
 
-- repeated detections can be grouped;
-- event centroid and time span generated;
-- clustering parameters are configurable.
+-   detections are traceable to events;
+-   clustering parameters are configurable/versioned;
+-   event geometry and temporal span are generated.
 
----
+------------------------------------------------------------------------
 
-## 4. Build persistent-source engine
+## 5. Persistent-source engine
 
 Implement:
 
-```text
+``` text
 events
 → source association
 → persistence statistics
-→ persistent source
+→ persistent/recurring/transient state
 ```
 
 Acceptance:
 
-- known persistent hotspots form stable tracks;
-- transient events do not become persistent by default.
+-   persistence is independently measurable;
+-   source identity is not confused with event identity.
 
----
+------------------------------------------------------------------------
 
-## 5. Build OSM enrichment
+## 6. Context pipeline
 
 Implement:
 
-```text
-event
-→ nearby OSM objects
-→ distance/type features
+-   OSM/industrial enrichment;
+-   land-cover enrichment;
+-   satellite catalog/context lookup.
+
+Acceptance:
+
+-   provenance retained;
+-   missing context represented explicitly;
+-   context never becomes automatic ground truth.
+
+------------------------------------------------------------------------
+
+## 7. Baseline benchmark
+
+Implement:
+
+``` text
+FIRMS confidence
+→ industrial proximity
+→ persistence
+→ combined rules
+```
+
+Then evaluate against the reference registry.
+
+Acceptance:
+
+-   benchmark split is frozen;
+-   event/source leakage is prevented;
+-   baseline metrics are recorded.
+
+------------------------------------------------------------------------
+
+## 8. ML benchmark
+
+Only after baseline and labels are sufficient:
+
+``` text
+features
+→ XGBoost/LightGBM
+→ grouped evaluation
+→ calibration
+→ abstention
 ```
 
 Acceptance:
 
-- industrial context can be attached;
-- OSM provenance stored;
-- missing OSM data does not break processing.
+-   ML materially improves over baseline;
+-   calibration measured;
+-   ablation completed;
+-   no leakage detected.
 
----
+------------------------------------------------------------------------
 
-## 6. Build baseline
+# Next Up
 
-Before ML:
+### Gate 1 --- Scientific contract
 
-```text
-FIRMS confidence
-+ industrial proximity
-+ persistence
-```
+Before model training, freeze:
 
-Create a transparent rule baseline.
+-   [ ] final phenomenon ontology;
+-   [ ] context ontology;
+-   [ ] persistence definition;
+-   [ ] attribution definition;
+-   [ ] event clustering semantics;
+-   [ ] ground-truth label policy;
+-   [ ] geographic/temporal benchmark split;
+-   [ ] geospatial error metric.
 
----
+### Gate 2 --- Data feasibility
 
-## 7. Build labelled benchmark
+-   [ ] sample FIRMS data for selected geography;
+-   [ ] quantify candidate event volume;
+-   [ ] quantify label volume;
+-   [ ] quantify class balance;
+-   [ ] inspect OSM completeness;
+-   [ ] inspect satellite availability/cloud limitations.
 
-This is the highest-priority research task.
+### Gate 3 --- Baseline
 
-Create an event registry with:
+-   [ ] deterministic baseline;
+-   [ ] evaluation;
+-   [ ] error analysis.
 
-- label;
-- source;
-- evidence;
-- timestamp;
-- geography;
-- confidence.
+Only then decide whether advanced ML is justified.
 
-No benchmark should be used for model claims until label quality is understood.
-
----
+------------------------------------------------------------------------
 
 # Open Questions
 
-## Critical
+These are the only decisions that should block the final ML
+specification:
 
-1. **Geography:** Which Indian region will be the primary demo area?
-2. **Taxonomy:** Do we use 5 broad classes or 7 classes?
-3. **Ground truth:** What sources will be accepted as authoritative labels?
-4. **Industrial fire definition:** What exactly qualifies as an industrial fire?
-5. **Persistent source definition:** What threshold defines persistence?
-6. **Attribution radius:** What spatial relationship qualifies as industrial context?
-7. **Satellite:** Which satellite product should be the primary contextual source?
-8. **Deployment:** Is near-real-time operation required for the demo, or is historical replay acceptable?
-9. **Team:** Who owns data engineering, geospatial processing, ML, backend and frontend?
+1.  What exact Indian demonstration geography provides sufficient
+    diversity and reference evidence?
+2.  What minimum number of Tier A/B events is sufficient for the chosen
+    taxonomy?
+3.  Which phenomenon classes can be supported by real labels rather than
+    proxies?
+4.  What exact rule defines `persistent` versus `recurring`?
+5.  What spatial distance rule is used for contextual proximity?
+6.  What exact reference geometry is used for geospatial attribution
+    error?
+7.  What satellite product is the preferred contextual source for the
+    selected geography?
+8.  What is the final benchmark time window?
+9.  What minimum precision/recall constraints define acceptable
+    selective classification?
+10. What is the exact demo scenario?
 
----
+------------------------------------------------------------------------
 
 # Architecture Decisions
 
-## ADR-001 — PostGIS
+## AD-001 --- Official requirement priority
 
-**Decision:** PostgreSQL + PostGIS.
+Industrial-fire segregation and GIS storage/visualization are MUST
+requirements.
 
-**Why:** The system is fundamentally spatial and relational.
+## AD-002 --- Orthogonal ontology
 
----
+Phenomenon, context, persistence and attribution are separate
+dimensions.
 
-## ADR-002 — Redis for MVP orchestration
+## AD-003 --- Evidence-first
 
-**Decision:** Redis-backed workers instead of Kafka.
+Every prediction exposes evidence, uncertainty and provenance.
 
-**Why:** Lower operational complexity. Scale should be introduced only when measured requirements justify it.
+## AD-004 --- Abstention
 
----
+Low-evidence cases may return `unknown/uncertain`.
 
-## ADR-003 — Event/source hierarchy
+## AD-005 --- Baseline-first
 
-**Decision:**
+No advanced model before deterministic baselines and a valid benchmark.
 
-```text
-Detection → Event → Persistent Source
-```
+## AD-006 --- Context ablation
 
-**Why:** A raw satellite detection is not necessarily an incident, and persistent sources should not generate thousands of unrelated alerts.
+The contribution of OSM/industrial context must be measured.
 
----
+## AD-007 --- Satellite availability
 
-## ADR-004 — Evidence-first classification
+Satellite integration is supported, but missing imagery does not
+automatically invalidate an event.
 
-**Decision:** Every prediction must expose supporting evidence and uncertainty.
+## AD-008 --- PostGIS
 
-**Why:** This is the strongest product differentiation and supports analyst trust.
+PostGIS is the primary geospatial store.
 
----
+## AD-009 --- Redis over Kafka for MVP
 
-## ADR-005 — Abstention
+Use Redis-backed jobs unless measured workload proves a stronger
+requirement.
 
-**Decision:** The classifier may output `uncertain`.
+## AD-010 --- No UI-led development
 
-**Why:** Thermal anomaly classification is an open-world problem.
+The intelligence pipeline must be validated before UI optimization.
 
----
-
-## ADR-006 — Tabular model first
-
-**Decision:** Begin with engineered features and gradient boosting.
-
-**Why:** Ground truth is the dominant bottleneck. Deep vision should be added only if measurable gains justify it.
-
----
-
-# Target Metrics
-
-The team-provided image proposes:
-
-| Metric | Internal target | Status |
-|---|---:|---|
-| Overall accuracy | ≥95% | Unvalidated |
-| Macro F1 | ≥0.92 | Unvalidated |
-| Industrial-fire precision | ≥95% | Unvalidated |
-| Industrial-fire recall | ≥95% | Unvalidated |
-| High-confidence false-positive rate | <3% | Unvalidated |
-| Event-to-intelligence latency | <2 min | Engineering target |
-| Classification coverage | ≥95% | Unvalidated |
-| Persistent-source F1 | ≥0.85 | Unvalidated |
-| Median geospatial error | <500 m | Definition required |
-| Batch scalability | 10,000 events <5 min | Engineering target |
-| Evidence completeness | ≥90% | Definition required |
-
-These are **team targets**, not official SIH requirements.
-
-Before using them in judging material, define:
-
-- dataset;
-- test split;
-- metric formula;
-- confidence threshold;
-- spatial tolerance;
-- latency measurement boundary.
-
----
-
-# Known Bottlenecks
-
-1. Ground-truth data.
-2. FIRMS spatial ambiguity.
-3. Thermal anomaly classification.
-4. Temporal/persistent-source analysis.
-5. Satellite availability and fusion.
-
----
+------------------------------------------------------------------------
 
 # Session Notes
 
-## Current strategic insight
+The major specification audit identified four critical conceptual
+corrections:
 
-The project should not be positioned as a generic wildfire detector.
+1.  **Theme:** Miscellaneous, not Disaster Management.
+2.  **Official requirements:** industrial-fire segregation + GIS
+    storage/visualization are MUST.
+3.  **Ontology:** phenomenon/context/persistence/attribution must be
+    separated.
+4.  **Evaluation:** ground truth, leakage prevention, calibration,
+    abstention and geospatial-error definitions must be established
+    before headline metrics are claimed.
 
-The strongest positioning is:
+The current architecture is intentionally preserved because the core
+design is sound.
 
-> **Evidence-driven geospatial intelligence for classifying and monitoring ambiguous satellite thermal anomalies.**
-
-The core differentiator should be the ability to explain:
-
-```text
-WHAT happened?
-WHERE?
-WHEN?
-WHAT is it likely to be?
-WHY?
-HOW persistent is it?
-WHAT evidence supports the conclusion?
-HOW certain are we?
-```
-
----
-
-# Research Notes
-
-Key external findings incorporated into the specification:
-
-- NASA FIRMS provides active-fire/thermal-anomaly observations and explicitly warns about accuracy and interpretation limitations.
-- VIIRS 375 m data includes brightness temperature, FRP, confidence, acquisition time, scan/track and day/night information.
-- VIIRS can support identification of persistent hotspots such as gas flares.
-- OSM industrial tags provide useful contextual information but are not authoritative incident labels.
-- Sentinel-2 provides high-resolution optical context but is constrained by revisit and cloud conditions.
-- Landsat/HLS can provide complementary historical/contextual imagery.
-- STAC and OGC API Features are suitable interoperability patterns for geospatial assets and APIs.
-
----
-
-# Immediate Next Decision
-
-Before model development, lock:
-
-```text
-Geography
-+
-Taxonomy
-+
-Ground-truth protocol
-+
-Persistence definition
-+
-Evaluation split
-```
-
-These five decisions determine whether later ML metrics are meaningful.
+The next engineering effort should reduce uncertainty rather than add
+features.
