@@ -248,7 +248,7 @@ class TestDetectionsPersistence:
             conn.rollback()
 
     def test_foreign_key_to_source_records_rejected_if_nonexistent(self) -> None:
-        """TEST 4: Non-existent source_record_id is rejected by foreign key constraint."""
+        """TEST 4: Non-existent source_record_id is rejected by foreign key."""
         non_existent_rec_id = uuid.uuid4()
         with _get_connection() as conn, conn.cursor() as cur:
             _, snapshot_id, _ = _create_test_lineage(cur)
@@ -271,7 +271,7 @@ class TestDetectionsPersistence:
             conn.rollback()
 
     def test_foreign_key_to_source_snapshots_rejected_if_nonexistent(self) -> None:
-        """TEST 5: Non-existent source_snapshot_id is rejected by foreign key constraint."""
+        """TEST 5: Non-existent source_snapshot_id is rejected by foreign key."""
         non_existent_snap_id = uuid.uuid4()
         with _get_connection() as conn, conn.cursor() as cur:
             _, _, record_id = _create_test_lineage(cur)
@@ -354,7 +354,7 @@ class TestDetectionsPersistence:
             conn.rollback()
 
     def test_scientific_check_constraints(self) -> None:
-        """TEST 8: Verify mathematical bounds on coordinates, temperatures, FRP, scan/track."""
+        """TEST 8: Verify bounds on coordinates, temperatures, FRP, scan/track."""
         base_values: dict[str, Any] = {
             "latitude": 28.0,
             "longitude": 77.0,
@@ -445,12 +445,12 @@ class TestDetectionsPersistence:
             conn.rollback()
 
     def test_full_4_tier_provenance_chain(self) -> None:
-        """TEST 10: Validate queryable 4-tier lineage: source -> snapshot -> record -> detection."""
+        """TEST 10: Validate 4-tier lineage: source -> snap -> record -> detection."""
         raw_hash = "4" * 64
         acquired_time = datetime(2026, 8, 29, 14, 20, 0, tzinfo=UTC)
 
         with _get_connection() as conn, conn.cursor() as cur:
-            source_id, snapshot_id, record_id = _create_test_lineage(cur)
+            _source_id, snapshot_id, record_id = _create_test_lineage(cur)
 
             # Insert detection
             cur.execute(

@@ -4,7 +4,7 @@
 
 -   **Phase:** Specification refinement → scientific/data feasibility
 -   **Status:** In progress
--   **Implementation status:** In progress (DB-006 completed; DB-007 next)
+-   **Implementation status:** In progress (DB-007 completed; DB-008 next)
 -   **UI:** Intentionally deferred
 
 ------------------------------------------------------------------------
@@ -91,6 +91,7 @@ The immediate objective is to lock:
 -   [x] DB-004 Source registry migration established (alembic/versions/0003_source_registry.py, source_registry table, SourceRole enum, relational metadata, integrity constraints).
 -   [x] DB-005 Source snapshots migration established (alembic/versions/0004_source_snapshots.py, source_snapshots table, SnapshotAvailabilityState enum, integrity hashes, RESTRICT FK).
 -   [x] DB-006 Source records migration established (alembic/versions/0005_source_records.py, source_records table, PostGIS geometry EPSG:4326, composite unique constraint, GiST spatial index, RESTRICT FK).
+-   [x] DB-007 Canonical detections migration established (alembic/versions/0006_detections.py, detections table, PostGIS Point geometry EPSG:4326, FRP in MW, temperatures in Kelvin, pixel dimensions in km, RESTRICT FKs).
 
 ------------------------------------------------------------------------
 
