@@ -4,7 +4,7 @@
 
 -   **Phase:** Specification refinement → scientific/data feasibility
 -   **Status:** In progress
--   **Implementation status:** In progress (BE-003 completed; BE-005 next)
+-   **Implementation status:** In progress (BE-004 completed; DB-003 next)
 -   **UI:** Intentionally deferred
 
 ------------------------------------------------------------------------
@@ -84,6 +84,9 @@ The immediate objective is to lock:
 -   [x] DB-001 PostGIS Compose service established (PostGIS 16-3.4, persistent volume, healthcheck, smoke tests).
 -   [x] DB-002 Migration framework established (Alembic 1.14+, dynamic DB URL, baseline migration, test suite, CI).
 -   [x] BE-003 Environment/config loader established (packages/config/, Pydantic Settings, secret protection, safe DB URL helpers).
+-   [x] BE-005 Error handling & exceptions taxonomy established (packages/errors/, AppError base, ErrorCode enum, cause-preserving chaining).
+-   [x] BE-006 Structured logging system established (packages/logging/, StructuredJsonFormatter, secret sanitization, AppError integration).
+-   [x] BE-004 Scientific configuration contract established (packages/config/scientific.py, ScientificConfig, explicit incomplete state, SHA-256 fingerprinting).
 
 ------------------------------------------------------------------------
 

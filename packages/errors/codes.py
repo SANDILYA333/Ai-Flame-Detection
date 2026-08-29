@@ -1,0 +1,39 @@
+"""Canonical error code definitions for SIH26162."""
+
+from enum import StrEnum
+
+
+class ErrorCode(StrEnum):
+    """Stable, machine-readable error codes for application-level failures."""
+
+    # General / System
+    INTERNAL_ERROR = "INTERNAL_ERROR"
+
+    # Configuration
+    CONFIGURATION_ERROR = "CONFIGURATION_ERROR"
+    MISSING_CONFIGURATION = "MISSING_CONFIGURATION"
+    INVALID_CONFIGURATION = "INVALID_CONFIGURATION"
+
+    # Validation / Input
+    VALIDATION_ERROR = "VALIDATION_ERROR"
+    INVALID_INPUT = "INVALID_INPUT"
+    CONTRACT_VIOLATION = "CONTRACT_VIOLATION"
+
+    # Database / Storage
+    DATABASE_ERROR = "DATABASE_ERROR"
+    DATABASE_CONNECTION_ERROR = "DATABASE_CONNECTION_ERROR"
+    RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND"
+    RESOURCE_CONFLICT = "RESOURCE_CONFLICT"
+
+    # External Services & Dependencies
+    EXTERNAL_SERVICE_ERROR = "EXTERNAL_SERVICE_ERROR"
+    SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE"
+    SERVICE_TIMEOUT = "SERVICE_TIMEOUT"
+
+    # Domain / Application Invariants
+    DOMAIN_ERROR = "DOMAIN_ERROR"
+    INVARIANT_VIOLATION = "INVARIANT_VIOLATION"
+
+    # Pipeline & Background Processing
+    PIPELINE_ERROR = "PIPELINE_ERROR"
+    JOB_EXECUTION_ERROR = "JOB_EXECUTION_ERROR"

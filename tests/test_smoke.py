@@ -49,6 +49,15 @@ class TestRepositorySkeletonSmoke(unittest.TestCase):
             "packages.evidence",
             "packages.config",
             "packages.config.settings",
+            "packages.config.scientific",
+            "packages.errors",
+            "packages.errors.codes",
+            "packages.errors.base",
+            "packages.errors.exceptions",
+            "packages.logging",
+            "packages.logging.config",
+            "packages.logging.formatters",
+            "packages.logging.sanitizer",
         ]
         for mod_name in modules:
             with self.subTest(module=mod_name):
