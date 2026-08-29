@@ -1,4 +1,4 @@
-# Local Database Infrastructure & Migrations (DB-001 / DB-002 / DB-003 / DB-004 / DB-005)
+# Local Database Infrastructure & Migrations (DB-001 / DB-002 / DB-003 / DB-004 / DB-005 / DB-006 / DB-007)
 
 This repository uses **PostgreSQL 16 + PostGIS 3.4** as its analytical source-of-record store, managed through **Alembic** schema migrations.
 
@@ -75,6 +75,7 @@ All schema changes are version-controlled via Alembic in `alembic/versions/`.
 2. `0002_scientific_contracts`: Creates the `scientific_contracts` table to persist versioned scientific parameters and calibration contracts without fabricated defaults.
 3. `0003_source_registry`: Creates the `source_registry` table establishing persistent identities, semantic roles, access metadata, and lifecycle status for data sources.
 4. `0004_source_snapshots`: Creates the `source_snapshots` table establishing exact acquired versions, retrieval timestamps, request fingerprints, integrity hashes, and availability states for registered data sources.
+5. `0005_source_records`: Creates the `source_records` table establishing raw observation records, record hashes, PostGIS geometry (`EPSG:4326`), provider metadata JSONB, and composite uniqueness invariants (`source_snapshot_id`, `record_hash`).
 
 ### Canonical Migration Commands
 
@@ -165,14 +166,69 @@ The `source_snapshots` table records exact acquired source states, versions, ret
 | `metadata_json` | `JSONB` | `NULLABLE` | Acquisition headers/metadata (ETag, size, content-type) |
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | UTC database insertion timestamp |
 
-### Provenance Boundaries:
-- **`source_registry` (DB-004)**: Answers *"What data source is this?"* (identity and access contract).
-- **`source_snapshots` (DB-005)**: Answers *"What exact version/state of that source did we acquire?"* (hashes, retrieval timestamps, HTTP states).
-- **`source_records` (DB-006)**: Answers *"What raw observation records came from that acquisition?"* (per-record hashes, raw URIs).
+---
+
+## 8. Schema Reference: `source_records` (DB-006)
+
+The `source_records` table records individual raw observations/records belonging to a specific source snapshot:
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `UUID` | `PRIMARY KEY`, `DEFAULT gen_random_uuid()` | Immutable surrogate record primary key |
+| `source_snapshot_id`| `UUID` | `NOT NULL`, `FK (source_snapshots.id) ON DELETE RESTRICT`, `INDEX` | Parent snapshot foreign key |
+| `external_record_id`| `VARCHAR(128)` | `NULLABLE`, `INDEX` | External provider record identifier (e.g. FIRMS row index) |
+| `raw_artifact_uri` | `TEXT` | `NULLABLE` | Storage URI/path to raw external blob/file if applicable |
+| `record_hash` | `VARCHAR(64)` | `NOT NULL`, `CHECK (length = 64)`, `INDEX` | Cryptographic SHA-256 digest of this raw record |
+| `record_time` | `TIMESTAMPTZ` | `NULLABLE`, `INDEX` | Source-reported observation timestamp in UTC |
+| `geometry` | `GEOMETRY(Geometry, 4326)` | `NULLABLE`, `GIST INDEX` | PostGIS spatial geometry in EPSG:4326 |
+| `raw_metadata_json` | `JSONB` | `NULLABLE` | Structured provider-specific raw fields (no credentials) |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | UTC database persistence timestamp |
+
+### Key Invariants:
+- `UNIQUE (source_snapshot_id, record_hash)`: Enforces uniqueness within a single snapshot while allowing identical records across multiple polling snapshots.
+- Spatial Index: GiST index on `geometry` for efficient bounding box and radius queries.
 
 ---
 
-## 8. Resetting the Database
+## 9. Schema Reference: `detections` (DB-007)
+
+The `detections` table records normalized canonical remote-sensing thermal observations derived from raw source records:
+
+| Column | Type | Unit | Constraints | Description |
+| :--- | :--- | :---: | :--- | :--- |
+| `id` | `UUID` | — | `PRIMARY KEY`, `DEFAULT gen_random_uuid()` | Immutable surrogate detection primary key |
+| `source_record_id` | `UUID` | — | `NOT NULL`, `FK (source_records.id) ON DELETE RESTRICT`, `INDEX` | Source record provenance foreign key |
+| `source_snapshot_id`| `UUID` | — | `NOT NULL`, `FK (source_snapshots.id) ON DELETE RESTRICT`, `INDEX` | Snapshot provenance foreign key |
+| `source` | `VARCHAR(128)` | — | `NOT NULL`, `INDEX` | Observation source adapter identifier (e.g. `'firms'`) |
+| `satellite` | `VARCHAR(64)` | — | `NOT NULL`, `INDEX` (composite) | Observing satellite platform (e.g. `'NOAA-20'`, `'Terra'`) |
+| `instrument` | `VARCHAR(64)` | — | `NOT NULL`, `INDEX` (composite) | Observing sensor instrument (e.g. `'VIIRS'`, `'MODIS'`) |
+| `product_type` | `VARCHAR(64)` | — | `NOT NULL` | Processing tier (e.g. `'nrt'`, `'standard'`, `'urt'`) |
+| `product_version` | `VARCHAR(64)` | — | `NOT NULL` | Source data product version string |
+| `acquired_at` | `TIMESTAMPTZ` | UTC | `NOT NULL`, `INDEX` | Satellite observation/acquisition timestamp |
+| `ingested_at` | `TIMESTAMPTZ` | UTC | `NOT NULL`, `DEFAULT now()` | Ingestion timestamp into canonical pipeline |
+| `latitude` | `DOUBLE PRECISION` | ° | `NOT NULL`, `CHECK (latitude BETWEEN -90 AND 90)` | Pixel centroid latitude |
+| `longitude` | `DOUBLE PRECISION` | ° | `NOT NULL`, `CHECK (longitude BETWEEN -180 AND 180)` | Pixel centroid longitude |
+| `geometry` | `GEOMETRY(Point, 4326)`| EPSG:4326 | `NOT NULL`, `GIST INDEX` | PostGIS 2D Point centroid (`POINT(lon lat)`) |
+| `frp_mw` | `DOUBLE PRECISION` | MW | `NULLABLE`, `CHECK (frp_mw >= 0)` | Fire Radiative Power in Megawatts |
+| `brightness_ti4_k` | `DOUBLE PRECISION` | K | `NULLABLE`, `CHECK (brightness_ti4_k >= 0)` | TI4 / 4µm band brightness temperature in Kelvin |
+| `brightness_ti5_k` | `DOUBLE PRECISION` | K | `NULLABLE`, `CHECK (brightness_ti5_k >= 0)` | TI5 / 11µm band brightness temperature in Kelvin |
+| `confidence_raw` | `VARCHAR(64)` | — | `NULLABLE` | Source-provided raw confidence string/score |
+| `day_night` | `VARCHAR(8)` | — | `NULLABLE`, `CHECK (day_night IN ('D', 'N', 'unknown'))`| Daytime/nighttime observation indicator |
+| `scan` | `DOUBLE PRECISION` | km | `NULLABLE`, `CHECK (scan > 0)` | Along-scan pixel dimension in kilometers |
+| `track` | `DOUBLE PRECISION` | km | `NULLABLE`, `CHECK (track > 0)` | Along-track pixel dimension in kilometers |
+| `raw_identifier` | `VARCHAR(128)` | — | `NULLABLE` | External provider observation identifier |
+| `raw_hash` | `VARCHAR(64)` | SHA-256 | `NOT NULL`, `CHECK (length = 64)`, `INDEX` | Cryptographic SHA-256 digest of raw record |
+| `quality_status` | `VARCHAR(32)` | — | `NULLABLE` | Canonical quality classification |
+| `created_at` | `TIMESTAMPTZ` | UTC | `NOT NULL`, `DEFAULT now()` | UTC database insertion timestamp |
+
+### Provenance Hierarchy:
+```text
+source_registry (DB-004) -> source_snapshots (DB-005) -> source_records (DB-006) -> detections (DB-007)
+```
+
+---
+
+## 10. Resetting the Database
 
 > [!WARNING]
 > Resetting the database destroys the persistent Docker volume and all local database records.

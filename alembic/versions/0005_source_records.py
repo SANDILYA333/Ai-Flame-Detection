@@ -22,7 +22,7 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
-class Geometry(UserDefinedType):
+class Geometry(UserDefinedType[Any]):
     """PostGIS Geometry column type for SQLAlchemy DDL."""
 
     def __init__(self, geometry_type: str = "Geometry", srid: int = 4326) -> None:
