@@ -1,16 +1,15 @@
 """Alembic environment configuration for SIH26162.
 
-Dynamically resolves database connection parameters from environment variables
-to prevent hardcoding credentials in version-controlled configuration files.
+Dynamically resolves database connection parameters from the canonical
+operational configuration package (packages.config).
 """
 
-import os
 from logging.config import fileConfig
-from pathlib import Path
 
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
+from packages.config import get_settings
 
 # Alembic Config object, providing access to values within alembic.ini
 config = context.config
@@ -24,37 +23,9 @@ if config.config_file_name is not None:
 target_metadata = None
 
 
-def _load_env_file() -> None:
-    """Load key-value pairs from .env if present into os.environ."""
-    env_path = Path(__file__).resolve().parent.parent / ".env"
-    if env_path.is_file():
-        with open(env_path, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#") or "=" not in line:
-                    continue
-                k, v = line.split("=", 1)
-                k, v = k.strip(), v.strip().strip("'\"")
-                os.environ.setdefault(k, v)
-
-
 def get_database_url() -> str:
-    """Resolve database URL from environment variables."""
-    _load_env_file()
-    db_url = os.getenv("DATABASE_URL")
-    if db_url:
-        if db_url.startswith("postgresql://"):
-            return db_url.replace("postgresql://", "postgresql+psycopg://", 1)
-        if db_url.startswith("postgres://"):
-            return db_url.replace("postgres://", "postgresql+psycopg://", 1)
-        return db_url
-
-    user = os.getenv("POSTGRES_USER", "sih_user")
-    password = os.getenv("POSTGRES_PASSWORD", "sih_dev_password")
-    host = os.getenv("POSTGRES_HOST", "localhost")
-    port = os.getenv("POSTGRES_PORT", "5432")
-    db = os.getenv("POSTGRES_DB", "sih26162")
-    return f"postgresql+psycopg://{user}:{password}@{host}:{port}/{db}"
+    """Resolve database URL from canonical operational configuration."""
+    return get_settings().get_database_url()
 
 
 def run_migrations_offline() -> None:

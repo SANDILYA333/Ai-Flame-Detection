@@ -47,6 +47,8 @@ class TestRepositorySkeletonSmoke(unittest.TestCase):
             "packages.schemas.intelligence",
             "packages.geospatial",
             "packages.evidence",
+            "packages.config",
+            "packages.config.settings",
         ]
         for mod_name in modules:
             with self.subTest(module=mod_name):
