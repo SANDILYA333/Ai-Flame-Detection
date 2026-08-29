@@ -1,0 +1,6 @@
+# Graphify outputs, logs, and caches
+graphify-out/
+
+# Graphify custom assistant rules & workflows
+.agents/rules/graphify.md
+.agents/workflows/graphify.md
