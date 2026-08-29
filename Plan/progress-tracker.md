@@ -4,7 +4,7 @@
 
 -   **Phase:** Specification refinement → scientific/data feasibility
 -   **Status:** In progress
--   **Implementation status:** Not yet started
+-   **Implementation status:** In progress (BE-001 completed; BE-002 next)
 -   **UI:** Intentionally deferred
 
 ------------------------------------------------------------------------
@@ -78,6 +78,7 @@ The immediate objective is to lock:
 -   [x] Testing requirements defined.
 -   [x] AI/LLM usage policy defined.
 -   [x] Ground-truth provenance rules defined.
+-   [x] BE-001 Repository skeleton established (modular monolith boundaries, smoke test).
 
 ------------------------------------------------------------------------
 
