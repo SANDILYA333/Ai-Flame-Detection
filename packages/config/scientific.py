@@ -42,15 +42,15 @@ class ScientificConfig(BaseModel):
     version: str = Field(
         ...,
         min_length=1,
-        description="Version or identifier of this scientific configuration contract.",
+        description="Version or identifier of scientific configuration contract.",
     )
     name: str = Field(
         default="default",
-        description="Descriptive identifier for this configuration profile.",
+        description="Descriptive identifier for configuration profile.",
     )
     description: str = Field(
         default="",
-        description="Scientific justification, experimental notes, or calibration basis.",
+        description="Scientific justification or calibration basis.",
     )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
@@ -61,39 +61,39 @@ class ScientificConfig(BaseModel):
     spatial_cluster_radius_meters: float | None = Field(
         default=None,
         gt=0,
-        description="Maximum distance in meters between detections to form a thermal event cluster.",
+        description="Max clustering distance in meters between detections.",
     )
 
     # 2. Temporal Clustering Parameters
     temporal_window_hours: float | None = Field(
         default=None,
         gt=0,
-        description="Maximum time difference in hours between detections in the same event episode.",
+        description="Max temporal difference in hours for event episodes.",
     )
 
     # 3. Persistence Criteria
     persistence_threshold_days: float | None = Field(
         default=None,
         gt=0,
-        description="Minimum temporal observation span in days to qualify as a persistent thermal source.",
+        description="Min observation span in days for persistent sources.",
     )
     persistence_min_observations: int | None = Field(
         default=None,
         ge=1,
-        description="Minimum count of distinct satellite detections required for persistence.",
+        description="Min count of distinct satellite detections.",
     )
 
     # 4. Attribution Parameters
     attribution_radius_meters: float | None = Field(
         default=None,
         gt=0,
-        description="Spatial search radius in meters around event centroid for known infrastructure.",
+        description="Spatial search radius in meters around event centroid.",
     )
     attribution_confidence_threshold: float | None = Field(
         default=None,
         ge=0.0,
         le=1.0,
-        description="Minimum confidence score [0.0, 1.0] for confirmed infrastructure attribution.",
+        description="Min confidence score [0.0, 1.0] for attribution.",
     )
 
     # 5. Decision & Abstention Thresholds
@@ -101,13 +101,13 @@ class ScientificConfig(BaseModel):
         default=None,
         ge=0.0,
         le=1.0,
-        description="Minimum confidence score [0.0, 1.0] for a confirmed thermal event.",
+        description="Min confidence score [0.0, 1.0] for confirmed event.",
     )
     abstention_confidence_threshold: float | None = Field(
         default=None,
         ge=0.0,
         le=1.0,
-        description="Confidence cutoff [0.0, 1.0] below which the system must abstain from classifying.",
+        description="Confidence cutoff [0.0, 1.0] below which system abstains.",
     )
 
     @property
@@ -145,7 +145,7 @@ class ScientificConfig(BaseModel):
             )
 
     def to_canonical_dict(self) -> dict[str, Any]:
-        """Produce a deterministic, sorted dictionary representation of this configuration."""
+        """Produce a deterministic, sorted dictionary of this configuration."""
         raw = self.model_dump()
         raw["created_at"] = self.created_at.isoformat()
         return {k: raw[k] for k in sorted(raw.keys())}
@@ -160,6 +160,6 @@ class ScientificConfig(BaseModel):
         )
 
     def compute_fingerprint(self) -> str:
-        """Compute the SHA-256 hex digest of the canonical configuration JSON for provenance."""
+        """Compute the SHA-256 hex digest of canonical JSON for provenance."""
         canonical_bytes = self.to_canonical_json().encode("utf-8")
         return hashlib.sha256(canonical_bytes).hexdigest()

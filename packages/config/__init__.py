@@ -16,9 +16,9 @@ from packages.config.settings import (
 )
 
 __all__ = [
+    "SCIENTIFIC_PARAMETER_FIELDS",
     "AppEnvironment",
     "LogLevel",
-    "SCIENTIFIC_PARAMETER_FIELDS",
     "ScientificConfig",
     "Settings",
     "get_settings",

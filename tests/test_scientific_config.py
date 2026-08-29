@@ -21,9 +21,7 @@ class TestScientificConfiguration:
         config = ScientificConfig(version="v0.1.0-draft")
         assert config.version == "v0.1.0-draft"
         assert config.is_complete is False
-        assert len(config.missing_parameters) == len(
-            SCIENTIFIC_PARAMETER_FIELDS
-        )
+        assert len(config.missing_parameters) == len(SCIENTIFIC_PARAMETER_FIELDS)
 
         for param in SCIENTIFIC_PARAMETER_FIELDS:
             assert getattr(config, param) is None
@@ -147,7 +145,7 @@ class TestScientificConfiguration:
         assert c1.compute_fingerprint() != c2.compute_fingerprint()
 
     def test_operational_and_scientific_separation(self) -> None:
-        """TEST 9: Operational Settings and ScientificConfig remain strictly segregated."""
+        """TEST 9: Settings and ScientificConfig remain strictly segregated."""
         # Operational fields must not be in ScientificConfig
         operational_keys = {
             "POSTGRES_DB",
