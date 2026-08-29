@@ -1,4 +1,4 @@
-# Local Database Infrastructure & Migrations (DB-001 / DB-002)
+# Local Database Infrastructure & Migrations (DB-001 / DB-002 / DB-003)
 
 This repository uses **PostgreSQL 16 + PostGIS 3.4** as its analytical source-of-record store, managed through **Alembic** schema migrations.
 
@@ -70,6 +70,10 @@ docker compose exec postgres-postgis psql -U sih_user -d sih26162 -c "SELECT ST_
 
 All schema changes are version-controlled via Alembic in `alembic/versions/`.
 
+### Migration History
+1. `0001_baseline`: Enables PostGIS extension at baseline infrastructure level.
+2. `0002_scientific_contracts`: Creates the `scientific_contracts` table to persist versioned scientific parameters and calibration contracts without fabricated defaults.
+
 ### Canonical Migration Commands
 
 ```bash
@@ -92,7 +96,32 @@ uv run alembic revision -m "describe_migration"
 
 ---
 
-## 5. Resetting the Database
+## 5. Schema Reference: `scientific_contracts` (DB-003)
+
+The `scientific_contracts` table stores versioned scientific algorithm configurations corresponding to the BE-004 `ScientificConfig` model:
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `UUID` | `PRIMARY KEY`, `DEFAULT gen_random_uuid()` | Unique contract row identifier |
+| `version` | `VARCHAR(64)` | `NOT NULL`, `UNIQUE` | Semantic version of the scientific contract |
+| `name` | `VARCHAR(128)` | `NOT NULL`, `DEFAULT 'default'` | Profile name |
+| `description` | `TEXT` | `NOT NULL`, `DEFAULT ''` | Calibration notes / basis |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | UTC creation timestamp |
+| `fingerprint` | `VARCHAR(64)` | `NOT NULL`, `INDEX` | Deterministic SHA-256 fingerprint |
+| `spatial_cluster_radius_meters` | `DOUBLE PRECISION` | `NULLABLE`, `CHECK (> 0)` | Clustering radius ($m$) |
+| `temporal_window_hours` | `DOUBLE PRECISION` | `NULLABLE`, `CHECK (> 0)` | Clustering time window ($h$) |
+| `persistence_threshold_days` | `DOUBLE PRECISION` | `NULLABLE`, `CHECK (> 0)` | Persistence duration ($d$) |
+| `persistence_min_observations` | `INTEGER` | `NULLABLE`, `CHECK (>= 1)` | Min observation count |
+| `attribution_radius_meters` | `DOUBLE PRECISION` | `NULLABLE`, `CHECK (> 0)` | Attribution search radius ($m$) |
+| `attribution_confidence_threshold` | `DOUBLE PRECISION` | `NULLABLE`, `CHECK ([0, 1])`| Attribution confidence cutoff |
+| `minimum_event_confidence` | `DOUBLE PRECISION` | `NULLABLE`, `CHECK ([0, 1])`| Confirmed event confidence |
+| `abstention_confidence_threshold` | `DOUBLE PRECISION` | `NULLABLE`, `CHECK ([0, 1])`| Classification abstention cutoff |
+| `raw_config` | `JSONB` | `NULLABLE` | Full canonical JSON payload |
+| `is_active` | `BOOLEAN` | `NOT NULL`, `DEFAULT false`, `INDEX` | Active profile indicator |
+
+---
+
+## 6. Resetting the Database
 
 > [!WARNING]
 > Resetting the database destroys the persistent Docker volume and all local database records.

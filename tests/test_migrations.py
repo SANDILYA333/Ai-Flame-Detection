@@ -70,11 +70,12 @@ class TestAlembicMigrationFramework:
         # Current revision check
         current_res = _run_alembic_cmd(["current"])
         assert current_res.returncode == 0, f"Current failed: {current_res.stderr}"
-        assert "0001_baseline" in current_res.stdout
+        assert "0002_scientific_contracts" in current_res.stdout
 
         # History check
         history_res = _run_alembic_cmd(["history"])
         assert history_res.returncode == 0, f"History failed: {history_res.stderr}"
+        assert "0002_scientific_contracts" in history_res.stdout
         assert "0001_baseline" in history_res.stdout
 
     def test_alembic_downgrade_and_reupgrade_lifecycle(self) -> None:
@@ -86,7 +87,7 @@ class TestAlembicMigrationFramework:
         # Check current is now empty (base)
         current_res = _run_alembic_cmd(["current"])
         assert current_res.returncode == 0
-        assert "0001_baseline" not in current_res.stdout
+        assert "0002_scientific_contracts" not in current_res.stdout
 
         # Re-upgrade to head
         reup_res = _run_alembic_cmd(["upgrade", "head"])
@@ -95,7 +96,7 @@ class TestAlembicMigrationFramework:
         # Check current is restored
         current_restored = _run_alembic_cmd(["current"])
         assert current_restored.returncode == 0
-        assert "0001_baseline" in current_restored.stdout
+        assert "0002_scientific_contracts" in current_restored.stdout
 
     def test_migration_idempotency(self) -> None:
         """TEST 5: Verify running upgrade on an already-upgraded DB is a no-op."""
@@ -127,7 +128,7 @@ class TestAlembicMigrationFramework:
         res = subprocess.run(
             cmd, capture_output=True, text=True, check=True, timeout=10
         )
-        assert res.stdout.strip() == "0001_baseline"
+        assert res.stdout.strip() == "0002_scientific_contracts"
 
     def test_migration_failure_visibility(self) -> None:
         """TEST 7: Verify invalid connection URL produces visible nonzero exit."""
