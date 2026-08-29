@@ -1,4 +1,4 @@
-# Local Database Infrastructure & Migrations (DB-001 / DB-002 / DB-003 / DB-004 / DB-005 / DB-006 / DB-007)
+# Local Database Infrastructure & Migrations (DB-001 / DB-002 / DB-003 / DB-004 / DB-005 / DB-006 / DB-007 / DB-008)
 
 This repository uses **PostgreSQL 16 + PostGIS 3.4** as its analytical source-of-record store, managed through **Alembic** schema migrations.
 
@@ -228,7 +228,59 @@ source_registry (DB-004) -> source_snapshots (DB-005) -> source_records (DB-006)
 
 ---
 
-## 10. Resetting the Database
+## 10. Schema Reference: `thermal_events` & `event_detections` (DB-008)
+
+The `thermal_events` table persists derived spatiotemporal event clusters formed from member canonical detections:
+
+| Column | Type | Unit | Constraints | Description |
+| :--- | :--- | :---: | :--- | :--- |
+| `id` | `UUID` | — | `PRIMARY KEY`, `DEFAULT gen_random_uuid()` | Immutable surrogate event primary key |
+| `scientific_contract_id` | `UUID` | — | `NULLABLE`, `FK (scientific_contracts.id) ON DELETE RESTRICT`, `INDEX` | Algorithmic configuration contract FK |
+| `formation_run_id` | `VARCHAR(128)` | — | `NULLABLE`, `INDEX` | Pipeline execution run identifier |
+| `formation_status` | `VARCHAR(32)` | — | `NOT NULL`, `DEFAULT 'FORMED'`, `INDEX` | Event formation status (`FORMED`, `CANDIDATE`, `REFINED`) |
+| `started_at` | `TIMESTAMPTZ` | UTC | `NOT NULL`, `INDEX` (composite) | Earliest observation timestamp in cluster |
+| `ended_at` | `TIMESTAMPTZ` | UTC | `NOT NULL`, `INDEX` (composite), `CHECK (ended_at >= started_at)` | Latest observation timestamp in cluster |
+| `duration_seconds` | `DOUBLE PRECISION` | s | `NULLABLE`, `CHECK (duration_seconds >= 0)` | Event temporal duration in seconds |
+| `detection_count` | `INTEGER` | Count | `NOT NULL`, `CHECK (detection_count >= 1)` | Number of constituent detections |
+| `centroid_geometry` | `GEOMETRY(Point, 4326)` | EPSG:4326 | `NOT NULL`, `GIST INDEX` | Representative spatial centroid (`POINT(lon lat)`) |
+| `observation_geometry`| `GEOMETRY(Geometry, 4326)`| EPSG:4326 | `NULLABLE`, `GIST INDEX` | Bounding footprint / convex hull geometry |
+| `mean_frp_mw` | `DOUBLE PRECISION` | MW | `NULLABLE`, `CHECK (mean_frp_mw >= 0)` | Mean Fire Radiative Power across detections |
+| `max_frp_mw` | `DOUBLE PRECISION` | MW | `NULLABLE`, `CHECK (max_frp_mw >= 0)` | Peak Fire Radiative Power across detections |
+| `total_frp_mw` | `DOUBLE PRECISION` | MW | `NULLABLE`, `CHECK (total_frp_mw >= 0)` | Summed instantaneous FRP across detections |
+| `metadata_json` | `JSONB` | — | `NULLABLE` | Extended clustering parameters / dispersion metrics |
+| `created_at` | `TIMESTAMPTZ` | UTC | `NOT NULL`, `DEFAULT now()` | UTC database persistence timestamp |
+
+### Association Table: `event_detections`
+
+The `event_detections` table maintains deterministic membership between thermal events and member detections:
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `UUID` | `PRIMARY KEY`, `DEFAULT gen_random_uuid()` | Immutable surrogate membership PK |
+| `event_id` | `UUID` | `NOT NULL`, `FK (thermal_events.id) ON DELETE RESTRICT`, `INDEX` | Parent event foreign key |
+| `detection_id` | `UUID` | `NOT NULL`, `FK (detections.id) ON DELETE RESTRICT`, `INDEX` | Member detection foreign key |
+| `membership_confidence`| `DOUBLE PRECISION`| `NULLABLE`, `CHECK (confidence BETWEEN 0 AND 1)` | Membership weight / confidence score |
+| `metadata_json` | `JSONB` | `NULLABLE` | Association metadata |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | Persistence timestamp |
+
+**Invariants**: `UNIQUE (event_id, detection_id)` guarantees idempotent event composition.
+
+### 5-Tier Provenance Hierarchy:
+```text
+source_registry (DB-004)
+    ↓
+source_snapshots (DB-005)
+    ↓
+source_records (DB-006)
+    ↓
+detections (DB-007)
+    ↓
+event_detections (DB-008) ──→ thermal_events (DB-008)
+```
+
+---
+
+## 11. Resetting the Database
 
 > [!WARNING]
 > Resetting the database destroys the persistent Docker volume and all local database records.

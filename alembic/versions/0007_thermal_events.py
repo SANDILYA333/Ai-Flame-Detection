@@ -65,7 +65,9 @@ def upgrade() -> None:
         sa.Column("mean_frp_mw", sa.Float(precision=53), nullable=True),
         sa.Column("max_frp_mw", sa.Float(precision=53), nullable=True),
         sa.Column("total_frp_mw", sa.Float(precision=53), nullable=True),
-        sa.Column("metadata_json", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column(
+            "metadata_json", postgresql.JSONB(astext_type=sa.Text()), nullable=True
+        ),
         sa.Column(
             "created_at",
             sa.TIMESTAMP(timezone=True),
@@ -174,7 +176,9 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("membership_confidence", sa.Float(precision=53), nullable=True),
-        sa.Column("metadata_json", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column(
+            "metadata_json", postgresql.JSONB(astext_type=sa.Text()), nullable=True
+        ),
         sa.Column(
             "created_at",
             sa.TIMESTAMP(timezone=True),
@@ -200,7 +204,8 @@ def upgrade() -> None:
             name="uq_event_detections_event_detection",
         ),
         sa.CheckConstraint(
-            "membership_confidence IS NULL OR (membership_confidence >= 0.0 AND membership_confidence <= 1.0)",
+            "membership_confidence IS NULL OR "
+            "(membership_confidence >= 0.0 AND membership_confidence <= 1.0)",
             name="chk_event_detections_confidence_range",
         ),
     )

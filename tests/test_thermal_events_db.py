@@ -1,10 +1,10 @@
-"""Integration tests for DB-008 thermal events and detection membership schema."""
+"""Integration tests for DB-008 thermal events database schema."""
 
 import os
 import shutil
 import subprocess
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Any
 
 import psycopg
@@ -54,7 +54,7 @@ def _create_test_detection(
     frp: float = 15.0,
     raw_hash: str | None = None,
 ) -> tuple[uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID]:
-    """Helper to create complete upstream lineage: source -> snap -> record -> detection."""
+    """Helper creating complete upstream lineage: source -> snap -> record -> det."""
     if raw_hash is None:
         raw_hash = uuid.uuid4().hex + uuid.uuid4().hex
 
@@ -119,7 +119,7 @@ def _create_test_detection(
 
 @pytest.mark.integration
 class TestThermalEventsPersistence:
-    """Validate thermal_events and event_detections schemas, spatial and temporal invariants."""
+    """Validate thermal_events and event_detections schemas and invariants."""
 
     @pytest.fixture(autouse=True)
     def require_running_db(self) -> None:
@@ -128,7 +128,7 @@ class TestThermalEventsPersistence:
             pytest.skip("postgres-postgis container is not running.")
 
     def test_thermal_events_table_structure(self) -> None:
-        """TEST 1: Verify columns, data types, nullability, defaults, and PostGIS metadata."""
+        """TEST 1: Verify columns, data types, nullability, and PostGIS metadata."""
         expected_columns = {
             "id": ("uuid", "NO"),
             "scientific_contract_id": ("uuid", "YES"),
@@ -248,9 +248,7 @@ class TestThermalEventsPersistence:
         """TEST 4: Insert event with duration, FRP stats (MW), and Polygon geometry."""
         start = datetime(2026, 8, 29, 10, 0, 0, tzinfo=UTC)
         end = datetime(2026, 8, 29, 11, 30, 0, tzinfo=UTC)
-        poly_wkt = (
-            "POLYGON((77.1 28.5, 77.3 28.5, 77.3 28.7, 77.1 28.7, 77.1 28.5))"
-        )
+        poly_wkt = "POLYGON((77.1 28.5, 77.3 28.5, 77.3 28.7, 77.1 28.7, 77.1 28.5))"
 
         with _get_connection() as conn, conn.cursor() as cur:
             cur.execute(
@@ -304,8 +302,9 @@ class TestThermalEventsPersistence:
             # Insert 2 association rows
             cur.execute(
                 """
-                INSERT INTO event_detections (event_id, detection_id, membership_confidence)
-                VALUES (%s, %s, 0.95), (%s, %s, 0.88);
+                INSERT INTO event_detections (
+                    event_id, detection_id, membership_confidence
+                ) VALUES (%s, %s, 0.95), (%s, %s, 0.88);
                 """,
                 (event_id, det_id1, event_id, det_id2),
             )
@@ -322,7 +321,7 @@ class TestThermalEventsPersistence:
             conn.rollback()
 
     def test_foreign_key_on_delete_restrict(self) -> None:
-        """TEST 6: Deleting parent detections or thermal_events is blocked (RESTRICT)."""
+        """TEST 6: Deleting parent detections or thermal_events is blocked."""
         with _get_connection() as conn, conn.cursor() as cur:
             _, _, _, det_id = _create_test_lineage_detection(cur, 77.2, 28.6, 15.0)
 
@@ -415,7 +414,8 @@ class TestThermalEventsPersistence:
                 cur.execute(
                     """
                     INSERT INTO thermal_events (
-                        started_at, ended_at, duration_seconds, detection_count, centroid_geometry
+                        started_at, ended_at, duration_seconds,
+                        detection_count, centroid_geometry
                     ) VALUES (
                         %s, %s, -10.0, 1,
                         ST_SetSRID(ST_MakePoint(77.2, 28.6), 4326)
@@ -451,7 +451,8 @@ class TestThermalEventsPersistence:
                 cur.execute(
                     """
                     INSERT INTO thermal_events (
-                        started_at, ended_at, detection_count, centroid_geometry, mean_frp_mw
+                        started_at, ended_at, detection_count,
+                        centroid_geometry, mean_frp_mw
                     ) VALUES (
                         %s, %s, 1,
                         ST_SetSRID(ST_MakePoint(77.2, 28.6), 4326), -1.0
@@ -483,9 +484,9 @@ class TestThermalEventsPersistence:
             conn.rollback()
 
     def test_full_5_tier_provenance_chain(self) -> None:
-        """TEST 10: Validate 5-tier lineage: source -> snap -> record -> detection -> event."""
+        """TEST 10: Validate 5-tier lineage: source -> snap -> rec -> det -> event."""
         with _get_connection() as conn, conn.cursor() as cur:
-            src_id, snap_id, rec_id, det_id = _create_test_lineage_detection(
+            _src_id, snap_id, rec_id, det_id = _create_test_lineage_detection(
                 cur, 77.2090, 28.6139, 32.5
             )
 
@@ -507,8 +508,9 @@ class TestThermalEventsPersistence:
 
             cur.execute(
                 """
-                INSERT INTO event_detections (event_id, detection_id, membership_confidence)
-                VALUES (%s, %s, 0.99);
+                INSERT INTO event_detections (
+                    event_id, detection_id, membership_confidence
+                ) VALUES (%s, %s, 0.99);
                 """,
                 (event_id, det_id),
             )
