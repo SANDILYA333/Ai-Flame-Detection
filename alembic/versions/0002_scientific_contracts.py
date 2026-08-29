@@ -107,11 +107,10 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_scientific_contracts")),
-        sa.UniqueConstraint(
-            "version", name=op.f("uq_scientific_contracts_version")
-        ),
+        sa.UniqueConstraint("version", name=op.f("uq_scientific_contracts_version")),
         sa.CheckConstraint(
-            "spatial_cluster_radius_meters IS NULL OR spatial_cluster_radius_meters > 0",
+            "spatial_cluster_radius_meters IS NULL OR "
+            "spatial_cluster_radius_meters > 0",
             name="chk_scientific_contracts_spatial_radius",
         ),
         sa.CheckConstraint(
@@ -132,17 +131,20 @@ def upgrade() -> None:
         ),
         sa.CheckConstraint(
             "attribution_confidence_threshold IS NULL OR "
-            "(attribution_confidence_threshold >= 0.0 AND attribution_confidence_threshold <= 1.0)",
+            "(attribution_confidence_threshold >= 0.0 AND "
+            "attribution_confidence_threshold <= 1.0)",
             name="chk_scientific_contracts_attribution_conf",
         ),
         sa.CheckConstraint(
             "minimum_event_confidence IS NULL OR "
-            "(minimum_event_confidence >= 0.0 AND minimum_event_confidence <= 1.0)",
+            "(minimum_event_confidence >= 0.0 AND "
+            "minimum_event_confidence <= 1.0)",
             name="chk_scientific_contracts_min_conf",
         ),
         sa.CheckConstraint(
             "abstention_confidence_threshold IS NULL OR "
-            "(abstention_confidence_threshold >= 0.0 AND abstention_confidence_threshold <= 1.0)",
+            "(abstention_confidence_threshold >= 0.0 AND "
+            "abstention_confidence_threshold <= 1.0)",
             name="chk_scientific_contracts_abstention_conf",
         ),
     )

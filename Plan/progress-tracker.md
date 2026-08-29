@@ -4,7 +4,7 @@
 
 -   **Phase:** Specification refinement → scientific/data feasibility
 -   **Status:** In progress
--   **Implementation status:** In progress (BE-004 completed; DB-003 next)
+-   **Implementation status:** In progress (DB-003 completed; DB-004 next)
 -   **UI:** Intentionally deferred
 
 ------------------------------------------------------------------------
@@ -87,6 +87,7 @@ The immediate objective is to lock:
 -   [x] BE-005 Error handling & exceptions taxonomy established (packages/errors/, AppError base, ErrorCode enum, cause-preserving chaining).
 -   [x] BE-006 Structured logging system established (packages/logging/, StructuredJsonFormatter, secret sanitization, AppError integration).
 -   [x] BE-004 Scientific configuration contract established (packages/config/scientific.py, ScientificConfig, explicit incomplete state, SHA-256 fingerprinting).
+-   [x] DB-003 Scientific contracts migration established (alembic/versions/0002_scientific_contracts.py, scientific_contracts table, mathematical check constraints).
 
 ------------------------------------------------------------------------
 
