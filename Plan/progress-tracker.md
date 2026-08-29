@@ -4,7 +4,7 @@
 
 -   **Phase:** Specification refinement → scientific/data feasibility
 -   **Status:** In progress
--   **Implementation status:** In progress (DB-004 completed; DB-005 next)
+-   **Implementation status:** In progress (DB-005 completed; DB-006 next)
 -   **UI:** Intentionally deferred
 
 ------------------------------------------------------------------------
@@ -89,6 +89,7 @@ The immediate objective is to lock:
 -   [x] BE-004 Scientific configuration contract established (packages/config/scientific.py, ScientificConfig, explicit incomplete state, SHA-256 fingerprinting).
 -   [x] DB-003 Scientific contracts migration established (alembic/versions/0002_scientific_contracts.py, scientific_contracts table, mathematical check constraints).
 -   [x] DB-004 Source registry migration established (alembic/versions/0003_source_registry.py, source_registry table, SourceRole enum, relational metadata, integrity constraints).
+-   [x] DB-005 Source snapshots migration established (alembic/versions/0004_source_snapshots.py, source_snapshots table, SnapshotAvailabilityState enum, integrity hashes, RESTRICT FK).
 
 ------------------------------------------------------------------------
 

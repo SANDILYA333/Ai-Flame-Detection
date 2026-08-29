@@ -1,4 +1,4 @@
-# Local Database Infrastructure & Migrations (DB-001 / DB-002 / DB-003 / DB-004)
+# Local Database Infrastructure & Migrations (DB-001 / DB-002 / DB-003 / DB-004 / DB-005)
 
 This repository uses **PostgreSQL 16 + PostGIS 3.4** as its analytical source-of-record store, managed through **Alembic** schema migrations.
 
@@ -74,6 +74,7 @@ All schema changes are version-controlled via Alembic in `alembic/versions/`.
 1. `0001_baseline`: Enables PostGIS extension at baseline infrastructure level.
 2. `0002_scientific_contracts`: Creates the `scientific_contracts` table to persist versioned scientific parameters and calibration contracts without fabricated defaults.
 3. `0003_source_registry`: Creates the `source_registry` table establishing persistent identities, semantic roles, access metadata, and lifecycle status for data sources.
+4. `0004_source_snapshots`: Creates the `source_snapshots` table establishing exact acquired versions, retrieval timestamps, request fingerprints, integrity hashes, and availability states for registered data sources.
 
 ### Canonical Migration Commands
 
@@ -144,6 +145,26 @@ The `source_registry` table stores canonical source definitions and semantic rol
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | UTC registration creation timestamp |
 | `updated_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()`, `CHECK (updated_at >= created_at)` | UTC last update timestamp |
 
+---
+
+## 7. Schema Reference: `source_snapshots` (DB-005)
+
+The `source_snapshots` table records exact acquired source states, versions, retrieval timestamps, request fingerprints, integrity hashes, and availability states:
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `UUID` | `PRIMARY KEY`, `DEFAULT gen_random_uuid()` | Immutable surrogate snapshot primary key |
+| `source_id` | `UUID` | `NOT NULL`, `FK (source_registry.id) ON DELETE RESTRICT`, `INDEX` | Foreign key referencing registered data source |
+| `external_version` | `VARCHAR(128)` | `NULLABLE` | Source-provided version/edition/date string |
+| `retrieved_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()`, `INDEX` | UTC timestamp when snapshot was acquired |
+| `acquired_from` | `TEXT` | `NULLABLE` | Retrieval URI / endpoint / bucket reference (no credentials) |
+| `request_fingerprint` | `VARCHAR(64)` | `NULLABLE`, `CHECK (length = 64)`, `INDEX` | SHA-256 digest of request parameters/query |
+| `content_hash` | `VARCHAR(64)` | `NULLABLE`, `CHECK (length = 64)`, `INDEX` | Cryptographic SHA-256 digest of raw acquired artifact |
+| `availability_status` | `VARCHAR(32)` | `NOT NULL`, `CHECK (IN (...))`, `INDEX` | State (`AVAILABLE`, `EMPTY_RESULT`, `FAILED`, etc.) |
+| `error_code` | `VARCHAR(64)` | `NULLABLE` | Machine-readable error code if acquisition failed |
+| `metadata_json` | `JSONB` | `NULLABLE` | Acquisition headers/metadata (ETag, size, content-type) |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()` | UTC database insertion timestamp |
+
 ### Provenance Boundaries:
 - **`source_registry` (DB-004)**: Answers *"What data source is this?"* (identity and access contract).
 - **`source_snapshots` (DB-005)**: Answers *"What exact version/state of that source did we acquire?"* (hashes, retrieval timestamps, HTTP states).
@@ -151,7 +172,7 @@ The `source_registry` table stores canonical source definitions and semantic rol
 
 ---
 
-## 7. Resetting the Database
+## 8. Resetting the Database
 
 > [!WARNING]
 > Resetting the database destroys the persistent Docker volume and all local database records.
@@ -167,4 +188,5 @@ docker compose up -d
 # Apply migrations from scratch
 uv run alembic upgrade head
 ```
+
 

@@ -70,18 +70,19 @@ class TestAlembicMigrationFramework:
         # Current revision check
         current_res = _run_alembic_cmd(["current"])
         assert current_res.returncode == 0, f"Current failed: {current_res.stderr}"
-        assert "0003_source_registry" in current_res.stdout
+        assert "0004_source_snapshots" in current_res.stdout
 
         # History check
         history_res = _run_alembic_cmd(["history"])
         assert history_res.returncode == 0, f"History failed: {history_res.stderr}"
+        assert "0004_source_snapshots" in history_res.stdout
         assert "0003_source_registry" in history_res.stdout
         assert "0002_scientific_contracts" in history_res.stdout
         assert "0001_baseline" in history_res.stdout
 
     def test_alembic_downgrade_and_reupgrade_lifecycle(self) -> None:
         """TEST 3 & 4: Verify migration reversal (downgrade) and re-upgrade."""
-        # Downgrade 1 step to 0002_scientific_contracts
+        # Downgrade 1 step to 0003_source_registry
         down_one_res = _run_alembic_cmd(["downgrade", "-1"])
         assert down_one_res.returncode == 0, (
             f"Downgrade -1 failed: {down_one_res.stderr}"
@@ -89,8 +90,8 @@ class TestAlembicMigrationFramework:
 
         current_res = _run_alembic_cmd(["current"])
         assert current_res.returncode == 0
-        assert "0002_scientific_contracts" in current_res.stdout
-        assert "0003_source_registry" not in current_res.stdout
+        assert "0003_source_registry" in current_res.stdout
+        assert "0004_source_snapshots" not in current_res.stdout
 
         # Downgrade to base
         down_res = _run_alembic_cmd(["downgrade", "base"])
@@ -99,6 +100,7 @@ class TestAlembicMigrationFramework:
         # Check current is now empty (base)
         current_base_res = _run_alembic_cmd(["current"])
         assert current_base_res.returncode == 0
+        assert "0004_source_snapshots" not in current_base_res.stdout
         assert "0003_source_registry" not in current_base_res.stdout
         assert "0002_scientific_contracts" not in current_base_res.stdout
 
@@ -109,7 +111,7 @@ class TestAlembicMigrationFramework:
         # Check current is restored to head
         current_restored = _run_alembic_cmd(["current"])
         assert current_restored.returncode == 0
-        assert "0003_source_registry" in current_restored.stdout
+        assert "0004_source_snapshots" in current_restored.stdout
 
     def test_migration_idempotency(self) -> None:
         """TEST 5: Verify running upgrade on an already-upgraded DB is a no-op."""
@@ -141,7 +143,7 @@ class TestAlembicMigrationFramework:
         res = subprocess.run(
             cmd, capture_output=True, text=True, check=True, timeout=10
         )
-        assert res.stdout.strip() == "0003_source_registry"
+        assert res.stdout.strip() == "0004_source_snapshots"
 
     def test_migration_failure_visibility(self) -> None:
         """TEST 7: Verify invalid connection URL produces visible nonzero exit."""

@@ -107,3 +107,18 @@ class SourceRole(StrEnum):
     GROUND_TRUTH_EVIDENCE = "GROUND_TRUTH_EVIDENCE"
     OPTIONAL = "OPTIONAL"
     DEMO_ONLY = "DEMO_ONLY"
+
+
+class SnapshotAvailabilityState(StrEnum):
+    """Canonical availability and acquisition state for source snapshots.
+
+    Distinguishes successful acquisition, empty results (zero records),
+    and external retrieval failures.
+    """
+
+    AVAILABLE = "AVAILABLE"
+    EMPTY_RESULT = "EMPTY_RESULT"
+    FAILED = "FAILED"
+    UNAVAILABLE = "UNAVAILABLE"
+    RATE_LIMITED = "RATE_LIMITED"
+    PENDING = "PENDING"
