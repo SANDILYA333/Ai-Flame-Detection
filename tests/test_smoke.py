@@ -38,6 +38,13 @@ class TestRepositorySkeletonSmoke(unittest.TestCase):
         modules = [
             "packages",
             "packages.schemas",
+            "packages.schemas.common",
+            "packages.schemas.enums",
+            "packages.schemas.detection",
+            "packages.schemas.event",
+            "packages.schemas.source",
+            "packages.schemas.context",
+            "packages.schemas.intelligence",
             "packages.geospatial",
             "packages.evidence",
         ]

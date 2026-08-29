@@ -113,3 +113,5 @@ Thumbs.db
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+.env.example
+stat-index.json

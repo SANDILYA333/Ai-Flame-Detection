@@ -4,7 +4,7 @@
 
 -   **Phase:** Specification refinement → scientific/data feasibility
 -   **Status:** In progress
--   **Implementation status:** In progress (BE-002 completed; DB-001 next)
+-   **Implementation status:** In progress (DB-002 completed; BE-003 next)
 -   **UI:** Intentionally deferred
 
 ------------------------------------------------------------------------
@@ -80,6 +80,9 @@ The immediate objective is to lock:
 -   [x] Ground-truth provenance rules defined.
 -   [x] BE-001 Repository skeleton established (modular monolith boundaries, smoke test).
 -   [x] BE-002 Python/tooling contract established (Python 3.11+, Ruff, Pytest, Mypy, uv).
+-   [x] BE-003 Canonical domain schema package established (Detection, Event, Source, Context, Intelligence in Pydantic).
+-   [x] DB-001 PostGIS Compose service established (PostGIS 16-3.4, persistent volume, healthcheck, smoke tests).
+-   [x] DB-002 Migration framework established (Alembic 1.14+, dynamic DB URL, baseline migration, test suite, CI).
 
 ------------------------------------------------------------------------
 
@@ -342,7 +345,7 @@ Satellite integration is supported, but missing imagery does not
 automatically invalidate an event.
 
 ## AD-008 --- PostGIS
-
+v
 PostGIS is the primary geospatial store.
 
 ## AD-009 --- Redis over Kafka for MVP

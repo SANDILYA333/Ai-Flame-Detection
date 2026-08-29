@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test & Lint & Migrations
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_DB: sih26162
+          POSTGRES_USER: sih_user
+          POSTGRES_PASSWORD: sih_dev_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sih_user -d sih26162"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Lint with Ruff
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Type check with Mypy
+        run: uv run mypy .
+
+      - name: Run Alembic Migrations
+        env:
+          DATABASE_URL: postgresql+psycopg://sih_user:sih_dev_password@localhost:5432/sih26162
+        run: |
+          uv run alembic upgrade head
+          uv run alembic current
+          uv run alembic downgrade base
+          uv run alembic upgrade head
+
+      - name: Run Pytest Suite
+        env:
+          DATABASE_URL: postgresql+psycopg://sih_user:sih_dev_password@localhost:5432/sih26162
+          POSTGRES_PORT: "5432"
+        run: uv run pytest -v
