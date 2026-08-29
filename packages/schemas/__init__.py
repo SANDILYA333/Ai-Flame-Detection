@@ -20,6 +20,7 @@ from packages.schemas.enums import (
     EvidenceAvailabilityState,
     PersistenceState,
     PhenomenonType,
+    SourceRole,
 )
 from packages.schemas.event import Event
 from packages.schemas.intelligence import (
@@ -48,6 +49,7 @@ __all__ = [
     "PersistentSource",
     "PhenomenonType",
     "ProvenanceReference",
+    "SourceRole",
     "UncertaintyMetric",
     "UtcDatetime",
 ]

@@ -88,3 +88,22 @@ class DayNight(StrEnum):
     DAY = "D"
     NIGHT = "N"
     UNKNOWN = "unknown"
+
+
+class SourceRole(StrEnum):
+    """Canonical semantic roles for data sources within SIH26162.
+
+    Explicitly defines how each registered source contributes to data
+    provenance, intelligence formation, or validation.
+    """
+
+    OBSERVATION = "OBSERVATION"
+    REFERENCE = "REFERENCE"
+    CONTEXT = "CONTEXT"
+    VALIDATION = "VALIDATION"
+    ENVIRONMENTAL = "ENVIRONMENTAL"
+    DERIVED = "DERIVED"
+    GROUND_TRUTH_CANDIDATE = "GROUND_TRUTH_CANDIDATE"
+    GROUND_TRUTH_EVIDENCE = "GROUND_TRUTH_EVIDENCE"
+    OPTIONAL = "OPTIONAL"
+    DEMO_ONLY = "DEMO_ONLY"
