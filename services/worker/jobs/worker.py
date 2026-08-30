@@ -13,11 +13,10 @@ CRITICAL ARCHITECTURAL INVARIANTS:
    to prevent transient spin-loops.
 """
 
-from datetime import UTC, datetime
 import logging
 import threading
 import time
-from typing import Any
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from pydantic import Field
@@ -151,8 +150,9 @@ class WorkerRunner:
             log_with_context(
                 logger,
                 logging.WARNING,
-                f"Worker '{self.worker_id}' found orphaned message '{message.message_id}' "
-                f"referencing unknown job '{job_id}'. Dead-lettering message.",
+                f"Worker '{self.worker_id}' found orphaned message "
+                f"'{message.message_id}' referencing unknown job '{job_id}'. "
+                "Dead-lettering message.",
                 context={"job_id": job_id, "message_id": message.message_id},
             )
             self.queue.reject(
@@ -201,7 +201,8 @@ class WorkerRunner:
         log_with_context(
             logger,
             logging.INFO,
-            f"Worker '{self.worker_id}' launching job '{job_id}' (type: {db_job.job_type}).",
+            f"Worker '{self.worker_id}' launching job '{job_id}' "
+            f"(type: {db_job.job_type}).",
             context={
                 "job_id": job_id,
                 "job_type": db_job.job_type,
@@ -218,7 +219,8 @@ class WorkerRunner:
                 self._succeeded_count += 1
 
         elif result_job.state == JobState.BLOCKED:
-            # Missing configuration is authoritative: acknowledge queue so worker doesn't spin
+            # Missing configuration is authoritative: acknowledge queue
+            # to prevent transient worker spin-loops
             self.queue.acknowledge(message.message_id)
             with self._lock:
                 self._blocked_count += 1
@@ -248,17 +250,25 @@ class WorkerRunner:
                     f"(attempt {result_job.attempt_count}/{result_job.max_attempts}).",
                     context={"job_id": job_id, "reason": safe_reason},
                 )
+                requeued_job = JobStateMachine.transition(
+                    result_job,
+                    JobState.QUEUED,
+                    error_message_safe=safe_reason,
+                )
+                self.repository.save_job(requeued_job)
                 self.queue.reject(
                     message.message_id,
                     requeue=True,
                     reason=safe_reason,
                 )
+                return requeued_job
             else:
                 log_with_context(
                     logger,
                     logging.ERROR,
                     f"Worker '{self.worker_id}' dead-lettering job '{job_id}' "
-                    f"(attempts exhausted: {result_job.attempt_count}/{result_job.max_attempts}).",
+                    f"(attempts exhausted: "
+                    f"{result_job.attempt_count}/{result_job.max_attempts}).",
                     context={"job_id": job_id, "reason": safe_reason},
                 )
                 self.queue.reject(
