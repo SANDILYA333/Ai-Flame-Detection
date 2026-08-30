@@ -19,9 +19,11 @@ from pydantic import Field, field_validator, model_validator
 
 from packages.schemas.common import (
     BaseDomainModel,
+    Coordinate,
     ProvenanceReference,
     UtcDatetime,
 )
+from packages.schemas.enums import SourceRole
 
 
 class ReadinessStatus(StrEnum):
@@ -76,6 +78,37 @@ class LabelProvenanceType(StrEnum):
     PSEUDO_LABEL = "PSEUDO_LABEL"
     DETERMINISTIC_INFERENCE = "DETERMINISTIC_INFERENCE"
     UNKNOWN = "UNKNOWN"
+
+
+class ExclusionReason(StrEnum):
+    """Explicit rationale for excluding a sample from supervised training/eval."""
+
+    INSUFFICIENT_LABEL_EVIDENCE = "INSUFFICIENT_LABEL_EVIDENCE"
+    CONFLICTING_LABEL_EVIDENCE = "CONFLICTING_LABEL_EVIDENCE"
+    PROHIBITED_FEATURE_LEAKAGE = "PROHIBITED_FEATURE_LEAKAGE"
+    SHOWCASE_ISOLATION = "SHOWCASE_ISOLATION"
+    MISSING_REQUIRED_FEATURES = "MISSING_REQUIRED_FEATURES"
+    AMBIGUOUS_CLASS = "AMBIGUOUS_CLASS"
+    OUTSIDE_SPATIOTEMPORAL_SCOPE = "OUTSIDE_SPATIOTEMPORAL_SCOPE"
+
+
+class DatasetRowStatus(StrEnum):
+    """Supervised dataset sample eligibility status."""
+
+    TRAIN_ELIGIBLE = "TRAIN_ELIGIBLE"
+    VALIDATION_ELIGIBLE = "VALIDATION_ELIGIBLE"
+    TEST_ELIGIBLE = "TEST_ELIGIBLE"
+    SHOWCASE_ISOLATED = "SHOWCASE_ISOLATED"
+    EXCLUDED = "EXCLUDED"
+    UNLABELED = "UNLABELED"
+
+
+class LabelConflictPolicy(StrEnum):
+    """Policy for resolving conflicting evidence across reference sources."""
+
+    TIER_PRECEDENCE = "TIER_PRECEDENCE"
+    STRICT_CONSENSUS = "STRICT_CONSENSUS"
+    AUTHORITATIVE_OVERRIDE = "AUTHORITATIVE_OVERRIDE"
 
 
 class FeatureType(StrEnum):
@@ -367,6 +400,146 @@ class LabelQualityProfile(BaseDomainModel):
     )
 
 
+class ReferenceEvidence(BaseDomainModel):
+    """Structured observation evidence from external reference databases."""
+
+    evidence_id: str = Field(
+        ...,
+        min_length=1,
+        description="Unique identifier for the reference evidence record.",
+    )
+    source_name: str = Field(
+        ...,
+        min_length=1,
+        description="Originating source catalog (e.g. GEM, WRI, VNF).",
+    )
+    source_role: SourceRole = Field(
+        default=SourceRole.GROUND_TRUTH_EVIDENCE,
+        description="Assigned role of this source in ML label construction.",
+    )
+    entity_id: str = Field(
+        ...,
+        min_length=1,
+        description="Matched canonical entity ID (event_id or source_id).",
+    )
+    geometry: Coordinate = Field(
+        ...,
+        description="Centroid or match coordinates of reference evidence.",
+    )
+    observed_at: UtcDatetime | None = Field(
+        None,
+        description="Timestamp of reference observation or publication in UTC.",
+    )
+    claim_class: str = Field(
+        ...,
+        min_length=1,
+        description="Phenomenon or category class asserted by this evidence.",
+    )
+    confidence_score: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+        description="Confidence score of this reference claim (0.0 to 1.0).",
+    )
+    tier: LabelTier = Field(
+        default=LabelTier.TIER_B_STRONG_EVIDENCE,
+        description="Reliability tier of the originating reference source.",
+    )
+    provenance_type: LabelProvenanceType = Field(
+        default=LabelProvenanceType.REFERENCE_LABEL,
+        description="Provenance classification of this evidence.",
+    )
+    evidence_payload: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Raw metadata dictionary from reference catalog.",
+    )
+    notes: str | None = Field(
+        None,
+        description="Contextual or scientific notes regarding this evidence.",
+    )
+
+    @field_validator("confidence_score", mode="after")
+    @classmethod
+    def _validate_finite_score(cls, v: float) -> float:
+        if not math.isfinite(v):
+            raise ValueError("confidence_score must be finite.")
+        return v
+
+
+class LabelDecision(BaseDomainModel):
+    """Auditable label decision for a target on a prediction entity."""
+
+    decision_id: str = Field(
+        ...,
+        min_length=1,
+        description="Unique identifier for this label decision.",
+    )
+    target_id: str = Field(
+        ...,
+        min_length=1,
+        description="Target definition identifier this label satisfies.",
+    )
+    entity_id: str = Field(
+        ...,
+        min_length=1,
+        description="Entity ID (event_id or source_id).",
+    )
+    assigned_class: str = Field(
+        ...,
+        min_length=1,
+        description="Assigned class vocabulary string.",
+    )
+    label_tier: LabelTier = Field(
+        ...,
+        description="Assigned quality and reliability tier.",
+    )
+    provenance_type: LabelProvenanceType = Field(
+        ...,
+        description="Assigned provenance classification.",
+    )
+    confidence_score: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+        description="Assigned confidence score for this label (0.0 to 1.0).",
+    )
+    contributing_evidence_ids: list[str] = Field(
+        default_factory=list,
+        description="List of reference evidence IDs used to construct this label.",
+    )
+    has_conflicting_evidence: bool = Field(
+        default=False,
+        description="Whether conflicting evidence was detected during construction.",
+    )
+    conflict_resolution_notes: str | None = Field(
+        None,
+        description="Notes detailing how conflicting evidence was resolved.",
+    )
+    is_train_eligible: bool = Field(
+        default=True,
+        description="Whether this sample is eligible for model training.",
+    )
+    is_eval_eligible: bool = Field(
+        default=True,
+        description="Whether this sample is eligible for model evaluation.",
+    )
+    exclusion_reason: ExclusionReason | None = Field(
+        None,
+        description="Reason for exclusion if not eligible.",
+    )
+    decision_timestamp: UtcDatetime = Field(
+        ...,
+        description="Timestamp when label decision was constructed in UTC.",
+    )
+
+    @field_validator("confidence_score", mode="after")
+    @classmethod
+    def _validate_finite_confidence(cls, v: float) -> float:
+        if not math.isfinite(v):
+            raise ValueError("confidence_score must be finite.")
+        return v
+
+
 class FeatureDefinition(BaseDomainModel):
     """Metadata specification for an engineered ML feature."""
 
@@ -644,6 +817,130 @@ class SplitIntegrityReport(BaseDomainModel):
     )
 
 
+class SplitManifest(BaseDomainModel):
+    """Complete manifest of dataset partitions and split integrity audit."""
+
+    split_id: str = Field(
+        ...,
+        min_length=1,
+        description="Unique identifier for this split allocation.",
+    )
+    dataset_id: str = Field(
+        ...,
+        min_length=1,
+        description="Associated dataset identifier.",
+    )
+    dataset_version: str = Field(
+        ...,
+        min_length=1,
+        description="Version string of the partitioned dataset.",
+    )
+    split_strategy: SplitStrategy = Field(
+        ...,
+        description="Strategy applied to partition the dataset.",
+    )
+    random_seed: int = Field(
+        default=42,
+        description="Random seed used for deterministic hashing.",
+    )
+    train_count: int = Field(
+        default=0,
+        ge=0,
+        description="Count of samples in TRAIN partition.",
+    )
+    validation_count: int = Field(
+        default=0,
+        ge=0,
+        description="Count of samples in VALIDATION partition.",
+    )
+    test_count: int = Field(
+        default=0,
+        ge=0,
+        description="Count of samples in TEST partition.",
+    )
+    showcase_count: int = Field(
+        default=0,
+        ge=0,
+        description="Count of samples isolated in SHOWCASE_ISOLATION.",
+    )
+    excluded_count: int = Field(
+        default=0,
+        ge=0,
+        description="Count of excluded samples.",
+    )
+    assignments: list[SplitAssignment] = Field(
+        default_factory=list,
+        description="List of partition assignments for all entities.",
+    )
+    integrity_report: SplitIntegrityReport | None = Field(
+        None,
+        description="Integrity validation report for this split.",
+    )
+    created_at: UtcDatetime = Field(
+        ...,
+        description="Timestamp when split manifest was generated in UTC.",
+    )
+
+
+class LabeledFeatureRecord(BaseDomainModel):
+    """Unified record combining feature representation and target label decisions."""
+
+    entity_id: str = Field(
+        ...,
+        min_length=1,
+        description="Unique identifier of prediction entity.",
+    )
+    feature_record: FeatureRecord = Field(
+        ...,
+        description="Underlying ML-002 feature record.",
+    )
+    labels: dict[str, LabelDecision] = Field(
+        default_factory=dict,
+        description="Dictionary mapping target_id to constructed LabelDecision.",
+    )
+    split_partition: SplitPartition = Field(
+        default=SplitPartition.TRAIN,
+        description="Assigned evaluation partition.",
+    )
+    row_status: DatasetRowStatus = Field(
+        default=DatasetRowStatus.TRAIN_ELIGIBLE,
+        description="Eligibility status for supervised learning.",
+    )
+    exclusion_reason: ExclusionReason | None = Field(
+        None,
+        description="Reason for exclusion if not eligible.",
+    )
+
+
+class SupervisedDataset(BaseDomainModel):
+    """Complete supervised learning dataset with features, labels, and splits."""
+
+    manifest: DatasetManifest = Field(
+        ...,
+        description="Dataset manifest containing version, hash, and metadata.",
+    )
+    split_manifest: SplitManifest = Field(
+        ...,
+        description="Split manifest documenting train/val/test partitions.",
+    )
+    records: list[LabeledFeatureRecord] = Field(
+        default_factory=list,
+        description="List of labeled feature records.",
+    )
+    target_definitions: list[TargetDefinition] = Field(
+        default_factory=list,
+        description="List of target specifications present in this dataset.",
+    )
+    feature_definitions: list[FeatureDefinition] = Field(
+        default_factory=list,
+        description="List of feature definitions present in this dataset.",
+    )
+    summary_statistics: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Diagnostic statistics across classes, tiers, and splits.",
+    )
+
+
 class PerClassEvaluationMetrics(BaseDomainModel):
     """Detailed evaluation performance metrics for an individual class."""
 
@@ -907,4 +1204,164 @@ class MLReadinessReport(BaseDomainModel):
     readiness_details: dict[str, Any] = Field(
         default_factory=dict,
         description="Detailed diagnostics across evaluated subsystems.",
+    )
+
+
+class ModelMetadata(BaseDomainModel):
+    """Metadata specification for a trained ML model artifact."""
+
+    model_id: str = Field(
+        ...,
+        min_length=1,
+        description="Unique identifier for the trained model artifact.",
+    )
+    model_type: str = Field(
+        ...,
+        min_length=1,
+        description="Type/architecture of model (e.g. MajorityClass, LogReg).",
+    )
+    model_version: str = Field(
+        ...,
+        min_length=1,
+        description="Semantic version of the model build.",
+    )
+    target_id: str = Field(
+        ...,
+        min_length=1,
+        description="Target definition ID this model predicts.",
+    )
+    dataset_version: str = Field(
+        ...,
+        min_length=1,
+        description="Dataset version used for training.",
+    )
+    feature_set_version: str = Field(
+        ...,
+        min_length=1,
+        description="Feature set version used.",
+    )
+    label_set_version: str = Field(
+        ...,
+        min_length=1,
+        description="Label set version used.",
+    )
+    split_version: str = Field(
+        ...,
+        min_length=1,
+        description="Split strategy/version used.",
+    )
+    random_seed: int = Field(
+        default=42,
+        description="Random seed used for deterministic execution.",
+    )
+    hyperparameters: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Model hyperparameters and configuration.",
+    )
+    training_timestamp: UtcDatetime = Field(
+        ...,
+        description="Timestamp when model was trained in UTC.",
+    )
+    train_record_count: int = Field(
+        ...,
+        ge=0,
+        description="Number of samples in training partition.",
+    )
+    feature_names: list[str] = Field(
+        default_factory=list,
+        description="Ordered list of input feature names consumed by the model.",
+    )
+    validation_metrics: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Validation partition evaluation summary.",
+    )
+    test_metrics: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Held-out test partition evaluation summary.",
+    )
+
+
+class ModelArtifact(BaseDomainModel):
+    """Container for serialized model state, preprocessing parameters, and metadata."""
+
+    metadata: ModelMetadata = Field(
+        ...,
+        description="Provenance and training metadata.",
+    )
+    preprocessor_state: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Fitted preprocessing parameters (fitted on TRAIN only).",
+    )
+    model_parameters: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Fitted model weights, thresholds, or decision parameters.",
+    )
+    class_vocabulary: list[str] = Field(
+        default_factory=list,
+        description="Ordered list of predicted target classes.",
+    )
+
+
+class AblationExperimentResult(BaseDomainModel):
+    """Result of a single model evaluation on a specific feature ablation subset."""
+
+    experiment_id: str = Field(..., description="Unique ID of ablation experiment.")
+    subset_name: str = Field(
+        ..., description="Name of feature subset (e.g. THERMAL_ONLY)."
+    )
+    model_type: str = Field(..., description="Model architecture evaluated.")
+    feature_names: list[str] = Field(
+        default_factory=list, description="Included feature names."
+    )
+    feature_count: int = Field(..., description="Number of features in subset.")
+    excluded_features: list[str] = Field(
+        default_factory=list, description="Excluded feature names."
+    )
+    is_applicable: bool = Field(
+        default=True,
+        description="Whether experiment was semantically applicable for model.",
+    )
+    train_metrics: dict[str, Any] = Field(
+        default_factory=dict, description="Training metrics."
+    )
+    validation_metrics: dict[str, Any] = Field(
+        default_factory=dict, description="Validation metrics."
+    )
+    test_metrics: dict[str, Any] = Field(
+        default_factory=dict, description="Test metrics."
+    )
+    generalization_gap_macro_f1: float | None = Field(
+        default=None, description="Train F1 minus Test F1."
+    )
+    delta_vs_full_macro_f1: float | None = Field(
+        default=None, description="Delta in Test Macro F1 vs FULL subset."
+    )
+    delta_vs_full_balanced_acc: float | None = Field(
+        default=None, description="Delta in Test Balanced Acc vs FULL subset."
+    )
+    delta_vs_full_acc: float | None = Field(
+        default=None, description="Delta in Test Acc vs FULL subset."
+    )
+
+
+class AblationStudyReport(BaseDomainModel):
+    """Container for comprehensive multi-model, multi-subset feature ablation study."""
+
+    study_id: str = Field(..., description="Unique ID of ablation study.")
+    dataset_id: str = Field(..., description="Supervised dataset ID.")
+    dataset_version: str = Field(..., description="Dataset version evaluated.")
+    target_id: str = Field(..., description="Target specification ID.")
+    created_at: UtcDatetime = Field(..., description="Timestamp of execution.")
+    subsets_evaluated: list[str] = Field(
+        default_factory=list, description="List of evaluated subset names."
+    )
+    models_evaluated: list[str] = Field(
+        default_factory=list, description="List of evaluated model types."
+    )
+    results: list[AblationExperimentResult] = Field(
+        default_factory=list, description="Per-experiment results."
+    )
+    shortcut_diagnostics: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Contextual shortcut and thermal dependency deltas.",
     )
