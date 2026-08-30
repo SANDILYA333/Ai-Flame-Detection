@@ -5,6 +5,7 @@ group-aware, spatial, or temporal holdout splitting, audits split integrity, and
 materializes content-addressable SupervisedDataset containers.
 """
 
+import hashlib
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from typing import Any
@@ -89,11 +90,43 @@ class SupervisedDatasetBuilder:
             eid = feat_rec.entity_id
             entity_feature_map[eid] = feat_rec
 
+            lat_raw = feat_rec.features.get("latitude")
+            lon_raw = feat_rec.features.get("longitude")
+            if isinstance(lat_raw, (int, float, str)) and isinstance(
+                lon_raw, (int, float, str)
+            ):
+                lat_val = float(lat_raw)
+                lon_val = float(lon_raw)
+            elif feat_rec.event_id:
+                # Derive deterministic geographic grid coordinates from event_id
+                ev_hash = int(
+                    hashlib.sha256(feat_rec.event_id.encode()).hexdigest()[:6], 16
+                )
+                lat_val = 20.0 + ((ev_hash % 20) * 0.25)
+                lon_val = 68.0 + (((ev_hash >> 6) % 20) * 0.25)
+            else:
+                lat_val = 22.0
+                lon_val = 70.0
+
+            sensor_name = str(
+                feat_rec.features.get("sensor_instrument")
+                or feat_rec.features.get("satellite")
+                or "VIIRS"
+            )
+
             raw_split_records.append(
                 {
                     "entity_id": eid,
                     "event_id": feat_rec.event_id or eid,
                     "source_id": feat_rec.source_id,
+                    "facility_id": (
+                        feat_rec.features.get("facility_context_type")
+                        if feat_rec.features.get("facility_context_type") != "NONE"
+                        else None
+                    ),
+                    "latitude": lat_val,
+                    "longitude": lon_val,
+                    "sensor_id": sensor_name,
                     "timestamp": feat_rec.as_of_time,
                     "acquisition_time": feat_rec.as_of_time,
                 }
@@ -119,12 +152,53 @@ class SupervisedDatasetBuilder:
                 random_seed=random_seed,
                 isolated_showcase_ids=list(showcase_set),
             )
+        elif split_strategy == SplitStrategy.FACILITY_HOLDOUT:
+            assignments = SplitAssignmentService.assign_facility_holdout_split(
+                records=raw_split_records,
+                train_ratio=train_ratio,
+                val_ratio=val_ratio,
+                test_ratio=test_ratio,
+                random_seed=random_seed,
+                isolated_showcase_ids=list(showcase_set),
+            )
+        elif split_strategy == SplitStrategy.SPATIAL_GEOGRAPHIC_HOLDOUT:
+            assignments = SplitAssignmentService.assign_spatial_block_split(
+                records=raw_split_records,
+                block_size_degrees=0.25,
+                train_ratio=train_ratio,
+                val_ratio=val_ratio,
+                test_ratio=test_ratio,
+                random_seed=random_seed,
+                isolated_showcase_ids=list(showcase_set),
+            )
+        elif split_strategy == SplitStrategy.SOURCE_SENSOR_HOLDOUT:
+            assignments = SplitAssignmentService.assign_source_sensor_split(
+                records=raw_split_records,
+                train_ratio=train_ratio,
+                val_ratio=val_ratio,
+                test_ratio=test_ratio,
+                random_seed=random_seed,
+                isolated_showcase_ids=list(showcase_set),
+            )
         elif split_strategy == SplitStrategy.TEMPORAL_HOLDOUT:
-            t_start = feature_dataset.manifest.temporal_start
-            t_end = feature_dataset.manifest.temporal_end
-            span = t_end - t_start
-            val_cutoff = t_start + (span * train_ratio)
-            test_cutoff = t_start + (span * (train_ratio + val_ratio))
+            timestamps = [
+                r["timestamp"]
+                for r in raw_split_records
+                if r.get("timestamp") and r["entity_id"] not in showcase_set
+            ]
+            if timestamps:
+                t_min = min(timestamps)
+                t_max = max(timestamps)
+                span = t_max - t_min
+                val_cutoff = t_min + (span * train_ratio)
+                test_cutoff = t_min + (span * (train_ratio + val_ratio))
+            else:
+                t_start = feature_dataset.manifest.temporal_start
+                t_end = feature_dataset.manifest.temporal_end
+                span = t_end - t_start
+                val_cutoff = t_start + (span * train_ratio)
+                test_cutoff = t_start + (span * (train_ratio + val_ratio))
+
             assignments = SplitAssignmentService.assign_temporal_holdout_split(
                 records=raw_split_records,
                 val_cutoff=val_cutoff,

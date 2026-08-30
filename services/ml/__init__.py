@@ -8,6 +8,7 @@ model training pipelines, and baseline classifiers.
 from services.ml.calibration.abstention import AbstentionDecisionEngine
 from services.ml.calibration.contract import CalibrationManager
 from services.ml.evaluation.ablation import FeatureAblationService
+from services.ml.evaluation.generalization import GeneralizationBenchmarkService
 from services.ml.evaluation.harness import EvaluationHarness
 from services.ml.features.builder import FeatureDatasetBuilder
 from services.ml.features.extractor import FeatureExtractor
@@ -76,6 +77,7 @@ __all__ = [
     "FeatureExtractor",
     "FeaturePreprocessor",
     "FeatureRegistry",
+    "GeneralizationBenchmarkService",
     "LabelConstructor",
     "LeakageAuditReport",
     "LeakageAuditor",

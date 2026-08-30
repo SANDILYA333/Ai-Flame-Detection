@@ -2,9 +2,9 @@
 
 ## Current Phase
 
--   **Phase:** Phase 4 — Machine Learning & Scientific Evaluation (ML-001 through ML-007)
--   **Status:** ML-001 (Readiness Audit), ML-002 (Feature Pipeline), ML-003 (Label Construction & Splitting), ML-004 (Baseline Models & Pipeline), ML-005 (B3 Statistical Model Formalization), ML-006 (B4 Tree-Based Model Benchmark), ML-007 (Feature Ablation & Shortcut Audit) Complete
--   **Implementation status:** ML-007 establishes the Feature Ablation, Shortcut Detection & Scientific Dependency Audit framework (FeatureAblationService), systematically quantifying model dependency across 12 canonical feature subsets and 5 model architectures. Complete & Verified across 382 automated unit/integration tests (0 lint, 0 type errors).
+-   **Phase:** Phase 4 — Machine Learning & Scientific Evaluation (ML-001 through ML-008)
+-   **Status:** ML-001 (Readiness Audit), ML-002 (Feature Pipeline), ML-003 (Label Construction & Splitting), ML-004 (Baseline Models & Pipeline), ML-005 (B3 Statistical Model Formalization), ML-006 (B4 Tree-Based Model Benchmark), ML-007 (Feature Ablation & Shortcut Audit), ML-008 (Holdout Generalization Benchmark) Complete
+-   **Implementation status:** ML-008 establishes the Spatial, Temporal, Facility & Source Holdout Generalization Benchmark framework (GeneralizationBenchmarkService), evaluating 5 model architectures across 6 independent holdout partitioning protocols. Zero spatial/source generalization gap observed, spatial shortcut resilience verified, anti-leakage invariants audited. Complete & Verified across 389 automated unit/integration tests (0 lint, 0 type errors).
 -   **UI:** Intentionally deferred
 
 ------------------------------------------------------------------------

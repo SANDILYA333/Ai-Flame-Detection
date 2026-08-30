@@ -190,6 +190,8 @@ class SplitStrategy(StrEnum):
     SPATIAL_GEOGRAPHIC_HOLDOUT = "SPATIAL_GEOGRAPHIC_HOLDOUT"
     PERSISTENT_SOURCE_HOLDOUT = "PERSISTENT_SOURCE_HOLDOUT"
     GROUPED_EVENT_HOLDOUT = "GROUPED_EVENT_HOLDOUT"
+    FACILITY_HOLDOUT = "FACILITY_HOLDOUT"
+    SOURCE_SENSOR_HOLDOUT = "SOURCE_SENSOR_HOLDOUT"
     SPATIO_TEMPORAL_SOURCE_GROUPED = "SPATIO_TEMPORAL_SOURCE_GROUPED"
     STRATIFIED_GROUPED = "STRATIFIED_GROUPED"
 
@@ -780,10 +782,26 @@ class SplitAssignment(BaseDomainModel):
         None,
         description="Associated persistent source ID for group independence.",
     )
+    facility_id: str | None = Field(
+        None,
+        description="Associated facility ID for facility holdout splitting.",
+    )
+    spatial_block_id: str | None = Field(
+        None,
+        description="Associated geographic spatial block ID for spatial holdout.",
+    )
+    sensor_id: str | None = Field(
+        None,
+        description="Associated sensor or satellite platform ID.",
+    )
     split_key: str = Field(
         ...,
         min_length=1,
         description="Grouped key or partition identifier used for assignment.",
+    )
+    assignment_reason: str | None = Field(
+        None,
+        description="Machine-readable justification for partition assignment.",
     )
 
 
@@ -810,6 +828,18 @@ class SplitIntegrityReport(BaseDomainModel):
     source_leakage_violations: list[str] = Field(
         default_factory=list,
         description="Source IDs appearing in both train and test partitions.",
+    )
+    facility_leakage_violations: list[str] = Field(
+        default_factory=list,
+        description="Facility IDs appearing in multiple partitions.",
+    )
+    spatial_leakage_violations: list[str] = Field(
+        default_factory=list,
+        description="Spatial block IDs appearing in multiple partitions.",
+    )
+    sensor_leakage_violations: list[str] = Field(
+        default_factory=list,
+        description="Sensors appearing in multiple conflicting partitions.",
     )
     temporal_inversion_violations: list[str] = Field(
         default_factory=list,
@@ -1364,4 +1394,67 @@ class AblationStudyReport(BaseDomainModel):
     shortcut_diagnostics: dict[str, Any] = Field(
         default_factory=dict,
         description="Contextual shortcut and thermal dependency deltas.",
+    )
+
+
+class GeneralizationExperimentResult(BaseDomainModel):
+    """Result of evaluating a model on a specific holdout split strategy."""
+
+    experiment_id: str = Field(
+        ..., description="Unique ID for generalization experiment."
+    )
+    split_strategy: SplitStrategy = Field(..., description="Split strategy evaluated.")
+    model_type: str = Field(..., description="Model architecture evaluated.")
+    is_feasible: bool = Field(
+        default=True,
+        description="Whether split strategy was feasible with dataset.",
+    )
+    feasibility_notes: str | None = Field(
+        default=None, description="Notes if strategy is infeasible."
+    )
+    train_record_count: int = Field(default=0, ge=0)
+    val_record_count: int = Field(default=0, ge=0)
+    test_record_count: int = Field(default=0, ge=0)
+    train_metrics: dict[str, Any] = Field(default_factory=dict)
+    validation_metrics: dict[str, Any] = Field(default_factory=dict)
+    test_metrics: dict[str, Any] = Field(default_factory=dict)
+    generalization_gap_macro_f1: float | None = Field(
+        default=None,
+        description=(
+            "Macro F1 under GROUPED_EVENT_HOLDOUT minus Macro F1 under this holdout."
+        ),
+    )
+    generalization_gap_balanced_acc: float | None = Field(
+        default=None,
+        description=(
+            "Balanced Accuracy under GROUPED_EVENT_HOLDOUT minus Balanced Acc"
+            " under this holdout."
+        ),
+    )
+
+
+class GeneralizationStudyReport(BaseDomainModel):
+    """Container for comprehensive multi-strategy generalization benchmark."""
+
+    study_id: str = Field(..., description="Unique ID of generalization study.")
+    dataset_id: str = Field(..., description="Supervised dataset identifier.")
+    dataset_version: str = Field(..., description="Dataset version.")
+    target_id: str = Field(..., description="Target specification.")
+    created_at: UtcDatetime = Field(..., description="Timestamp of execution.")
+    strategies_evaluated: list[SplitStrategy] = Field(default_factory=list)
+    models_evaluated: list[str] = Field(default_factory=list)
+    results: list[GeneralizationExperimentResult] = Field(default_factory=list)
+    generalization_gaps: dict[str, dict[str, float | None]] = Field(
+        default_factory=dict,
+        description=(
+            "Mapping of model_type -> strategy -> macro_f1 gap vs standard event"
+            " holdout."
+        ),
+    )
+    shortcut_resilience: dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Analysis of performance under spatial holdout with full vs"
+            " thermal-only features."
+        ),
     )

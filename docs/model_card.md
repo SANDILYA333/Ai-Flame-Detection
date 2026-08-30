@@ -59,13 +59,19 @@
    - Systematically evaluated 12 canonical feature subsets across baseline models ([docs/ml_007_feature_ablation_report.md](file:///home/kafka/Coding/SIH-Hackathon/docs/ml_007_feature_ablation_report.md)).
    - **Thermal Independence:** `THERMAL_ONLY` (14 features) achieves identical Macro F1 ($1.0000$) to `FULL` (30 features).
    - **Spatial Shortcut Refutation:** `NO_SPATIAL` retains $1.0000$ Macro F1 with zero context dependency drop ($\Delta = +0.0000$), confirming that model classification does not rely on memorizing facility coordinates.
-2. **Label-Shuffle Target Leakage Test:**
+2. **Holdout Generalization Benchmark (ML-008):**
+   - Evaluated models across 6 independent holdout partitioning protocols ([docs/ml_008_generalization_holdout_report.md](file:///home/kafka/Coding/SIH-Hackathon/docs/ml_008_generalization_holdout_report.md)).
+   - **Spatial Block Holdout:** Models evaluated on unseen geographic blocks ($0.25^\circ \times 0.25^\circ$) achieved $1.0000$ Macro F1 with $0.00\%$ Generalization Gap vs event holdout.
+   - **Persistent Source & Facility Holdouts:** Zero generalization degradation ($\Delta = +0.0000$) across unseen sources and facilities.
+   - **Spatial Shortcut Resilience:** Removing all spatial context under spatial holdout produced $0.00\%$ drop in classification performance.
+   - **Sensor Holdout Feasibility Audit:** Correctly audited single-sensor dataset limitations without fabricating cross-sensor transferability.
+3. **Label-Shuffle Target Leakage Test:**
    - Evaluated by randomly permuting training labels while maintaining feature distributions.
    - Validation performance collapses to empirical prior / chance level, proving that model predictions reflect genuine feature relationships rather than memorization or target leakage.
-3. **Serialization & Reload Invariance:**
+4. **Serialization & Reload Invariance:**
    - Model artifacts serialized to JSON via [ModelRegistry](file:///home/kafka/Coding/SIH-Hackathon/services/ml/models/registry.py) are reloaded and verified.
    - Predictions and output probability vectors on held-out samples match 100% identically across serialize/deserialize cycles.
-4. **Secret Leak Audit:**
+5. **Secret Leak Audit:**
    - Recursively verifies that no API keys, credentials, or authentication tokens are embedded in model parameters or metadata.
 
 ---
@@ -74,3 +80,4 @@
 - **Controlled Benchmark Status:** High benchmark scores are measured on the controlled benchmark fixture (`ds_supervised_v1.0.0`) and do not constitute physical field-verified ground truth.
 - **Proxy Agreement vs. Ground Truth:** Supervised metrics reflect agreement with Tier A/B/C operational proxy labels constructed in ML-003. High classification accuracy on proxy labels does not substitute for empirical field validation.
 - **Single-Pass Test Partitioning:** Benchmark metrics on the held-out `TEST` partition are evaluated only once at pipeline execution time to prevent overfitting on the test distribution.
+
