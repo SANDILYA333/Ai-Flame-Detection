@@ -122,6 +122,38 @@ class Settings(BaseSettings):
         description="Database connection pool max overflow",
     )
 
+    # NASA FIRMS API Configuration
+    FIRMS_BASE_URL: str = Field(
+        default="https://firms.modaps.eosdis.nasa.gov/api",
+        description="Base URL endpoint for NASA FIRMS API",
+    )
+    FIRMS_MAP_KEY: SecretStr | None = Field(
+        default=None,
+        description="NASA FIRMS MAP_KEY authentication token (secret)",
+    )
+    FIRMS_TIMEOUT_SECONDS: float = Field(
+        default=30.0,
+        gt=0.0,
+        le=300.0,
+        description="HTTP request timeout in seconds for NASA FIRMS API",
+    )
+    FIRMS_MAX_RETRIES: int = Field(
+        default=3,
+        ge=0,
+        le=10,
+        description="Maximum transient failure retry attempts for FIRMS requests",
+    )
+    FIRMS_RETRY_BACKOFF_FACTOR: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=10.0,
+        description="Exponential backoff base factor in seconds",
+    )
+    FIRMS_USER_AGENT: str = Field(
+        default="SIH26162-Flare-Intelligence/1.0",
+        description="Safe HTTP User-Agent identifier for NASA FIRMS requests",
+    )
+
     def get_database_url(self, driver: str = "postgresql+psycopg") -> str:
         """Construct full plaintext database connection URL for driver connections.
 
