@@ -272,6 +272,22 @@ Acceptance:
 -   ablation completed;
 -   no leakage detected.
 
+## Phase 4 Progress & Milestones
+
+- [x] **ML-001: Machine Learning Readiness / Evaluation Foundation** (Completed: 2026-08-30)
+  - Typed ML configuration contracts (`MLConfig`), Feature registry, Leakage auditor.
+  - Split assignment & integrity validator (Grouped, Spatial, Temporal).
+  - Multi-class and probabilistic evaluation harness.
+  - Calibration manager & Abstention engine.
+  - 8-pillar ML Readiness Auditor.
+- [x] **ML-002: Feature Dataset Construction & Leakage-Safe Feature Engineering** (Completed: 2026-08-30)
+  - Canonical `FeatureDefinition`, `FeatureRecord`, and `FeatureDataset` schemas with `FeatureGroup` and `FeatureEligibilityStatus`.
+  - Approved standard feature set catalog (`feat_v1.0.0`) and disqualified candidates catalog.
+  - Leakage-safe `FeatureExtractor` strictly enforcing $T_{prediction}$ cutoff, missingness preservation, and identifier exclusion.
+  - `FeatureDatasetBuilder` with deterministic SHA-256 manifest hashing, duplicate auditing, and showcase isolation (`DATASET-003`).
+  - Feature reporting and ablation mapping utilities.
+  - 336 unit and integration tests passing with 0 lint/typecheck errors.
+
 ------------------------------------------------------------------------
 
 # Next Up
