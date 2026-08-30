@@ -1,5 +1,9 @@
 """API request and response schemas."""
 
+from services.api.schemas.detections import (
+    DetectionPagination,
+    DetectionsResponse,
+)
 from services.api.schemas.health import HealthResponse
 from services.api.schemas.readiness import (
     DependencyHealth,
@@ -20,6 +24,8 @@ from services.api.schemas.version import (
 __all__ = [
     "DependencyHealth",
     "DependencyStatus",
+    "DetectionPagination",
+    "DetectionsResponse",
     "HealthResponse",
     "ReadinessResponse",
     "SourceAvailabilityState",
