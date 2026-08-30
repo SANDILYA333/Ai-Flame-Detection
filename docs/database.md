@@ -1,4 +1,4 @@
-# Local Database Infrastructure & Migrations (DB-001 / DB-002 / DB-003 / DB-004 / DB-005 / DB-006 / DB-007 / DB-008)
+# Local Database Infrastructure & Migrations (DB-001 through DB-007 + Phase 3 Scientific Derivation)
 
 This repository uses **PostgreSQL 16 + PostGIS 3.4** as its analytical source-of-record store, managed through **Alembic** schema migrations.
 
@@ -228,7 +228,7 @@ source_registry (DB-004) -> source_snapshots (DB-005) -> source_records (DB-006)
 
 ---
 
-## 10. Schema Reference: `thermal_events` & `event_detections` (DB-008)
+## 10. Schema Reference: `thermal_events` & `event_detections` (Phase 3 — Scientific Derivation)
 
 The `thermal_events` table persists derived spatiotemporal event clusters formed from member canonical detections:
 
@@ -275,7 +275,7 @@ source_records (DB-006)
     ↓
 detections (DB-007)
     ↓
-event_detections (DB-008) ──→ thermal_events (DB-008)
+event_detections (Phase 3 Event) ──→ thermal_events (Phase 3 Event)
 ```
 
 ---

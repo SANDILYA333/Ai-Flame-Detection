@@ -54,6 +54,13 @@ class ContractViolationError(ValidationError):
     default_message: str = "A canonical domain contract was violated."
 
 
+class InvalidCoordinateError(ValidationError):
+    """Raised when geographic coordinates are invalid, non-finite, or out of bounds."""
+
+    default_code: ErrorCode | str = ErrorCode.INVALID_COORDINATE
+    default_message: str = "Invalid geographic coordinates provided."
+
+
 # ==============================================================================
 # Database / Storage Exceptions
 # ==============================================================================
