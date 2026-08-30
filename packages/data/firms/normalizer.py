@@ -1,9 +1,9 @@
-"""Field normalization, coordinate validation, timestamp parsing, and hashing for FIRMS."""
+"""Field normalization, coordinate validation, timestamp parsing, and hashing."""
 
-from datetime import UTC, datetime
 import hashlib
 import json
 import re
+from datetime import UTC, datetime
 from typing import Any
 
 from packages.data.firms.schemas import RawFirmsCsvRow
@@ -22,7 +22,7 @@ def parse_firms_timestamp(acq_date_str: str, acq_time_str: str) -> datetime:
 
     Args:
         acq_date_str: Date string in 'YYYY-MM-DD' format (e.g. '2026-08-01').
-        acq_time_str: Time string in 'HHMM' or 'HH:MM' format (e.g. '0430' or '430' or '04:30').
+        acq_time_str: Time string in 'HHMM' or 'HH:MM' format.
 
     Returns:
         datetime: Timezone-aware UTC datetime.
@@ -56,7 +56,9 @@ def parse_firms_timestamp(acq_date_str: str, acq_time_str: str) -> datetime:
     minute = int(time_match.group(2))
 
     if not (0 <= hour <= 23):
-        raise ValueError(f"Invalid hour '{hour}' in acq_time '{acq_time_str}'. Must be 0-23.")
+        raise ValueError(
+            f"Invalid hour '{hour}' in acq_time '{acq_time_str}'. Must be 0-23."
+        )
     if not (0 <= minute <= 59):
         raise ValueError(
             f"Invalid minute '{minute}' in acq_time '{acq_time_str}'. Must be 0-59."
@@ -72,7 +74,7 @@ def normalize_satellite_name(raw_satellite: str, instrument: str | None = None) 
     """Normalize raw FIRMS satellite identifier to canonical name.
 
     Args:
-        raw_satellite: Raw satellite string from source (e.g. 'N', '1', 'T', 'A', 'NOAA-20').
+        raw_satellite: Raw satellite string from source (e.g. 'N', '1', 'T', 'A').
         instrument: Optional instrument name to disambiguate.
 
     Returns:
@@ -208,12 +210,8 @@ def normalize_raw_row_to_detection(
     instrument = normalize_instrument(row.instrument, satellite)
 
     # 4. Resolve brightness temperatures (VIIRS or MODIS aliases)
-    brightness_ti4_k = (
-        row.bright_ti4 if row.bright_ti4 is not None else row.brightness
-    )
-    brightness_ti5_k = (
-        row.bright_ti5 if row.bright_ti5 is not None else row.bright_t31
-    )
+    brightness_ti4_k = row.bright_ti4 if row.bright_ti4 is not None else row.brightness
+    brightness_ti5_k = row.bright_ti5 if row.bright_ti5 is not None else row.bright_t31
 
     # 5. Normalize day/night
     day_night = normalize_day_night(row.daynight)
