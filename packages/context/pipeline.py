@@ -244,6 +244,7 @@ class RealContextLabelingService:
         data_status: str = "OFFLINE_FIXTURE",
         dataset_id: str = "ds_real_enriched_v1.0.0",
         dataset_version: str = "v1.0.0",
+        external_reference_evidence: Sequence[ReferenceEvidence] | None = None,
     ) -> RealEnrichedEventDataset:
         """Execute complete contextual enrichment and label adjudication pipeline."""
         now = datetime.now(UTC)
@@ -273,17 +274,31 @@ class RealContextLabelingService:
             )
         )
 
-        # 2. Synthesize Reference Evidence
-        reference_evidence = cls.synthesize_reference_evidence(
+        # 2. Synthesize Context Reference Evidence and merge with External Reference Evidence
+        synth_ref_evidence = cls.synthesize_reference_evidence(
             events=event_dataset.events,
             context_by_event=context_by_event,
             config=active_config,
         )
 
+        all_ref_evidence: list[ReferenceEvidence] = list(synth_ref_evidence)
+        if external_reference_evidence:
+            all_ref_evidence.extend(external_reference_evidence)
+
+        # Deterministic sorting: entity_id, tier, source_name, evidence_id
+        all_ref_evidence.sort(
+            key=lambda r: (
+                r.entity_id,
+                r.tier.value,
+                r.source_name,
+                r.evidence_id,
+            )
+        )
+
         # 3. Adjudicate Reference Labels
         labels = cls.adjudicate_labels(
             events=event_dataset.events,
-            reference_evidence=reference_evidence,
+            reference_evidence=all_ref_evidence,
             target_ids=["target_industrial_segregation"],
             conflict_policy=LabelConflictPolicy.TIER_PRECEDENCE,
             as_of_time=now,
@@ -303,7 +318,7 @@ class RealContextLabelingService:
             events=event_dataset.events,
             persistent_sources=event_dataset.persistent_sources,
             context_evidence=all_context_evidence,
-            reference_evidence=reference_evidence,
+            reference_evidence=all_ref_evidence,
             reference_labels=labels,
             context_snapshot_hashes=snapshot_hashes or {},
             config_fingerprint=active_config.compute_fingerprint(),
