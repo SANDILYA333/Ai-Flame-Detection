@@ -5,14 +5,14 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 from packages.schemas.common import BaseDomainModel
+from packages.schemas.context import ContextEvidence
+from packages.schemas.ml import ReferenceEvidence
 
 
 class EventResponse(BaseModel):
     """API representation of a canonical thermal event."""
 
-    event_id: str = Field(
-        ..., description="Unique canonical identifier for the event."
-    )
+    event_id: str = Field(..., description="Unique canonical identifier for the event.")
     started_at: datetime = Field(
         ..., description="Earliest detection acquisition timestamp in UTC."
     )
@@ -28,9 +28,7 @@ class EventResponse(BaseModel):
     centroid_longitude: float = Field(
         ..., description="Representative spatial centroid longitude."
     )
-    detection_count: int = Field(
-        ..., description="Total count of member detections."
-    )
+    detection_count: int = Field(..., description="Total count of member detections.")
     mean_frp_mw: float | None = Field(
         None, description="Mean Fire Radiative Power across detections in MW."
     )
@@ -74,9 +72,7 @@ class EventDetailResponse(BaseModel):
     duration_seconds: float | None = Field(
         None, description="Duration of the event in seconds."
     )
-    detection_count: int = Field(
-        ..., description="Total count of member detections."
-    )
+    detection_count: int = Field(..., description="Total count of member detections.")
     context_status: str = Field(
         ..., description="Contextual evidence status (AVAILABLE/UNAVAILABLE)."
     )
@@ -98,17 +94,28 @@ class TimelineObservation(BaseModel):
 
 
 class EventTimelineResponse(BaseModel):
-    """Timeline response for an event (API-008)."""
+    """Canonical response model for GET /events/{event_id}/timeline (API-008)."""
 
-    event_id: str = Field(..., description="Unique canonical identifier for the event.")
-    started_at: datetime = Field(
-        ..., description="Earliest detection acquisition timestamp in UTC."
-    )
-    ended_at: datetime = Field(
-        ..., description="Latest detection acquisition timestamp in UTC."
-    )
+    event_id: str = Field(..., description="Canonical unique event identifier.")
+    started_at: datetime = Field(..., description="Start time of the event episode.")
+    ended_at: datetime = Field(..., description="End time of the event episode.")
     timeline: list[TimelineObservation] = Field(
-        ..., description="Chronological sequence of detections."
+        ...,
+        description="Chronologically sorted raw detection members of this event.",
+    )
+
+
+class EventEvidenceResponse(BaseModel):
+    """Canonical response model for GET /events/{event_id}/evidence (API-009)."""
+
+    event_id: str = Field(..., description="Canonical unique event identifier.")
+    context_evidence: list[ContextEvidence] = Field(
+        default_factory=list,
+        description="Contextual spatial/infrastructure evidence linked to event.",
+    )
+    reference_evidence: list[ReferenceEvidence] = Field(
+        default_factory=list,
+        description="Scientific reference evidence linked to event.",
     )
 
 

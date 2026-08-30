@@ -1,11 +1,13 @@
 """API request and response schemas."""
 
+from packages.schemas.intelligence import IntelligenceResult
 from services.api.schemas.detections import (
     DetectionPagination,
     DetectionsResponse,
 )
 from services.api.schemas.events import (
     EventDetailResponse,
+    EventEvidenceResponse,
     EventPagination,
     EventResponse,
     EventsResponse,
@@ -13,6 +15,11 @@ from services.api.schemas.events import (
     TimelineObservation,
 )
 from services.api.schemas.health import HealthResponse
+from services.api.schemas.layers import (
+    GeoJsonFeature,
+    GeoJsonFeatureCollection,
+    GeoJsonGeometry,
+)
 from services.api.schemas.readiness import (
     DependencyHealth,
     DependencyStatus,
@@ -35,11 +42,16 @@ __all__ = [
     "DetectionPagination",
     "DetectionsResponse",
     "EventDetailResponse",
+    "EventEvidenceResponse",
     "EventPagination",
     "EventResponse",
     "EventTimelineResponse",
     "EventsResponse",
+    "GeoJsonFeature",
+    "GeoJsonFeatureCollection",
+    "GeoJsonGeometry",
     "HealthResponse",
+    "IntelligenceResult",
     "ReadinessResponse",
     "SourceAvailabilityState",
     "SourceOperationalMode",

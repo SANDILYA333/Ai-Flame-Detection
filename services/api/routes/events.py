@@ -5,8 +5,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
+from packages.schemas.intelligence import IntelligenceResult
 from services.api.schemas.events import (
     EventDetailResponse,
+    EventEvidenceResponse,
     EventsResponse,
     EventTimelineResponse,
 )
@@ -88,3 +90,27 @@ def get_event(event_id: str) -> EventDetailResponse:
 def get_event_timeline(event_id: str) -> EventTimelineResponse:
     """Retrieve canonical event timeline."""
     return EventQueryService.get_event_timeline(event_id)
+
+
+@router.get(
+    "/{event_id}/evidence",
+    response_model=EventEvidenceResponse,
+    operation_id="get_event_evidence",
+    summary="Retrieve canonical thermal event evidence",
+    description="Returns scientific reference and contextual evidence.",
+)
+def get_event_evidence(event_id: str) -> EventEvidenceResponse:
+    """Retrieve canonical thermal event evidence."""
+    return EventQueryService.get_event_evidence(event_id)
+
+
+@router.get(
+    "/{event_id}/intelligence",
+    response_model=IntelligenceResult,
+    operation_id="get_event_intelligence",
+    summary="Retrieve canonical thermal event intelligence",
+    description="Returns intelligence inference result, calibration, and abstention.",
+)
+def get_event_intelligence(event_id: str) -> IntelligenceResult:
+    """Retrieve canonical thermal event intelligence."""
+    return EventQueryService.get_event_intelligence(event_id)
