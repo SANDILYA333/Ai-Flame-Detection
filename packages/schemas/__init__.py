@@ -51,6 +51,7 @@ from packages.schemas.ml import (
     GeneralizationExperimentResult,
     GeneralizationStudyReport,
     InferenceMode,
+    InferencePredictionResult,
     LabelConflictPolicy,
     LabelDecision,
     LabeledFeatureRecord,
@@ -74,6 +75,7 @@ from packages.schemas.ml import (
     TargetDefinition,
     TargetType,
     TargetUnit,
+    TrainingRunManifest,
 )
 from packages.schemas.source import PersistentSource
 
@@ -110,6 +112,7 @@ __all__ = [
     "GeneralizationExperimentResult",
     "GeneralizationStudyReport",
     "InferenceMode",
+    "InferencePredictionResult",
     "IntelligenceResult",
     "LabelConflictPolicy",
     "LabelDecision",
@@ -140,6 +143,7 @@ __all__ = [
     "TargetDefinition",
     "TargetType",
     "TargetUnit",
+    "TrainingRunManifest",
     "UncertaintyMetric",
     "UtcDatetime",
 ]

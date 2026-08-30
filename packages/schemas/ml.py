@@ -11,6 +11,8 @@ This module establishes the foundational contracts for:
 - Machine learning readiness assessment
 """
 
+import hashlib
+import json
 import math
 from enum import StrEnum
 from typing import Any
@@ -1251,19 +1253,35 @@ class ModelMetadata(BaseDomainModel):
         description="Type/architecture of model (e.g. MajorityClass, LogReg).",
     )
     model_version: str = Field(
-        ...,
+        default="v1.0.0",
         min_length=1,
         description="Semantic version of the model build.",
+    )
+    model_family: str | None = Field(
+        None,
+        description="High-level model family (e.g. Baseline, Tree, Linear).",
     )
     target_id: str = Field(
         ...,
         min_length=1,
         description="Target definition ID this model predicts.",
     )
+    target_version: str = Field(
+        default="target_v1.0.0",
+        description="Version of target definition.",
+    )
+    dataset_id: str = Field(
+        default="ds_supervised_v1.0.0",
+        description="Identifier of training dataset.",
+    )
     dataset_version: str = Field(
         ...,
         min_length=1,
         description="Dataset version used for training.",
+    )
+    dataset_hash: str | None = Field(
+        None,
+        description="SHA-256 hash of training dataset.",
     )
     feature_set_version: str = Field(
         ...,
@@ -1274,6 +1292,10 @@ class ModelMetadata(BaseDomainModel):
         ...,
         min_length=1,
         description="Label set version used.",
+    )
+    split_strategy: str | None = Field(
+        None,
+        description="Evaluation split strategy used.",
     )
     split_version: str = Field(
         ...,
@@ -1301,6 +1323,11 @@ class ModelMetadata(BaseDomainModel):
         default_factory=list,
         description="Ordered list of input feature names consumed by the model.",
     )
+    feature_dimensionality: int = Field(
+        default=0,
+        ge=0,
+        description="Total dimension of transformed feature input vector.",
+    )
     validation_metrics: dict[str, Any] = Field(
         default_factory=dict,
         description="Validation partition evaluation summary.",
@@ -1308,6 +1335,10 @@ class ModelMetadata(BaseDomainModel):
     test_metrics: dict[str, Any] = Field(
         default_factory=dict,
         description="Held-out test partition evaluation summary.",
+    )
+    artifact_hash: str | None = Field(
+        None,
+        description="SHA-256 content hash of artifact model state.",
     )
 
 
@@ -1330,6 +1361,79 @@ class ModelArtifact(BaseDomainModel):
         default_factory=list,
         description="Ordered list of predicted target classes.",
     )
+    sha256_hash: str | None = Field(
+        None,
+        description="Deterministic content hash of serialized parameters and state.",
+    )
+
+    def compute_content_hash(self) -> str:
+        """Compute deterministic SHA-256 hash of model parameters and preprocessor."""
+        state = {
+            "model_type": self.metadata.model_type,
+            "target_id": self.metadata.target_id,
+            "feature_set_version": self.metadata.feature_set_version,
+            "preprocessor_state": self.preprocessor_state,
+            "model_parameters": self.model_parameters,
+            "class_vocabulary": self.class_vocabulary,
+        }
+        json_bytes = json.dumps(state, sort_keys=True, ensure_ascii=True).encode(
+            "utf-8"
+        )
+        return hashlib.sha256(json_bytes).hexdigest()
+
+
+class TrainingRunManifest(BaseDomainModel):
+    """Immutable audit manifest capturing end-to-end training provenance."""
+
+    run_id: str = Field(..., description="Unique training run execution ID.")
+    model_id: str = Field(..., description="Target model identifier.")
+    model_type: str = Field(..., description="Model architecture type.")
+    model_version: str = Field(..., description="Model version string.")
+    dataset_id: str = Field(..., description="Dataset identifier.")
+    dataset_version: str = Field(..., description="Dataset version.")
+    dataset_hash: str | None = Field(None, description="SHA-256 hash of dataset.")
+    feature_set_version: str = Field(..., description="Feature set version.")
+    label_set_version: str = Field(..., description="Label set version.")
+    target_id: str = Field(..., description="Target specification ID.")
+    target_version: str = Field(default="target_v1.0.0", description="Target version.")
+    split_strategy: str = Field(..., description="Split strategy used.")
+    random_seed: int = Field(default=42, description="Deterministic random seed.")
+    hyperparameters: dict[str, Any] = Field(default_factory=dict)
+    train_record_count: int = Field(..., ge=0)
+    validation_record_count: int = Field(default=0, ge=0)
+    test_record_count: int = Field(default=0, ge=0)
+    validation_metrics: dict[str, Any] = Field(default_factory=dict)
+    test_metrics: dict[str, Any] = Field(default_factory=dict)
+    artifact_hash: str | None = Field(None, description="Content hash of artifact.")
+    created_at: UtcDatetime = Field(..., description="Run timestamp in UTC.")
+
+
+class InferencePredictionResult(BaseDomainModel):
+    """Structured inference output returned by MLInferenceEngine."""
+
+    entity_id: str = Field(..., description="Evaluated entity identifier.")
+    target_id: str = Field(..., description="Target specification ID.")
+    target_version: str = Field(..., description="Target version string.")
+    model_id: str = Field(..., description="Model identifier used.")
+    model_version: str = Field(..., description="Model version string.")
+    model_type: str = Field(..., description="Model architecture used.")
+    feature_set_version: str = Field(..., description="Feature set version.")
+    predicted_class: str = Field(..., description="Predicted class label.")
+    class_probabilities: dict[str, float] = Field(
+        default_factory=dict, description="Class probability distribution."
+    )
+    confidence: float = Field(
+        ..., ge=0.0, le=1.0, description="Highest class probability score."
+    )
+    is_abstained: bool = Field(
+        default=False, description="True if prediction was abstained."
+    )
+    abstention_reason: str | None = Field(
+        None, description="Reason code if prediction was abstained."
+    )
+    feature_count: int = Field(..., ge=0, description="Features evaluated.")
+    inference_timestamp: UtcDatetime = Field(..., description="Prediction timestamp.")
+    latency_ms: float = Field(default=0.0, ge=0.0, description="Latency in ms.")
 
 
 class AblationExperimentResult(BaseDomainModel):
