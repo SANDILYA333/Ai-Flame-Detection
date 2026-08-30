@@ -10,6 +10,7 @@ from packages.context.matching import (
     evaluate_temporal_validity,
 )
 from packages.context.models import ContextFeature, SpatialMatchRule
+from packages.context.pipeline import RealContextLabelingService
 from packages.context.providers import ContextProvider, InMemoryContextProvider
 from packages.context.service import (
     enrich_event_with_context,
@@ -21,6 +22,7 @@ __all__ = [
     "ContextFeature",
     "ContextProvider",
     "InMemoryContextProvider",
+    "RealContextLabelingService",
     "SpatialMatchRule",
     "build_context_evidence_from_feature",
     "build_not_found_evidence",

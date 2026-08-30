@@ -2,9 +2,9 @@
 
 ## Current Phase
 
--   **Phase:** Phase 4 — Machine Learning & Real-World Data Activation (ML-001 through ML-010)
--   **Status:** ML-001 through ML-009 (Phase-4 ML Baseline Foundation Frozen); ML-010 (Real-World Data Activation & NASA FIRMS Provenance) COMPLETE
--   **Implementation status:** ML-010 establishes the production-grade real data activation layer (`FirmsDataActivationService`), converting raw NASA FIRMS satellite observations into canonical `Detection` datasets (`ds_real_firms_v1.0.0`) with immutable raw byte hashes, spatial/temporal filtering, deduplication, quality control distributions, deterministic canonical dataset hashing, and secret auditing. Fully verified across 407 automated tests (0 lint, 0 type errors).
+-   **Phase:** Phase 4 — Machine Learning & Real-World Data Activation (ML-001 through ML-011)
+-   **Status:** ML-001 through ML-009 (Frozen Baseline Foundation); ML-010 (Real Data Ingestion); ML-011 (Real Event Construction & Source Tracking) COMPLETE
+-   **Implementation status:** ML-011 implements the deterministic physical aggregation and tracking layer (`RealEventConstructionService`, `RealThermalEventDataset`), grouping canonical FIRMS detections into spatiotemporally clustered `Event` objects and longitudinal `PersistentSource` entities with strict point-in-time anti-leakage guarantees. Fully verified across 413 automated tests (0 lint, 0 type errors).
 -   **UI:** Intentionally deferred
 
 ------------------------------------------------------------------------

@@ -84,7 +84,9 @@ In addition to the controlled benchmark fixture (`ds_supervised_v1.0.0`), the sy
 | :--- | :--- | :--- | :--- |
 | **`ds_supervised_v1.0.0`** | Controlled / Programmatic Benchmark Fixture | Programmatically synthesized multi-region event corpus ($N=100$) | Frozen baseline benchmark for ML-004 through ML-009 |
 | **`ds_real_firms_v1.0.0`** | Real Observational Satellite Dataset | NASA FIRMS (VIIRS 375m / MODIS 1km active fire detections) | Activated in ML-010; input for ML-011 event construction |
+| **`ds_real_events_v1.0.0`** | Real Thermal Event & Source Dataset | Spatiotemporally clustered events and persistent sources derived from `ds_real_firms_v1.0.0` | Activated in ML-011; input for ML-012 contextual enrichment |
 
 ### Invariant:
-> `ds_real_firms_v1.0.0` represents pure observational remote-sensing thermal anomaly detections. It does **NOT** constitute ground-truth fire classifications or facility labels. Multi-observation event clustering (ML-011) and reference label adjudication (ML-012) must be performed before training supervised models on real-world observations.
+> `ds_real_firms_v1.0.0` and `ds_real_events_v1.0.0` represent observational remote-sensing entities and spatiotemporal clusters. They do **NOT** constitute ground-truth fire classifications or facility labels. Reference label adjudication (ML-012) must be performed before training supervised models on real-world observations.
+
 

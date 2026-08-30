@@ -23,7 +23,11 @@ from packages.schemas.enums import (
     SnapshotAvailabilityState,
     SourceRole,
 )
-from packages.schemas.event import Event
+from packages.schemas.event import (
+    Event,
+    RealEnrichedEventDataset,
+    RealThermalEventDataset,
+)
 from packages.schemas.intelligence import (
     EvidenceCategoryState,
     EvidenceCompleteness,
@@ -131,6 +135,8 @@ __all__ = [
     "PhenomenonType",
     "ProvenanceReference",
     "ReadinessStatus",
+    "RealEnrichedEventDataset",
+    "RealThermalEventDataset",
     "ReferenceEvidence",
     "SnapshotAvailabilityState",
     "SourceRole",
