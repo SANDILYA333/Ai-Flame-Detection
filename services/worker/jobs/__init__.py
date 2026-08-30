@@ -36,6 +36,12 @@ from services.worker.jobs.repository import (
 )
 from services.worker.jobs.runner import SyncJobRunner
 from services.worker.jobs.state_machine import JobStateMachine
+from services.worker.jobs.worker import (
+    WorkerRunner,
+    WorkerStatus,
+    create_default_worker_registry,
+    get_default_worker_runner,
+)
 
 
 def create_default_job_registry() -> JobRegistry:
@@ -82,8 +88,12 @@ __all__ = [
     "PipelineRunStatus",
     "RedisJobQueue",
     "SyncJobRunner",
+    "WorkerRunner",
+    "WorkerStatus",
     "create_default_job_registry",
+    "create_default_worker_registry",
     "create_queue_message_from_job",
     "get_default_job_queue",
     "get_default_job_runner",
+    "get_default_worker_runner",
 ]
