@@ -54,7 +54,7 @@ def parse_firms_csv(
         list[Detection]: Deterministically ordered list of canonical detections.
 
     Raises:
-        ContractViolationError: If input is malformed, missing required headers, or invalid.
+        ContractViolationError: If input is malformed or invalid.
     """
     if not source_snapshot_id or not source_snapshot_id.strip():
         raise ContractViolationError(
@@ -133,7 +133,7 @@ def parse_firms_csv_with_report(
     product_type: str = "nrt",
     product_version: str = "v2.0",
 ) -> FirmsParseReport:
-    """Parse FIRMS CSV in batch report mode, collecting both valid detections and row errors.
+    """Parse FIRMS CSV in batch report mode collecting valid detections and errors.
 
     Args:
         csv_input: CSV content string, file Path, or readable text stream.
