@@ -5,10 +5,11 @@ group-aware, spatial, or temporal holdout splitting, audits split integrity, and
 materializes content-addressable SupervisedDataset containers.
 """
 
+from __future__ import annotations
+
 import hashlib
-from collections.abc import Sequence
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from packages.schemas.common import ProvenanceReference
 from packages.schemas.ml import (
@@ -27,11 +28,25 @@ from packages.schemas.ml import (
     SupervisedDataset,
     TargetDefinition,
 )
+from services.ml.features.builder import FeatureDatasetBuilder
+from services.ml.features.standard_set import (
+    STANDARD_FEATURE_VERSION,
+    get_standard_feature_registry,
+)
 from services.ml.labels.targets import get_standard_target_registry
 from services.ml.training.splits import (
     SplitAssignmentService,
     SplitIntegrityValidator,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from packages.data.firms.schemas import RealDetectionDataset
+    from packages.schemas.context import ContextEvidence
+    from packages.schemas.detection import Detection
+    from packages.schemas.event import Event, RealEnrichedEventDataset
+    from packages.schemas.source import PersistentSource
 
 
 class SupervisedDatasetBuilder:
@@ -42,6 +57,152 @@ class SupervisedDatasetBuilder:
         targets: dict[str, TargetDefinition] | None = None,
     ) -> None:
         self.targets = targets or get_standard_target_registry()
+
+    def build_from_real_enriched_dataset(
+        self,
+        enriched_dataset: RealEnrichedEventDataset,
+        detection_dataset: RealDetectionDataset,
+        split_strategy: SplitStrategy = SplitStrategy.FACILITY_HOLDOUT,
+        target_ids: Sequence[str] | None = None,
+        train_ratio: float = 0.70,
+        val_ratio: float = 0.15,
+        test_ratio: float = 0.15,
+        random_seed: int = 42,
+        dataset_id: str = "ds_real_supervised_v1.0.0",
+        dataset_version: str = "v1.0.0",
+        feature_set_version: str = STANDARD_FEATURE_VERSION,
+        label_set_version: str = "label_v1.0.0",
+        isolated_showcase_ids: Sequence[str] | None = None,
+        provenance: ProvenanceReference | None = None,
+    ) -> SupervisedDataset:
+        """Assemble a SupervisedDataset directly from real enriched observations.
+
+        Executes the canonical DATASET-002 bridge:
+        RealEnrichedEventDataset + RealDetectionDataset
+          -> FeatureDatasetBuilder (30 approved features as of T_pred)
+          -> SupervisedDatasetBuilder (reference labels & leakage-safe splitting)
+        """
+        active_target_ids = (
+            list(target_ids) if target_ids else ["target_industrial_segregation"]
+        )
+
+        # 1. Index member detections by detection_id
+        detections_by_id = {d.detection_id: d for d in detection_dataset.detections}
+
+        # 2. Map persistent sources by linked event IDs
+        source_by_event_id: dict[str, PersistentSource] = {}
+        for source in enriched_dataset.persistent_sources:
+            for ev_id in source.linked_event_ids:
+                source_by_event_id[ev_id] = source
+
+        # 3. Map context evidence per event
+        context_by_event_id: dict[str, list[ContextEvidence]] = {}
+        for c_item in enriched_dataset.context_evidence:
+            for ev in enriched_dataset.events:
+                if (
+                    c_item.distance_to_event_meters is not None
+                    and c_item.distance_to_event_meters <= 2500.0
+                ):
+                    context_by_event_id.setdefault(ev.event_id, []).append(c_item)
+
+        # 4. Build event tuples for FeatureDatasetBuilder
+        event_tuples: list[
+            tuple[
+                Event,
+                Sequence[Detection],
+                datetime,
+                Sequence[Event] | None,
+                PersistentSource | None,
+                Sequence[ContextEvidence] | None,
+            ]
+        ] = []
+        for ev in enriched_dataset.events:
+            member_dets: list[Detection] = [
+                detections_by_id[d_id]
+                for d_id in ev.detection_ids
+                if d_id in detections_by_id
+            ]
+            if not member_dets:
+                continue
+
+            as_of = ev.started_at
+            preceding: list[Event] = [
+                e
+                for e in enriched_dataset.events
+                if e.ended_at < ev.started_at and e.event_id != ev.event_id
+            ]
+            src = source_by_event_id.get(ev.event_id)
+            ctx_items: Sequence[ContextEvidence] = context_by_event_id.get(
+                ev.event_id, []
+            )
+
+            event_tuples.append(
+                (ev, member_dets, as_of, preceding, src, ctx_items)
+            )
+
+        # 5. Extract features using FeatureDatasetBuilder (FEAT-001 / FEAT-003)
+        feature_builder = FeatureDatasetBuilder(
+            registry=get_standard_feature_registry()
+        )
+        feature_dataset = feature_builder.extract_and_build_dataset(
+            dataset_id=f"feat_{dataset_id}",
+            dataset_version=dataset_version,
+            target_id=active_target_ids[0],
+            geographic_scope=enriched_dataset.study_area_id,
+            temporal_start=(
+                enriched_dataset.events[0].started_at
+                if enriched_dataset.events
+                else datetime.now(UTC)
+            ),
+            temporal_end=(
+                enriched_dataset.events[-1].ended_at
+                if enriched_dataset.events
+                else datetime.now(UTC)
+            ),
+            split_strategy=split_strategy,
+            event_tuples=event_tuples,
+            feature_set_version=feature_set_version,
+            label_set_version=label_set_version,
+            isolated_showcase_ids=isolated_showcase_ids,
+            provenance=provenance
+            or ProvenanceReference(
+                source=enriched_dataset.dataset_id,
+                source_snapshot_id=enriched_dataset.dataset_version,
+            ),
+        )
+
+        # 6. Index reference labels by target_id
+        labels_by_target: dict[str, Sequence[LabelDecision]] = {}
+        raw_labels_by_target: dict[str, list[LabelDecision]] = {}
+        custom_exclusions: dict[str, ExclusionReason] = {}
+
+        for lbl in enriched_dataset.reference_labels:
+            if lbl.target_id in active_target_ids:
+                raw_labels_by_target.setdefault(lbl.target_id, []).append(lbl)
+                # Enforce Missing != Negative and train-eligibility
+                if not lbl.is_train_eligible or lbl.assigned_class == "unknown":
+                    custom_exclusions[lbl.entity_id] = (
+                        ExclusionReason.CONFLICTING_LABEL_EVIDENCE
+                        if lbl.has_conflicting_evidence
+                        else ExclusionReason.INSUFFICIENT_LABEL_EVIDENCE
+                    )
+
+        for tid, l_list in raw_labels_by_target.items():
+            labels_by_target[tid] = l_list
+
+        # 7. Assemble final SupervisedDataset
+        return self.build_supervised_dataset(
+            feature_dataset=feature_dataset,
+            label_decisions_by_target=labels_by_target,
+            split_strategy=split_strategy,
+            train_ratio=train_ratio,
+            val_ratio=val_ratio,
+            test_ratio=test_ratio,
+            random_seed=random_seed,
+            isolated_showcase_ids=isolated_showcase_ids,
+            custom_exclusions=custom_exclusions,
+            provenance=provenance,
+        )
 
     def build_supervised_dataset(
         self,

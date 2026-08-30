@@ -79,6 +79,29 @@ class Settings(BaseSettings):
         description="Secret key for signing and operational tokens",
     )
 
+    # CORS Configuration
+    CORS_ORIGINS: list[str] = Field(
+        default=[
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:5173",
+        ],
+        description="Allowed CORS origin URLs",
+    )
+    CORS_ALLOW_CREDENTIALS: bool = Field(
+        default=True,
+        description="Whether to support credentials for cross-origin requests",
+    )
+    CORS_ALLOW_METHODS: list[str] = Field(
+        default=["*"],
+        description="Allowed HTTP methods for CORS requests",
+    )
+    CORS_ALLOW_HEADERS: list[str] = Field(
+        default=["*"],
+        description="Allowed HTTP headers for CORS requests",
+    )
+
     # Database Configuration (PostgreSQL + PostGIS)
     POSTGRES_DB: str = Field(
         default="sih26162",
