@@ -24,6 +24,7 @@ from services.ml.features.standard_set import (
     STANDARD_FEATURE_VERSION,
     get_standard_feature_registry,
 )
+from services.ml.inference.engine import MLInferenceEngine
 from services.ml.labels.constructor import LabelConstructor
 from services.ml.labels.dataset import SupervisedDatasetBuilder
 from services.ml.labels.targets import (
@@ -83,6 +84,7 @@ __all__ = [
     "LeakageAuditor",
     "LeakageViolation",
     "LogisticRegressionClassifier",
+    "MLInferenceEngine",
     "MLReadinessAuditor",
     "MLTrainingPipeline",
     "MajorityClassClassifier",
