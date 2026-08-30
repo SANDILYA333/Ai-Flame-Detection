@@ -122,10 +122,7 @@ def test_dataset_002_real_supervised_dataset_assembly(
             assert rec.split_partition in valid_partitions
         else:
             excluded_count += 1
-            assert (
-                rec.exclusion_reason
-                == ExclusionReason.INSUFFICIENT_LABEL_EVIDENCE
-            )
+            assert rec.exclusion_reason == ExclusionReason.INSUFFICIENT_LABEL_EVIDENCE
             assert rec.row_status == DatasetRowStatus.EXCLUDED
 
     assert train_eligible_count == 3
