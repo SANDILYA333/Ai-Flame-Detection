@@ -115,3 +115,7 @@ Thumbs.db
 !.vscode/extensions.json
 .env.example
 stat-index.json
+# Raw large archives
+sri/data/raw_thermal/
+*.zip
+
