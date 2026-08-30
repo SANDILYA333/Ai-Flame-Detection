@@ -88,9 +88,7 @@ def test_get_events_classification_filter() -> None:
 
 def test_get_events_status_filter() -> None:
     """Test filtering by status (persistence state)."""
-    response = client.get(
-        "/events", params={"status": "CANDIDATE_PERSISTENT_SOURCE"}
-    )
+    response = client.get("/events", params={"status": "CANDIDATE_PERSISTENT_SOURCE"})
     assert response.status_code == 200
     events = response.json()["events"]
     for ev in events:
