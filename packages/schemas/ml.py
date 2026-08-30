@@ -90,6 +90,30 @@ class FeatureType(StrEnum):
     COUNT = "COUNT"
 
 
+class FeatureGroup(StrEnum):
+    """Logical grouping of features for ablation studies and provenance."""
+
+    THERMAL_CORE = "THERMAL_CORE"
+    TEMPORAL_HISTORY = "TEMPORAL_HISTORY"
+    PERSISTENCE_SOURCE = "PERSISTENCE_SOURCE"
+    SPATIAL_CONTEXT = "SPATIAL_CONTEXT"
+    LAND_COVER = "LAND_COVER"
+    ENVIRONMENTAL_WEATHER = "ENVIRONMENTAL_WEATHER"
+    SATELLITE_OPTICAL = "SATELLITE_OPTICAL"
+
+
+class FeatureEligibilityStatus(StrEnum):
+    """Eligibility classification for candidate features in ML models."""
+
+    APPROVED = "APPROVED"
+    CONTEXT_ONLY = "CONTEXT_ONLY"
+    LABEL_REFERENCE = "LABEL_REFERENCE"
+    VALIDATION_ONLY = "VALIDATION_ONLY"
+    OPTIONAL = "OPTIONAL"
+    REJECTED = "REJECTED"
+    BLOCKED = "BLOCKED"
+
+
 class LeakageRisk(StrEnum):
     """Classification of potential data leakage risk for a feature."""
 
@@ -355,6 +379,14 @@ class FeatureDefinition(BaseDomainModel):
         ...,
         description="Data type and physical representation of feature.",
     )
+    feature_group: FeatureGroup = Field(
+        default=FeatureGroup.THERMAL_CORE,
+        description="Logical grouping of feature for ablation studies.",
+    )
+    eligibility_status: FeatureEligibilityStatus = Field(
+        default=FeatureEligibilityStatus.APPROVED,
+        description="Eligibility status (e.g. APPROVED, REJECTED, BLOCKED).",
+    )
     source_entity: str = Field(
         ...,
         min_length=1,
@@ -382,6 +414,22 @@ class FeatureDefinition(BaseDomainModel):
         default=True,
         description="Whether feature is permitted in training datasets.",
     )
+    is_model_input: bool = Field(
+        default=True,
+        description="Whether feature is a direct model input (False for metadata).",
+    )
+    spatial_semantics: str | None = Field(
+        None,
+        description="Spatial aggregation and alignment semantics.",
+    )
+    temporal_semantics: str | None = Field(
+        None,
+        description="Temporal aggregation and cutoff semantics.",
+    )
+    source_version: str | None = Field(
+        None,
+        description="Version or vintage of upstream source dataset.",
+    )
     leakage_risk: LeakageRisk = Field(
         default=LeakageRisk.UNKNOWN,
         description="Assessment of leakage vulnerability.",
@@ -402,6 +450,69 @@ class FeatureDefinition(BaseDomainModel):
         if not math.isfinite(v):
             raise ValueError("availability_lag_seconds must be finite.")
         return v
+
+
+class FeatureRecord(BaseDomainModel):
+    """Canonical feature row representing an individual prediction sample."""
+
+    entity_id: str = Field(
+        ...,
+        min_length=1,
+        description="Unique identifier of prediction entity (e.g. event_id).",
+    )
+    prediction_unit: TargetUnit = Field(
+        default=TargetUnit.EVENT,
+        description="Unit of prediction for this feature row.",
+    )
+    as_of_time: UtcDatetime = Field(
+        ...,
+        description="Strict prediction cutoff timestamp in UTC.",
+    )
+    event_id: str | None = Field(
+        None,
+        description="Event ID for group-holdout splitting.",
+    )
+    source_id: str | None = Field(
+        None,
+        description="Persistent Source ID for group-holdout splitting.",
+    )
+    features: dict[str, float | int | str | bool | None] = Field(
+        default_factory=dict,
+        description="Dictionary of engineered feature name to value.",
+    )
+    missingness_flags: dict[str, bool] = Field(
+        default_factory=dict,
+        description="Explicit boolean missingness indicator for each feature.",
+    )
+    provenance: ProvenanceReference | None = Field(
+        None,
+        description="Lineage reference linking upstream observations/records.",
+    )
+
+
+class FeatureDataset(BaseDomainModel):
+    """Complete, versioned, and content-addressable feature dataset."""
+
+    manifest: "DatasetManifest" = Field(
+        ...,
+        description="Dataset manifest containing version, hash, and metadata.",
+    )
+    records: list[FeatureRecord] = Field(
+        default_factory=list,
+        description="List of feature records in deterministic order.",
+    )
+    feature_definitions: list[FeatureDefinition] = Field(
+        default_factory=list,
+        description="List of feature definitions present in this dataset.",
+    )
+    feature_groups: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description="Mapping of feature group name to list of feature names.",
+    )
+    summary_statistics: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Quality and missingness diagnostics across feature records.",
+    )
 
 
 class DatasetManifest(BaseDomainModel):
