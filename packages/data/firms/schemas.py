@@ -1,5 +1,5 @@
-"""Raw NASA FIRMS source record schemas, request models, and capture objects."""
-
+import hashlib
+import json
 import math
 import re
 from enum import StrEnum
@@ -13,7 +13,7 @@ from pydantic import (
     model_validator,
 )
 
-from packages.schemas.common import BaseDomainModel, UtcDatetime
+from packages.schemas.common import BaseDomainModel, BoundingBox, UtcDatetime
 from packages.schemas.detection import Detection
 from packages.schemas.enums import SnapshotAvailabilityState
 
@@ -363,3 +363,185 @@ class FirmsParseReport(BaseDomainModel):
     error_count: int = Field(..., ge=0)
     valid_detections: list[Detection] = Field(default_factory=list)
     row_errors: list[FirmsRowError] = Field(default_factory=list)
+
+
+class RealDataAcquisitionManifest(BaseDomainModel):
+    """Provenance and quality manifest for real observational satellite data."""
+
+    dataset_id: str = Field(
+        default="ds_real_firms_v1.0.0",
+        min_length=1,
+        description="Unique identifier for the observational dataset.",
+    )
+    dataset_version: str = Field(
+        default="v1.0.0",
+        min_length=1,
+        description="Semantic version of the observational dataset.",
+    )
+    source_name: str = Field(
+        default="NASA_FIRMS",
+        description="Originating observational data system.",
+    )
+    source_product: str = Field(
+        ...,
+        description="NASA FIRMS product identifier (e.g. VIIRS_SNPP_NRT, MODIS_NRT).",
+    )
+    sensor: str = Field(
+        ...,
+        description="Observing satellite sensor platform (e.g. VIIRS, MODIS).",
+    )
+    study_area_id: str = Field(
+        ...,
+        description="Identifier of study area (e.g. jamnagar_kutch).",
+    )
+    study_area_name: str = Field(
+        ...,
+        description="Human-readable study area title.",
+    )
+    bounding_box: BoundingBox = Field(
+        ...,
+        description="Geographic WGS-84 spatial bounding envelope.",
+    )
+    requested_start_date: str = Field(
+        ...,
+        description="Requested temporal window start date (YYYY-MM-DD).",
+    )
+    requested_end_date: str = Field(
+        ...,
+        description="Requested temporal window end date (YYYY-MM-DD).",
+    )
+    actual_coverage_start: UtcDatetime | None = Field(
+        None,
+        description="Earliest observation timestamp among canonical detections.",
+    )
+    actual_coverage_end: UtcDatetime | None = Field(
+        None,
+        description="Latest observation timestamp among canonical detections.",
+    )
+    raw_record_count: int = Field(
+        ...,
+        ge=0,
+        description="Total raw CSV observation rows parsed from source.",
+    )
+    valid_record_count: int = Field(
+        ...,
+        ge=0,
+        description="Total structurally valid observation rows.",
+    )
+    invalid_record_count: int = Field(
+        default=0,
+        ge=0,
+        description="Total malformed or unparseable rows rejected.",
+    )
+    duplicate_record_count: int = Field(
+        default=0,
+        ge=0,
+        description="Total exact duplicate rows removed during ingestion.",
+    )
+    spatial_excluded_count: int = Field(
+        default=0,
+        ge=0,
+        description="Records filtered out due to location outside study area.",
+    )
+    temporal_excluded_count: int = Field(
+        default=0,
+        ge=0,
+        description="Records filtered out due to timestamp outside window.",
+    )
+    canonical_record_count: int = Field(
+        ...,
+        ge=0,
+        description="Final count of canonical Detection records in dataset.",
+    )
+    raw_file_hashes: list[str] = Field(
+        default_factory=list,
+        description="SHA-256 hashes of immutable raw input files/captures.",
+    )
+    canonical_dataset_hash: str = Field(
+        ...,
+        min_length=64,
+        max_length=64,
+        description="Deterministic SHA-256 hash of sorted canonical detections.",
+    )
+    missingness_summary: dict[str, int] = Field(
+        default_factory=dict,
+        description="Count of missing/null values for optional measurement fields.",
+    )
+    sensor_distribution: dict[str, int] = Field(
+        default_factory=dict,
+        description="Breakdown of detections by sensor instrument.",
+    )
+    satellite_distribution: dict[str, int] = Field(
+        default_factory=dict,
+        description="Breakdown of detections by observing satellite.",
+    )
+    day_night_distribution: dict[str, int] = Field(
+        default_factory=dict,
+        description="Breakdown of detections by day/night observation flag.",
+    )
+    quality_control_passed: bool = Field(
+        default=True,
+        description="Whether dataset passed quality and consistency audit.",
+    )
+    created_at: UtcDatetime = Field(
+        ...,
+        description="Timestamp when dataset and manifest were compiled in UTC.",
+    )
+    ingestion_version: str = Field(
+        default="v1.0.0",
+        description="Version of ingestion software pipeline.",
+    )
+
+
+class RealDetectionDataset(BaseDomainModel):
+    """Canonical container for real observational satellite detection records."""
+
+    manifest: RealDataAcquisitionManifest = Field(
+        ...,
+        description="Provenance and quality manifest.",
+    )
+    detections: list[Detection] = Field(
+        default_factory=list,
+        description="Deterministically ordered canonical Detection domain objects.",
+    )
+
+    def compute_canonical_hash(self) -> str:
+        """Compute deterministic SHA-256 hash across sorted detection records."""
+        sorted_dets = sorted(
+            self.detections,
+            key=lambda d: (
+                d.acquired_at.isoformat(),
+                d.geometry.latitude,
+                d.geometry.longitude,
+                d.satellite,
+                d.detection_id,
+            ),
+        )
+        canonical_rows = [
+            {
+                "detection_id": d.detection_id,
+                "source": d.source,
+                "source_snapshot_id": d.source_snapshot_id,
+                "acquired_at": d.acquired_at.isoformat(),
+                "latitude": round(d.geometry.latitude, 6),
+                "longitude": round(d.geometry.longitude, 6),
+                "satellite": d.satellite,
+                "instrument": d.instrument,
+                "product_type": d.product_type,
+                "product_version": d.product_version,
+                "raw_hash": d.raw_hash,
+                "frp_mw": round(d.frp_mw, 4) if d.frp_mw is not None else None,
+                "brightness_ti4_k": (
+                    round(d.brightness_ti4_k, 2)
+                    if d.brightness_ti4_k is not None
+                    else None
+                ),
+                "confidence": d.confidence,
+                "day_night": d.day_night.value if d.day_night else None,
+            }
+            for d in sorted_dets
+        ]
+        json_bytes = json.dumps(
+            canonical_rows, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+        ).encode("utf-8")
+        return hashlib.sha256(json_bytes).hexdigest()
