@@ -1,0 +1,35 @@
+{
+  "type": "FeatureCollection",
+  "name": "malformed_geometries",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "missing_geom",
+      "properties": {
+        "name": "Missing Geometry Object"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "unsupported_type",
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": []
+      },
+      "properties": {
+        "name": "Unsupported Type"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "empty_polygon",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": []
+      },
+      "properties": {
+        "name": "Empty Polygon"
+      }
+    }
+  ]
+}

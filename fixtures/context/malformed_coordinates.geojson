@@ -1,0 +1,39 @@
+{
+  "type": "FeatureCollection",
+  "name": "malformed_coordinates",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "bad_lat_1",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [70.0, 95.0]
+      },
+      "properties": {
+        "name": "Latitude out of bounds"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "bad_lon_2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [200.0, 22.0]
+      },
+      "properties": {
+        "name": "Longitude out of bounds"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "bad_type_3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": ["invalid_lon", "invalid_lat"]
+      },
+      "properties": {
+        "name": "Non-numeric coordinates"
+      }
+    }
+  ]
+}
