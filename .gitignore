@@ -115,3 +115,4 @@ Thumbs.db
 !.vscode/extensions.json
 .env.example
 stat-index.json
+graphify-out/cache
