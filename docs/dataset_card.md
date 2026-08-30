@@ -73,3 +73,18 @@ The dataset provides 4 leakage-safe partition strategies evaluated by `SplitInte
 - **Content Addressability**: Deterministic canonical SHA-256 content hashing across sorted records.
 - **Deduplication Audit**: Pre-split auditing for duplicate entity IDs and space-time collision duplicates.
 - **Dataset Manifest**: Versioned `DatasetManifest` with `split_strategy`, `feature_set_version`, `label_set_version`, bounding box scope, and git commit provenance.
+
+---
+
+## 6. Real Observational Dataset Specification (ML-010)
+
+In addition to the controlled benchmark fixture (`ds_supervised_v1.0.0`), the system provides the real observational data activation layer:
+
+| Dataset Identifier | Nature of Dataset | Originating Sources | Status & Scope |
+| :--- | :--- | :--- | :--- |
+| **`ds_supervised_v1.0.0`** | Controlled / Programmatic Benchmark Fixture | Programmatically synthesized multi-region event corpus ($N=100$) | Frozen baseline benchmark for ML-004 through ML-009 |
+| **`ds_real_firms_v1.0.0`** | Real Observational Satellite Dataset | NASA FIRMS (VIIRS 375m / MODIS 1km active fire detections) | Activated in ML-010; input for ML-011 event construction |
+
+### Invariant:
+> `ds_real_firms_v1.0.0` represents pure observational remote-sensing thermal anomaly detections. It does **NOT** constitute ground-truth fire classifications or facility labels. Multi-observation event clustering (ML-011) and reference label adjudication (ML-012) must be performed before training supervised models on real-world observations.
+
