@@ -4,13 +4,23 @@
 - **Model Name:** SIH26162 Thermal Anomaly Baseline Suite
 - **Model Version:** `v1.0.0`
 - **Release Date:** 2026-08-30
-- **Milestone:** ML-004 to ML-006 (Phase 4 — Baseline Model Training, Statistical Formalization & Tree-Based Benchmarks)
+- **Milestone:** ML-004 to ML-009 (Phase 4 — Baseline Training, Tree Models, Ablation, Generalization & Phase-4 Freeze)
 - **Architectures Included:**
   1. `MajorityClassClassifier` (B0 — Empirical Class Prior Baseline)
   2. `DeterministicContextualClassifier` (B2 — Contextual Distance Heuristic Baseline)
   3. `LogisticRegressionClassifier` (B3 — Multinomial Softmax Linear Baseline with L2 Regularization)
   4. `DecisionTreeClassifier` (B4 — Nonlinear Multi-Class CART Decision Tree with Gini Impurity Splitting)
   5. `RandomForestClassifier` (B4 — Bagged Tree Ensemble with Feature Subsampling)
+
+---
+
+## Inference Contract & Runtime Engine (ML-009)
+- **Inference Runtime Engine:** [MLInferenceEngine](file:///home/kafka/Coding/SIH-Hackathon/services/ml/inference/engine.py)
+- **Model Registry & Persistence:** [ModelRegistry](file:///home/kafka/Coding/SIH-Hackathon/services/ml/models/registry.py)
+- **Structured Prediction Contract:** [InferencePredictionResult](file:///home/kafka/Coding/SIH-Hackathon/packages/schemas/ml.py)
+- **Content Hashing:** Every model artifact embeds a deterministic SHA-256 content hash verified upon deserialization to prevent parameter tampering or file corruption.
+- **Reload Invariance:** 100% numerically identical output across serialize $\to$ deserialize cycles ($\Delta p = 0.0000$).
+- **Abstention Support:** Wired to `AbstentionDecisionEngine` to evaluate confidence cutoffs and evidence completeness thresholds.
 
 ---
 
@@ -68,7 +78,7 @@
 3. **Label-Shuffle Target Leakage Test:**
    - Evaluated by randomly permuting training labels while maintaining feature distributions.
    - Validation performance collapses to empirical prior / chance level, proving that model predictions reflect genuine feature relationships rather than memorization or target leakage.
-4. **Serialization & Reload Invariance:**
+4. **Serialization & Reload Invariance (ML-009):**
    - Model artifacts serialized to JSON via [ModelRegistry](file:///home/kafka/Coding/SIH-Hackathon/services/ml/models/registry.py) are reloaded and verified.
    - Predictions and output probability vectors on held-out samples match 100% identically across serialize/deserialize cycles.
 5. **Secret Leak Audit:**
@@ -76,8 +86,19 @@
 
 ---
 
-## Scientific Limitations & Ethical Guardrails
-- **Controlled Benchmark Status:** High benchmark scores are measured on the controlled benchmark fixture (`ds_supervised_v1.0.0`) and do not constitute physical field-verified ground truth.
-- **Proxy Agreement vs. Ground Truth:** Supervised metrics reflect agreement with Tier A/B/C operational proxy labels constructed in ML-003. High classification accuracy on proxy labels does not substitute for empirical field validation.
-- **Single-Pass Test Partitioning:** Benchmark metrics on the held-out `TEST` partition are evaluated only once at pipeline execution time to prevent overfitting on the test distribution.
+## Scientific Limitations & Rigorous Verification Boundaries
+
+### Verified Engineering & Methodological Capabilities:
+- Reproducible end-to-end training and inference pipelines.
+- Leakage-safe preprocessing fitted strictly on training partitions.
+- Exact reload invariance across all 5 model architectures.
+- Deterministic predictions and point-in-time feature extraction.
+- High classification accuracy on the controlled benchmark fixture.
+- Spatial and temporal robustness under controlled holdouts.
+
+### Explicitly Not Established (Scientific Boundaries):
+- **Real-World Operational Accuracy:** High benchmark scores are measured on the controlled programmatic fixture (`ds_supervised_v1.0.0`) with operational proxy labels and do not constitute physical field-verified ground truth.
+- **Cross-Sensor Transferability:** Single-sensor (`VIIRS`) spine in the current benchmark cannot validate transferability to MODIS, SLSTR, or Landsat thermal observations.
+- **Unmapped Geographic Generalization:** Performance on unmapped industrial installations across broader Indian geography has not yet been field-validated.
+- **Production Deployment Readiness:** Engineering readiness of model artifacts is not equivalent to unrestricted operational production readiness.
 
