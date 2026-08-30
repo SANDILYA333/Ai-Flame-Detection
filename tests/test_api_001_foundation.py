@@ -120,9 +120,7 @@ class TestApi001Foundation:
         expected_origin = "https://fireintel.example.com"
         assert cors_resp.headers.get("access-control-allow-origin") == expected_origin
 
-    def test_no_secret_leakage(
-        self, client: TestClient, test_app: FastAPI
-    ) -> None:
+    def test_no_secret_leakage(self, client: TestClient, test_app: FastAPI) -> None:
         """TEST 7: No secrets exposed in health, headers, or OpenAPI schema."""
         health_resp = client.get("/health")
         body_text = health_resp.text

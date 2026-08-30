@@ -43,9 +43,7 @@ def client(test_app: FastAPI) -> TestClient:
 class TestApi004SourceStatus:
     """Test suite for API-004 /sources/status endpoint and provider metadata."""
 
-    def test_sources_status_endpoint_and_schema(
-        self, client: TestClient
-    ) -> None:
+    def test_sources_status_endpoint_and_schema(self, client: TestClient) -> None:
         """TEST 1: GET /sources/status returns 200 OK and conforms to schema."""
         response = client.get("/sources/status")
         assert response.status_code == 200
@@ -89,9 +87,7 @@ class TestApi004SourceStatus:
         assert firms["status"] == SourceAvailabilityState.OFFLINE_ONLY.value
         assert firms["details"]["has_map_key"] is False
 
-    def test_sources_status_all_providers_and_roles(
-        self, client: TestClient
-    ) -> None:
+    def test_sources_status_all_providers_and_roles(self, client: TestClient) -> None:
         """TEST 4: All registered context and observation providers are listed."""
         response = client.get("/sources/status")
         assert response.status_code == 200

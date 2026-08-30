@@ -136,9 +136,7 @@ class SupervisedDatasetBuilder:
                 ev.event_id, []
             )
 
-            event_tuples.append(
-                (ev, member_dets, as_of, preceding, src, ctx_items)
-            )
+            event_tuples.append((ev, member_dets, as_of, preceding, src, ctx_items))
 
         # 5. Extract features using FeatureDatasetBuilder (FEAT-001 / FEAT-003)
         feature_builder = FeatureDatasetBuilder(

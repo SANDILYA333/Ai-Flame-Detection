@@ -67,17 +67,13 @@ class TestApi002Readiness:
             assert validated.service == "sih26162-api"
             assert validated.version == "0.1.0"
             assert validated.environment == AppEnvironment.TEST.value
-            assert (
-                validated.dependencies["database"].status
-                == DependencyStatus.READY
-            )
+            assert validated.dependencies["database"].status == DependencyStatus.READY
             assert (
                 validated.dependencies["model_registry"].status
                 == DependencyStatus.READY
             )
             assert (
-                validated.dependencies["configuration"].status
-                == DependencyStatus.READY
+                validated.dependencies["configuration"].status == DependencyStatus.READY
             )
 
     def test_readiness_database_unavailable(self, client: TestClient) -> None:
@@ -159,10 +155,7 @@ class TestApi002Readiness:
         result = ReadinessCheckService.evaluate_readiness(settings)
         assert isinstance(result, ReadinessResponse)
         assert result.status == DependencyStatus.UNAVAILABLE
-        assert (
-            result.dependencies["database"].status
-            == DependencyStatus.UNAVAILABLE
-        )
+        assert result.dependencies["database"].status == DependencyStatus.UNAVAILABLE
         assert "connected" in result.dependencies["database"].details
 
     def test_openapi_documents_ready_endpoint(self, client: TestClient) -> None:

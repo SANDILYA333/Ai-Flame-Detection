@@ -38,9 +38,7 @@ def client(test_app: FastAPI) -> TestClient:
 class TestApi003Version:
     """Test suite for API-003 /version endpoint and contract metadata."""
 
-    def test_version_endpoint_status_and_schema(
-        self, client: TestClient
-    ) -> None:
+    def test_version_endpoint_status_and_schema(self, client: TestClient) -> None:
         """TEST 1: GET /version returns HTTP 200 and conforms to VersionResponse."""
         response = client.get("/version")
         assert response.status_code == 200
@@ -86,9 +84,7 @@ class TestApi003Version:
         assert "SECRET_KEY" not in body_text
         assert "sih_dev_password" not in body_text
 
-    def test_openapi_documents_version_endpoint(
-        self, client: TestClient
-    ) -> None:
+    def test_openapi_documents_version_endpoint(self, client: TestClient) -> None:
         """TEST 5: /openapi.json contains /version with 200 response."""
         resp = client.get("/openapi.json")
         assert resp.status_code == 200

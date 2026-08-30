@@ -1,6 +1,7 @@
 """Application service for data source status and capabilities (API-004)."""
 
 from packages.config.settings import Settings
+from packages.errors import ErrorCode, NotFoundError
 from packages.schemas.enums import SourceRole
 from services.api.schemas.sources import (
     SourceAvailabilityState,
@@ -109,3 +110,15 @@ class SourceStatusService:
             environment=settings.ENVIRONMENT.value,
             sources=sources,
         )
+
+    @classmethod
+    def get_source(cls, settings: Settings, source_id: str) -> SourceStatusItem:
+        """Retrieve operational availability metadata for a specific source."""
+        all_sources = cls.get_sources_status(settings).sources
+        target_source = next((s for s in all_sources if s.source_id == source_id), None)
+        if target_source is None:
+            raise NotFoundError(
+                message=f"Source '{source_id}' not found.",
+                code=ErrorCode.RESOURCE_NOT_FOUND,
+            )
+        return target_source
