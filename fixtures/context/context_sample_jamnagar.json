@@ -12,7 +12,7 @@
       "provider": "osm",
       "dataset_name": "planet_osm_polygon",
       "dataset_version": "2026-08-01",
-      "context_type": "refinery",
+      "context_type": "industrial",
       "geometry": {
         "latitude": 22.4502,
         "longitude": 70.0512
@@ -37,7 +37,7 @@
       "provider": "wri",
       "dataset_name": "global_power_plant_database",
       "dataset_version": "v1.3.0",
-      "context_type": "power_plant",
+      "context_type": "power",
       "geometry": {
         "latitude": 22.4550,
         "longitude": 70.0550
@@ -57,7 +57,7 @@
       "provider": "gem",
       "dataset_name": "global_gas_flaring_tracker",
       "dataset_version": "2026.1",
-      "context_type": "industrial_site",
+      "context_type": "oil_gas",
       "geometry": {
         "latitude": 22.4506,
         "longitude": 70.0516
@@ -76,7 +76,7 @@
       "provider": "osm",
       "dataset_name": "planet_osm_polygon",
       "dataset_version": "2026-08-01",
-      "context_type": "refinery",
+      "context_type": "industrial",
       "geometry": {
         "latitude": 22.4800,
         "longitude": 70.1200
@@ -100,7 +100,7 @@
       "provider": "landcover",
       "dataset_name": "dynamic_world_v1",
       "dataset_version": "2026-08-01",
-      "context_type": "cropland",
+      "context_type": "agricultural",
       "geometry": {
         "latitude": 22.5804,
         "longitude": 70.2003
@@ -124,7 +124,7 @@
       "provider": "osm",
       "dataset_name": "planet_osm_polygon",
       "dataset_version": "2026-08-01",
-      "context_type": "industrial_site",
+      "context_type": "industrial",
       "geometry": {
         "latitude": 22.4500,
         "longitude": 70.0500

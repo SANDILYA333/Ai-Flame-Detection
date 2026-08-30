@@ -303,7 +303,7 @@ class RealThermalEventDataset(BaseDomainModel):
 
 
 class RealEnrichedEventDataset(BaseDomainModel):
-    """Canonical container for contextually enriched events and reference labels (ML-012)."""
+    """Container for contextually enriched events & reference labels (ML-012)."""
 
     dataset_id: str = Field(
         default="ds_real_enriched_v1.0.0",
@@ -327,7 +327,7 @@ class RealEnrichedEventDataset(BaseDomainModel):
     )
     source_event_dataset_id: str = Field(
         ...,
-        description="Originating thermal event dataset ID (e.g. ds_real_events_v1.0.0).",
+        description="Originating thermal event dataset ID (ds_real_events_v1.0.0).",
     )
     source_event_dataset_hash: str = Field(
         ...,
@@ -379,7 +379,7 @@ class RealEnrichedEventDataset(BaseDomainModel):
         ...,
         min_length=64,
         max_length=64,
-        description="Deterministic SHA-256 hash across sorted events, context, and labels.",
+        description="Deterministic SHA-256 hash across events, context, and labels.",
     )
     data_status: str = Field(
         default="OFFLINE_FIXTURE",
@@ -395,7 +395,7 @@ class RealEnrichedEventDataset(BaseDomainModel):
     )
 
     def compute_canonical_hash(self) -> str:
-        """Compute deterministic SHA-256 hash across sorted events, context, and labels."""
+        """Compute canonical SHA-256 hash across events, context, and labels."""
         import hashlib
         import json
 
@@ -431,7 +431,7 @@ class RealEnrichedEventDataset(BaseDomainModel):
         )
         sorted_labels = sorted(
             self.reference_labels,
-            key=lambda l: (l.target_id, l.entity_id, l.decision_id),
+            key=lambda lbl: (lbl.target_id, lbl.entity_id, lbl.decision_id),
         )
 
         canonical_events = [
@@ -474,16 +474,16 @@ class RealEnrichedEventDataset(BaseDomainModel):
 
         canonical_labels = [
             {
-                "decision_id": l.decision_id,
-                "target_id": l.target_id,
-                "entity_id": l.entity_id,
-                "assigned_class": l.assigned_class,
-                "label_tier": l.label_tier.value,
-                "confidence_score": round(l.confidence_score, 4),
-                "has_conflicting_evidence": l.has_conflicting_evidence,
-                "is_train_eligible": l.is_train_eligible,
+                "decision_id": dec.decision_id,
+                "target_id": dec.target_id,
+                "entity_id": dec.entity_id,
+                "assigned_class": dec.assigned_class,
+                "label_tier": dec.label_tier.value,
+                "confidence_score": round(dec.confidence_score, 4),
+                "has_conflicting_evidence": dec.has_conflicting_evidence,
+                "is_train_eligible": dec.is_train_eligible,
             }
-            for l in sorted_labels
+            for dec in sorted_labels
         ]
 
         payload = {

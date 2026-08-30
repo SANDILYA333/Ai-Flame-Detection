@@ -1,18 +1,17 @@
-"""Real-Data Contextual Enrichment & Reference Label Adjudication Service (ML-012).
+"""Real-Data Contextual Enrichment & Reference Label Adjudication (ML-012).
 
 Orchestrates:
-1. Geospatial context enrichment across external providers (OSM, WRI, GEM, LandCover).
-2. Reference evidence synthesis with explicit quality tiering (Tier A/B/C) and circularity tracking.
-3. Deterministic label adjudication under strict missingness and conflict resolution rules.
-4. Point-in-time temporal integrity preventing future context/facility leakage.
+1. Geospatial context enrichment across external providers.
+2. Reference evidence synthesis with explicit quality tiering.
+3. Deterministic label adjudication under strict missingness rules.
+4. Point-in-time temporal integrity preventing future context leakage.
 """
 
-from collections.abc import Sequence
-from datetime import UTC, datetime
 import hashlib
 import json
+from collections.abc import Sequence
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
 from packages.config.scientific import ScientificConfig
 from packages.context.models import ContextFeature
@@ -39,20 +38,15 @@ from packages.schemas.ml import (
 from services.ml.labels.constructor import LabelConstructor
 
 INDUSTRIAL_CONTEXT_TYPES = {
-    ContextType.REFINERY,
-    ContextType.CHEMICAL,
-    ContextType.POWER_PLANT,
-    ContextType.INDUSTRIAL_SITE,
-    ContextType.FACTORY,
-    ContextType.MINE,
-    ContextType.OIL_GAS_STORAGE,
+    ContextType.INDUSTRIAL,
+    ContextType.OIL_GAS,
+    ContextType.POWER,
+    ContextType.MINING,
 }
 
 NON_INDUSTRIAL_CONTEXT_TYPES = {
-    ContextType.CROPLAND,
-    ContextType.FOREST,
-    ContextType.GRASSLAND,
-    ContextType.AGRICULTURAL_ZONE,
+    ContextType.AGRICULTURAL,
+    ContextType.FOREST_VEGETATION,
 }
 
 
@@ -68,7 +62,8 @@ class RealContextLabelingService:
 
         Returns:
             tuple[list[ContextFeature], dict[str, str]]:
-                List of validated ContextFeature objects and mapping of provider -> raw SHA256 hash.
+                List of validated ContextFeature objects and mapping of
+                provider -> raw SHA256 hash.
         """
         path = Path(fixture_path)
         if not path.exists():
@@ -84,9 +79,7 @@ class RealContextLabelingService:
         features = [ContextFeature.model_validate(f) for f in raw_features]
 
         # Map provider to snapshot hash
-        snapshot_id = data.get("snapshot_metadata", {}).get(
-            "snapshot_id", path.stem
-        )
+        snapshot_id = data.get("snapshot_metadata", {}).get("snapshot_id", path.stem)
         hashes = {snapshot_id: raw_hash}
 
         return features, hashes
@@ -95,25 +88,30 @@ class RealContextLabelingService:
     def synthesize_reference_evidence(
         cls,
         events: Sequence[Event],
-        context_evidence: Sequence[ContextEvidence],
+        context_by_event: dict[str, list[ContextEvidence]] | Sequence[ContextEvidence],
         config: ScientificConfig,
     ) -> list[ReferenceEvidence]:
         """Synthesize auditable ReferenceEvidence from matched ContextEvidence."""
         radius_meters = config.attribution_radius_meters or 1500.0
-        evidence_by_event: dict[str, list[ContextEvidence]] = {}
-        for c in context_evidence:
-            # Extract target event ID if encoded in context_id: ctx_{target_id}_{prov}_{idx}
-            # Or group via distance linkage
-            target_id = c.context_id.split("_")[1] if "_" in c.context_id else ""
-            if target_id:
-                if target_id not in evidence_by_event:
-                    evidence_by_event[target_id] = []
-                evidence_by_event[target_id].append(c)
+
+        # Handle both dict and sequence of ContextEvidence
+        evidence_dict: dict[str, list[ContextEvidence]]
+        if isinstance(context_by_event, dict):
+            evidence_dict = context_by_event
+        else:
+            # Fallback for sequence: match by proximity to event centroid
+            evidence_dict = {}
+            for ev in events:
+                evidence_dict[ev.event_id] = [
+                    c
+                    for c in context_by_event
+                    if c.distance_to_event_meters is not None
+                ]
 
         reference_items: list[ReferenceEvidence] = []
 
         for ev in events:
-            ev_context = evidence_by_event.get(ev.event_id, [])
+            ev_context = evidence_dict.get(ev.event_id, [])
             for ctx in ev_context:
                 dist = (
                     ctx.distance_to_event_meters
@@ -181,7 +179,8 @@ class RealContextLabelingService:
                                 "source_provider": ctx.source_type,
                             },
                             notes=(
-                                f"Spatial match to {ctx.facility_name or ctx.context_type.value} "
+                                f"Spatial match to "
+                                f"{ctx.facility_name or ctx.context_type.value} "
                                 f"at {dist:.1f}m distance."
                             ),
                         )
@@ -209,7 +208,9 @@ class RealContextLabelingService:
     ) -> list[LabelDecision]:
         """Adjudicate formal LabelDecisions for events across prediction targets."""
         constructor = LabelConstructor(default_conflict_policy=conflict_policy)
-        active_targets = list(target_ids) if target_ids else ["target_industrial_segregation"]
+        active_targets = (
+            list(target_ids) if target_ids else ["target_industrial_segregation"]
+        )
 
         decisions: list[LabelDecision] = []
         for ev in events:
@@ -244,13 +245,14 @@ class RealContextLabelingService:
         dataset_id: str = "ds_real_enriched_v1.0.0",
         dataset_version: str = "v1.0.0",
     ) -> RealEnrichedEventDataset:
-        """Execute the complete contextual enrichment and label adjudication pipeline."""
+        """Execute complete contextual enrichment and label adjudication pipeline."""
         now = datetime.now(UTC)
         active_config = config or get_default_calibrated_scientific_config()
         active_config.validate_completeness()
 
         # 1. Enrich events with external geospatial context
         all_context_evidence: list[ContextEvidence] = []
+        context_by_event: dict[str, list[ContextEvidence]] = {}
         for ev in event_dataset.events:
             ctx_items = enrich_with_context(
                 target_id=ev.event_id,
@@ -260,6 +262,7 @@ class RealContextLabelingService:
                 config=active_config,
             )
             all_context_evidence.extend(ctx_items)
+            context_by_event[ev.event_id] = ctx_items
 
         # Sort context evidence deterministically
         all_context_evidence.sort(
@@ -273,7 +276,7 @@ class RealContextLabelingService:
         # 2. Synthesize Reference Evidence
         reference_evidence = cls.synthesize_reference_evidence(
             events=event_dataset.events,
-            context_evidence=all_context_evidence,
+            context_by_event=context_by_event,
             config=active_config,
         )
 
@@ -327,10 +330,10 @@ class RealContextLabelingService:
         candidate_features: Sequence[ContextFeature],
         config: ScientificConfig | None = None,
     ) -> RealEnrichedEventDataset:
-        """Enrich and adjudicate events strictly as of a cutoff timestamp (anti-leakage).
+        """Enrich and adjudicate events as of a cutoff timestamp (anti-leakage).
 
         - Events starting after as_of_time are excluded.
-        - Context features valid only in the future (valid_from > as_of_time) are excluded.
+        - Context features valid in the future (valid_from > as_of) are excluded.
         """
         active_config = config or get_default_calibrated_scientific_config()
         active_config.validate_completeness()

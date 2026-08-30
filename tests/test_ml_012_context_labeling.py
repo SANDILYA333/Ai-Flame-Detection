@@ -1,17 +1,18 @@
-"""Formal unit and integration tests for ML-012 Real Contextual Enrichment & Labeling.
+"""Formal unit/integration tests for ML-012 Real Contextual Enrichment & Labeling.
 
 Validates:
-- Geospatial context enrichment across external sources (OSM, WRI, GEM, LandCover).
-- Reference evidence synthesis with explicit quality tiering (Tier A/B/C) and circularity provenance.
-- Deterministic label adjudication with conflict resolution and Missing != Negative enforcement.
-- Strict point-in-time temporal integrity (zero future context or event leakage).
-- End-to-end integration: ML-010 detections -> ML-011 events -> ML-012 enriched labels.
+- Context enrichment across external sources (OSM, WRI, GEM, LandCover).
+- Reference evidence synthesis with quality tiering and circularity provenance.
+- Deterministic label adjudication with Missing != Negative enforcement.
+- Strict point-in-time temporal integrity (zero future context leakage).
+- End-to-end integration: ML-010 detections -> ML-011 events -> ML-012 labels.
 - Serialization, canonical dataset hash integrity, and tamper detection.
 """
 
+import tempfile
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-import tempfile
+
 import pytest
 
 from packages.config.scientific import ScientificConfig
@@ -21,7 +22,6 @@ from packages.data.firms.activation import FirmsDataActivationService
 from packages.events.pipeline import RealEventConstructionService
 from packages.feasibility.candidates import JAMNAGAR_KUTCH
 from packages.schemas.common import Coordinate
-from packages.schemas.context import ContextEvidence
 from packages.schemas.detection import Detection
 from packages.schemas.enums import ContextType, DayNight
 from packages.schemas.event import Event, RealEnrichedEventDataset
@@ -59,7 +59,7 @@ def sample_context_features() -> list[ContextFeature]:
             provider="osm",
             dataset_name="planet_osm_polygon",
             dataset_version="2026-08-01",
-            context_type=ContextType.REFINERY,
+            context_type=ContextType.INDUSTRIAL,
             geometry=Coordinate(latitude=22.4500, longitude=70.0500),
             facility_name="Jamnagar Test Refinery",
             valid_from=datetime(2000, 1, 1, tzinfo=UTC),
@@ -69,7 +69,7 @@ def sample_context_features() -> list[ContextFeature]:
             provider="landcover",
             dataset_name="dynamic_world",
             dataset_version="2026-08-01",
-            context_type=ContextType.CROPLAND,
+            context_type=ContextType.AGRICULTURAL,
             geometry=Coordinate(latitude=22.5800, longitude=70.2000),
             facility_name="Kutch Agricultural Zone",
             valid_from=datetime(2015, 1, 1, tzinfo=UTC),
@@ -79,7 +79,7 @@ def sample_context_features() -> list[ContextFeature]:
             provider="osm",
             dataset_name="planet_osm_polygon",
             dataset_version="2026-08-01",
-            context_type=ContextType.INDUSTRIAL_SITE,
+            context_type=ContextType.INDUSTRIAL,
             geometry=Coordinate(latitude=22.4500, longitude=70.0500),
             facility_name="Future Hydrogen Plant",
             valid_from=datetime(2026, 12, 1, tzinfo=UTC),
@@ -158,7 +158,9 @@ class TestML012ContextLabeling:
 
         # Check industrial label
         label_ind = next(
-            l for l in enriched_ds.reference_labels if l.entity_id == "ev_industrial"
+            lbl
+            for lbl in enriched_ds.reference_labels
+            if lbl.entity_id == "ev_industrial"
         )
         assert label_ind.assigned_class == "industrial"
         assert label_ind.label_tier == LabelTier.TIER_B_STRONG_EVIDENCE
@@ -166,14 +168,18 @@ class TestML012ContextLabeling:
 
         # Check agricultural label
         label_agri = next(
-            l for l in enriched_ds.reference_labels if l.entity_id == "ev_agricultural"
+            lbl
+            for lbl in enriched_ds.reference_labels
+            if lbl.entity_id == "ev_agricultural"
         )
         assert label_agri.assigned_class == "non_industrial"
         assert label_agri.label_tier == LabelTier.TIER_C_PROXY_WEAK
 
         # Check isolated event: Zero matched evidence -> "unknown" (Missing != Negative)
         label_iso = next(
-            l for l in enriched_ds.reference_labels if l.entity_id == "ev_isolated"
+            lbl
+            for lbl in enriched_ds.reference_labels
+            if lbl.entity_id == "ev_isolated"
         )
         assert label_iso.assigned_class == "unknown"
         assert label_iso.label_tier == LabelTier.UNKNOWN
@@ -223,7 +229,7 @@ class TestML012ContextLabeling:
         calibrated_config: ScientificConfig,
         sample_context_features: list[ContextFeature],
     ) -> None:
-        """Future-dated facility records (valid_from > as_of_time) are strictly excluded."""
+        """Future facility records (valid_from > as_of) are strictly excluded."""
         # Query point-in-time state as of Aug 1 2026
         as_of = datetime(2026, 8, 1, 12, 0, 0, tzinfo=UTC)
         ev = _make_event("ev_aug1", 22.4500, 70.0500, as_of - timedelta(hours=2))
@@ -242,7 +248,7 @@ class TestML012ContextLabeling:
             config=calibrated_config,
         )
 
-        # Future facility 'osm_future_plant_01' (commissioned Dec 2026) must NOT appear in evidence
+        # Future facility 'osm_future_plant_01' (Dec 2026) must NOT appear in evidence
         matched_feature_ids = [
             c.external_facility_id
             for c in pit_ds.context_evidence
@@ -255,7 +261,7 @@ class TestML012ContextLabeling:
         calibrated_config: ScientificConfig,
         sample_context_features: list[ContextFeature],
     ) -> None:
-        """Reference evidence payloads explicitly record matched context ID and facility."""
+        """Reference evidence payloads record matched context ID and facility."""
         t0 = datetime(2026, 8, 1, 10, 0, 0, tzinfo=UTC)
         ev = _make_event("ev_circ", 22.4500, 70.0500, t0)
 
@@ -282,7 +288,7 @@ class TestML012ContextLabeling:
         self,
         calibrated_config: ScientificConfig,
     ) -> None:
-        """Real fixture traverses ML-010 -> ML-011 -> ML-012 with complete provenance."""
+        """Real fixture traverses ML-010 -> ML-011 -> ML-012 with provenance."""
         # 1. Ingest ML-010 detections
         fixture_path = Path("fixtures/firms/firms_real_sample_jamnagar.csv")
         detection_ds = FirmsDataActivationService.activate_from_csv(
@@ -300,8 +306,10 @@ class TestML012ContextLabeling:
 
         # 3. Load ML-012 context fixture
         ctx_fixture_path = Path("fixtures/context/context_sample_jamnagar.json")
-        features, hashes = RealContextLabelingService.load_context_features_from_fixture(
-            ctx_fixture_path
+        features, hashes = (
+            RealContextLabelingService.load_context_features_from_fixture(
+                ctx_fixture_path
+            )
         )
 
         # 4. Derive ML-012 enriched dataset
@@ -317,7 +325,10 @@ class TestML012ContextLabeling:
         assert len(enriched_ds.events) == event_ds.event_count
         assert len(enriched_ds.reference_labels) == event_ds.event_count
         assert enriched_ds.source_event_dataset_hash == event_ds.canonical_dataset_hash
-        assert enriched_ds.source_detection_dataset_hash == detection_ds.manifest.canonical_dataset_hash
+        assert (
+            enriched_ds.source_detection_dataset_hash
+            == detection_ds.manifest.canonical_dataset_hash
+        )
 
     def test_save_and_load_with_tamper_detection(
         self,
@@ -356,5 +367,7 @@ class TestML012ContextLabeling:
             data["reference_labels"][0]["assigned_class"] = "tampered_class"
             out_path.write_text(json.dumps(data), encoding="utf-8")
 
-            with pytest.raises(ValueError, match="Enriched event dataset hash mismatch"):
+            with pytest.raises(
+                ValueError, match="Enriched event dataset hash mismatch"
+            ):
                 RealContextLabelingService.load_dataset(out_path)

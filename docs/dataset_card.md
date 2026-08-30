@@ -87,6 +87,20 @@ In addition to the controlled benchmark fixture (`ds_supervised_v1.0.0`), the sy
 | **`ds_real_events_v1.0.0`** | Real Thermal Event & Source Dataset | Spatiotemporally clustered events and persistent sources derived from `ds_real_firms_v1.0.0` | Activated in ML-011; input for ML-012 contextual enrichment |
 
 ### Invariant:
-> `ds_real_firms_v1.0.0` and `ds_real_events_v1.0.0` represent observational remote-sensing entities and spatiotemporal clusters. They do **NOT** constitute ground-truth fire classifications or facility labels. Reference label adjudication (ML-012) must be performed before training supervised models on real-world observations.
+> `ds_real_firms_v1.0.0` and `ds_real_events_v1.0.0` represent observational remote-sensing entities and spatiotemporal clusters. They do **NOT** constitute ground-truth fire classifications or facility labels.
+
+---
+
+### Dataset: `ds_real_enriched_v1.0.0` (ML-012)
+* **Status:** OFFLINE_FIXTURE / REAL
+* **Domain Model:** `packages.schemas.event.RealEnrichedEventDataset`
+* **Purpose:** Contextually enriched thermal events with synthesized reference evidence and adjudicated target labels.
+* **Lineage:**
+  - Ingested NASA FIRMS detections (`ds_real_firms_v1.0.0`)
+  - Spatiotemporally clustered events & longitudinal sources (`ds_real_events_v1.0.0`)
+  - Contextual feature snapshots (`fixtures/context/context_sample_jamnagar.json`) from OSM, WRI, GEM, LandCover
+* **Adjudicated Targets:** `target_industrial_segregation` (Tier A, Tier B, Tier C, Heuristic, Unknown)
+* **Anti-Leakage Guarantees:** Strict point-in-time temporal validity checking ($t_{\text{valid\_from}} \le T_{\text{prediction}}$); circularity payload lineage tracking in evidence payload.
+* **Integrity:** Content-addressed cryptographic SHA-256 dataset hashing.
 
 
