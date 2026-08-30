@@ -146,6 +146,14 @@ class SyncJobRunner:
             self.repository.save_job(cancelled_job)
             return cancelled_job
 
+        # If retrying a failed or unblocking a blocked job, transition to QUEUED first
+        if (
+            job.state in (JobState.FAILED, JobState.BLOCKED)
+            and job.attempt_count < job.max_attempts
+        ):
+            job = JobStateMachine.transition(job, JobState.QUEUED)
+            self.repository.save_job(job)
+
         # Resolve handler
         handler = self.registry.get(job.job_type)
 
