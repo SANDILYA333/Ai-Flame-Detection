@@ -98,9 +98,7 @@ class TestApi005Detections:
         for det in data["detections"]:
             assert det["acquired_at"].startswith("2026-08-01")
 
-    def test_detections_source_and_metadata_filter(
-        self, client: TestClient
-    ) -> None:
+    def test_detections_source_and_metadata_filter(self, client: TestClient) -> None:
         """TEST 4: Day/night, satellite, and instrument filters operate cleanly."""
         # Day filter
         resp_day = client.get("/detections", params={"day_night": "D"})
