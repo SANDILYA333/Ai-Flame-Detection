@@ -2,9 +2,9 @@
 
 ## Current Phase
 
--   **Phase:** Phase 4 — Machine Learning & Scientific Evaluation (ML-001 through ML-008)
--   **Status:** ML-001 (Readiness Audit), ML-002 (Feature Pipeline), ML-003 (Label Construction & Splitting), ML-004 (Baseline Models & Pipeline), ML-005 (B3 Statistical Model Formalization), ML-006 (B4 Tree-Based Model Benchmark), ML-007 (Feature Ablation & Shortcut Audit), ML-008 (Holdout Generalization Benchmark) Complete
--   **Implementation status:** ML-008 establishes the Spatial, Temporal, Facility & Source Holdout Generalization Benchmark framework (GeneralizationBenchmarkService), evaluating 5 model architectures across 6 independent holdout partitioning protocols. Zero spatial/source generalization gap observed, spatial shortcut resilience verified, anti-leakage invariants audited. Complete & Verified across 389 automated unit/integration tests (0 lint, 0 type errors).
+-   **Phase:** Phase 4 — Machine Learning & Scientific Evaluation (ML-001 through ML-009)
+-   **Status:** ML-001 (Readiness Audit), ML-002 (Feature Pipeline), ML-003 (Label Construction & Splitting), ML-004 (Baseline Models & Pipeline), ML-005 (B3 Statistical Model Formalization), ML-006 (B4 Tree-Based Model Benchmark), ML-007 (Feature Ablation & Shortcut Audit), ML-008 (Holdout Generalization Benchmark), ML-009 (Model Artifacts, Reproducibility & Phase-4 Freeze) COMPLETE & FROZEN
+-   **Implementation status:** ML-009 establishes the formal model artifact contract, content-addressable SHA-256 integrity verification, recursive secret auditing, canonical MLInferenceEngine runtime with strict feature contract validation, and training run manifest logging. Phase 4 baseline foundation is complete, hardened, and frozen across 399 unit and integration tests (0 lint, 0 type errors).
 -   **UI:** Intentionally deferred
 
 ------------------------------------------------------------------------
