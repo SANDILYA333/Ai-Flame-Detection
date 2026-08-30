@@ -2,9 +2,9 @@
 
 ## Current Phase
 
--   **Phase:** Phase 3 — Scientific Derivation (EVENT → SOURCE → CONTEXT → INTELLIGENCE)
--   **Status:** Complete
--   **Implementation status:** Complete (Geospatial Core, Component 1 EVENT, Component 2 SOURCE, Component 3 CONTEXT, and Component 4 INTELLIGENCE completed and verified across 203 automated tests)
+-   **Phase:** Phase 4 — Machine Learning & Scientific Evaluation (ML-001 through ML-007)
+-   **Status:** ML-001 (Readiness Audit), ML-002 (Feature Pipeline), ML-003 (Label Construction & Splitting), ML-004 (Baseline Models & Pipeline), ML-005 (B3 Statistical Model Formalization), ML-006 (B4 Tree-Based Model Benchmark), ML-007 (Feature Ablation & Shortcut Audit) Complete
+-   **Implementation status:** ML-007 establishes the Feature Ablation, Shortcut Detection & Scientific Dependency Audit framework (FeatureAblationService), systematically quantifying model dependency across 12 canonical feature subsets and 5 model architectures. Complete & Verified across 382 automated unit/integration tests (0 lint, 0 type errors).
 -   **UI:** Intentionally deferred
 
 ------------------------------------------------------------------------
@@ -104,6 +104,12 @@ The immediate objective is to lock:
 -   [x] DATA-004 External Context Data Ingestion established (packages/data/context/, GeoJSON & CSV parser APIs, OpenStreetMap tag classification [POWER, OIL_GAS, MINING, INDUSTRIAL, AGRICULTURAL, etc.], WRI power plants normalizer, polygon bounding box & 3D spherical centroid calculation, explicit missingness preservation, deterministic content-addressable feature_id & raw_hash, 19 unit/determinism/integration tests).
 -   [x] DATA-005 Data Quality, Validation & Ingestion Integrity Layer established (packages/data/quality/, duplicate observation detection & partitioning, conflicting space-time observation auditing, temporal span & timezone verification, spatial envelope & Null Island anomaly detection, provenance completeness audit, explainable deterministic quality scoring & tier classification [HIGH_QUALITY, ACCEPTABLE, DEGRADED, REJECTED], CleanedDetectionManifest, 12 unit/determinism/integration tests).
 -   [x] ML-001 Machine Learning Readiness / Evaluation Foundation established (packages/schemas/ml.py, packages/config/ml.py, services/ml/features/ [FeatureRegistry, LeakageAuditor], services/ml/training/ [DatasetBuilder, SplitAssignmentService, SplitIntegrityValidator], services/ml/evaluation/ [EvaluationHarness], services/ml/calibration/ [CalibrationManager, AbstentionDecisionEngine], services/ml/readiness.py [MLReadinessAuditor 8-pillar assessment], 323 passing repository tests, zero fabricated labels, zero premature models).
+-   [x] ML-002 Feature Dataset Construction & Leakage-Safe Feature Engineering established (services/ml/features/ [FeatureExtractor, FeatureDatasetBuilder, standard_set.py, reporting.py], FeatureDefinition schemas with FeatureGroup & FeatureEligibilityStatus, 30 approved standard features, 10 disqualified candidates, strict T_prediction cutoff enforcement, deterministic SHA-256 manifest content hashing, showcase isolation [DATASET-003], docs/feature_dataset.md, 336 passing tests).
+-   [x] ML-003 Ground-Truth / Label Construction, Target Definition & Leakage-Safe Dataset Splitting established (packages/schemas/ml.py [ExclusionReason, DatasetRowStatus, LabelConflictPolicy, ReferenceEvidence, LabelDecision, SplitManifest, LabeledFeatureRecord, SupervisedDataset], services/ml/labels/ [targets.py, constructor.py, dataset.py, reporting.py], approved target registry [Thermal Phenomenon, Industrial Segregation, Persistent Combustion], LabelConstructor with Tier A/B/C tiering and tier-precedence conflict resolution, SupervisedDatasetBuilder with Grouped Event / Source / Temporal holdout splitting and integrity validation, docs/dataset_card.md, 349 passing tests).
+-   [x] ML-004 Baseline Model Training & Reproducible ML Pipeline established (services/ml/models/ [MajorityClassClassifier B0, DeterministicContextualClassifier B2, LogisticRegressionClassifier B3, ModelRegistry], services/ml/training/ [MLTrainingPipeline, DatasetSplitExtractor, FeaturePreprocessor], docs/ml_004_baseline_report.md, 360 passing tests).
+-   [x] ML-005 B3 Simple Statistical Model Formalization & Evaluation established (services/ml/models/linear.py, multi-class Softmax with L2 penalty, coefficient interpretability, docs/ml_005_b3_report.md, docs/model_card.md, 366 passing tests).
+-   [x] ML-006 B4 Tree-Based Model Controlled Complexity Benchmark established (services/ml/models/tree.py [DecisionTreeClassifier, RandomForestClassifier], CART Gini impurity splitting, MDI feature importance, JSON artifact serialization, docs/ml_006_b4_tree_model_report.md, docs/model_card.md, 375 passing tests).
+-   [x] ML-007 Feature Ablation, Shortcut Detection & Scientific Dependency Audit established (services/ml/evaluation/ablation.py [FeatureAblationService], 12 canonical feature subsets, 5 baseline model families, contextual shortcut & thermal dependency diagnostics, docs/ml_007_feature_ablation_report.md, docs/model_card.md, 382 passing tests).
 
 ------------------------------------------------------------------------
 
@@ -287,6 +293,35 @@ Acceptance:
   - `FeatureDatasetBuilder` with deterministic SHA-256 manifest hashing, duplicate auditing, and showcase isolation (`DATASET-003`).
   - Feature reporting and ablation mapping utilities.
   - 336 unit and integration tests passing with 0 lint/typecheck errors.
+- [x] **ML-003: Ground-Truth / Label Construction & Dataset Splitting** (Completed: 2026-08-30)
+  - Canonical target registry (`target_industrial_segregation`, `target_thermal_phenomenon`, `target_persistent_combustion`).
+  - Tier A/B/C multi-tier label constructor with tier-precedence conflict resolution policies.
+  - Supervised dataset builder with `GROUPED_EVENT_HOLDOUT` and integrity validation.
+  - 349 unit/integration tests passing.
+- [x] **ML-004: Baseline Model Training & Reproducible ML Pipeline** (Completed: 2026-08-30)
+  - Baseline architectures: B0 (`MajorityClassClassifier`), B2 (`DeterministicContextualClassifier`), B3 (`LogisticRegressionClassifier`).
+  - End-to-end `MLTrainingPipeline`, train-only `FeaturePreprocessor`, `DatasetSplitExtractor`.
+  - Model serialization, secret audits, and reload invariance in `ModelRegistry`.
+  - 360 unit/integration tests passing.
+- [x] **ML-005: B3 Simple Statistical Model Formalization** (Completed: 2026-08-30)
+  - Formal validation of Multinomial Softmax Logistic Regression with L2 regularization.
+  - Linear coefficient and feature importance extraction, loss convergence tracking.
+  - Official baseline report (`docs/ml_005_b3_report.md`) and Model Card update (`docs/model_card.md`).
+  - 366 unit/integration tests passing.
+- [x] **ML-006: B4 Tree-Based Model Controlled Complexity Benchmark** (Completed: 2026-08-30)
+  - Pure-Python deterministic `DecisionTreeClassifier` (CART Gini impurity) and `RandomForestClassifier` (bootstrap aggregation).
+  - Mean Decrease in Impurity (MDI / Gini importance) calculation.
+  - Lossless recursive JSON tree serialization and `ModelRegistry` reconstruction.
+  - Label-shuffle sanity collapse validation confirming zero target leakage.
+  - Comprehensive report (`docs/ml_006_b4_tree_model_report.md`) and updated `docs/model_card.md`.
+  - 375 unit/integration tests passing with 0 lint / 0 type errors.
+- [x] **ML-007: Feature Ablation, Shortcut Detection & Scientific Dependency Audit** (Completed: 2026-08-30)
+  - Canonical feature group derivations (`THERMAL_CORE`, `TEMPORAL_HISTORY`, `PERSISTENCE_SOURCE`, `SPATIAL_CONTEXT`, `LAND_COVER`).
+  - Multi-subset (`FULL`, `THERMAL_ONLY`, `TEMPORAL_ONLY`, `PERSISTENCE_ONLY`, `SPATIAL_ONLY`, `ENVIRONMENTAL_ONLY`, `NO_SPATIAL`, `NO_PERSISTENCE`, `NO_CONTEXT`, combinations) ablation runner.
+  - Contextual shortcut dependency and thermal sensitivity metrics.
+  - Label circularity refutation demonstrating thermal emission intensity is the primary driver of performance.
+  - Formal documentation report (`docs/ml_007_feature_ablation_report.md`) and updated `docs/model_card.md`.
+  - 382 unit/integration tests passing with 0 lint / 0 type errors.
 
 ------------------------------------------------------------------------
 
