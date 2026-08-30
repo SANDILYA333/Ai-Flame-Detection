@@ -6,7 +6,11 @@ secret sanitization, and idempotent logging configuration.
 
 from packages.logging.config import configure_logging, get_logger, log_with_context
 from packages.logging.formatters import StructuredJsonFormatter
-from packages.logging.sanitizer import sanitize_log_data
+from packages.logging.sanitizer import (
+    sanitize_log_data,
+    sanitize_log_dict,
+    sanitize_log_value,
+)
 
 __all__ = [
     "StructuredJsonFormatter",
@@ -14,4 +18,6 @@ __all__ = [
     "get_logger",
     "log_with_context",
     "sanitize_log_data",
+    "sanitize_log_dict",
+    "sanitize_log_value",
 ]
