@@ -13,6 +13,7 @@ from packages.schemas.ml import (
     ModelMetadata,
     SplitPartition,
     SupervisedDataset,
+    TrainingRunManifest,
 )
 from services.ml.evaluation.harness import EvaluationHarness
 from services.ml.models.base import BaseMLModel
@@ -203,32 +204,84 @@ class MLTrainingPipeline:
                 preprocessor.output_column_names
             )
 
-        # 10. Construct Model Metadata and Artifact
+        # 10. Construct Model Metadata, Artifact, and TrainingRunManifest
+        model_family = (
+            "TreeEnsemble"
+            if model_type in ("DecisionTreeClassifier", "RandomForestClassifier")
+            else "StatisticalLinear"
+            if model_type == "LogisticRegressionClassifier"
+            else "HeuristicBaseline"
+        )
+        model_id = (
+            f"model_{model_type.lower()}_{target_id}_{dataset.manifest.dataset_version}"
+        )
+
         model_meta = ModelMetadata(
-            model_id=f"model_{model_type.lower()}_{target_id}_{dataset.manifest.dataset_version}",
+            model_id=model_id,
             model_type=model_type,
             model_version="v1.0.0",
+            model_family=model_family,
             target_id=target_id,
+            target_version="target_v1.0.0",
+            dataset_id=dataset.manifest.dataset_id,
             dataset_version=dataset.manifest.dataset_version,
+            dataset_hash=dataset.manifest.sha256_hash,
             feature_set_version=dataset.manifest.feature_set_version,
             label_set_version=dataset.manifest.label_set_version,
+            split_strategy=dataset.split_manifest.split_strategy.value,
             split_version=dataset.split_manifest.split_strategy.value,
             random_seed=self.random_seed,
             hyperparameters=params,
             training_timestamp=now,
             train_record_count=len(x_train_raw),
             feature_names=preprocessor.output_column_names,
+            feature_dimensionality=len(preprocessor.output_column_names),
             validation_metrics=(
                 val_report.model_dump(mode="json") if val_report else {}
             ),
             test_metrics=(test_report.model_dump(mode="json") if test_report else {}),
         )
 
-        artifact = ModelArtifact(
+        raw_artifact = ModelArtifact(
             metadata=model_meta,
             preprocessor_state=preprocessor.to_dict(),
             model_parameters=ml_model.get_parameters(),
             class_vocabulary=ml_model.class_vocabulary,
+        )
+        content_hash = raw_artifact.compute_content_hash()
+        artifact = raw_artifact.model_copy(
+            update={
+                "sha256_hash": content_hash,
+                "metadata": model_meta.model_copy(
+                    update={"artifact_hash": content_hash}
+                ),
+            }
+        )
+
+        run_manifest = TrainingRunManifest(
+            run_id=f"run_{model_id}_{int(now.timestamp())}",
+            model_id=model_id,
+            model_type=model_type,
+            model_version="v1.0.0",
+            dataset_id=dataset.manifest.dataset_id,
+            dataset_version=dataset.manifest.dataset_version,
+            dataset_hash=dataset.manifest.sha256_hash,
+            feature_set_version=dataset.manifest.feature_set_version,
+            label_set_version=dataset.manifest.label_set_version,
+            target_id=target_id,
+            target_version="target_v1.0.0",
+            split_strategy=dataset.split_manifest.split_strategy.value,
+            random_seed=self.random_seed,
+            hyperparameters=params,
+            train_record_count=len(x_train_raw),
+            validation_record_count=len(x_val_raw),
+            test_record_count=len(x_test_raw),
+            validation_metrics=(
+                val_report.model_dump(mode="json") if val_report else {}
+            ),
+            test_metrics=(test_report.model_dump(mode="json") if test_report else {}),
+            artifact_hash=content_hash,
+            created_at=now,
         )
 
         # 11. Verify Serialization Roundtrip (Save -> Load -> Predict Consistency)
@@ -264,6 +317,7 @@ class MLTrainingPipeline:
             "feature_importances": feature_importances,
             "label_shuffle_sanity_test": label_shuffle_result,
             "artifact": artifact,
+            "run_manifest": run_manifest,
         }
 
     def _instantiate_model(

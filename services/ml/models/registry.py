@@ -1,4 +1,11 @@
-"""Model registry and secure serialization service for ML artifacts."""
+"""Model registry and secure serialization service for ML artifacts (ML-009).
+
+Enforces:
+- Deterministic JSON serialization and content-addressable SHA-256 hashing.
+- Recursive secret auditing (rejects API keys, tokens, credentials, passwords).
+- Artifact integrity validation (schema versioning, parameter completeness).
+- Exact pipeline reconstruction (FeaturePreprocessor + BaseMLModel).
+"""
 
 import json
 from pathlib import Path
@@ -19,6 +26,16 @@ SENSITIVE_KEY_PATTERNS: tuple[str, ...] = (
     "password",
     "api_key",
     "credential",
+    "private_key",
+    "authorization",
+)
+
+SUPPORTED_MODEL_TYPES: tuple[str, ...] = (
+    "MajorityClassClassifier",
+    "DeterministicContextualClassifier",
+    "LogisticRegressionClassifier",
+    "DecisionTreeClassifier",
+    "RandomForestClassifier",
 )
 
 
@@ -27,20 +44,33 @@ class ModelRegistry:
 
     @classmethod
     def serialize_artifact(cls, artifact: ModelArtifact) -> str:
-        """Serialize ModelArtifact to JSON while auditing against secret leaks."""
-        data = artifact.model_dump(mode="json")
+        """Serialize ModelArtifact to JSON while auditing against secret leaks.
+
+        Computes and embeds deterministic SHA-256 content hash if not already present.
+        """
+        content_hash = artifact.compute_content_hash()
+        artifact_to_save = artifact.model_copy(update={"sha256_hash": content_hash})
+
+        data = artifact_to_save.model_dump(mode="json")
         cls._audit_no_secrets(data)
         return json.dumps(data, indent=2, sort_keys=True, ensure_ascii=True)
 
     @classmethod
     def deserialize_artifact(cls, json_str: str) -> ModelArtifact:
-        """Deserialize ModelArtifact from JSON string."""
-        data = json.loads(json_str)
-        return ModelArtifact.model_validate(data)
+        """Deserialize ModelArtifact from JSON string and audit integrity."""
+        try:
+            data = json.loads(json_str)
+        except Exception as e:
+            raise ValueError(f"Corrupted or invalid JSON artifact: {e}") from e
+
+        cls._audit_no_secrets(data)
+        artifact = ModelArtifact.model_validate(data)
+        cls.verify_artifact_integrity(artifact)
+        return artifact
 
     @classmethod
     def save_to_file(cls, artifact: ModelArtifact, file_path: Path | str) -> Path:
-        """Save ModelArtifact to filesystem."""
+        """Save ModelArtifact to filesystem with content hashing and secret audits."""
         path = Path(file_path)
         path.parent.mkdir(parents=True, exist_ok=True)
         json_content = cls.serialize_artifact(artifact)
@@ -49,7 +79,7 @@ class ModelRegistry:
 
     @classmethod
     def load_from_file(cls, file_path: Path | str) -> ModelArtifact:
-        """Load ModelArtifact from filesystem."""
+        """Load ModelArtifact from filesystem and verify integrity."""
         path = Path(file_path)
         if not path.exists():
             raise FileNotFoundError(f"Model artifact not found at {path}")
@@ -57,10 +87,44 @@ class ModelRegistry:
         return cls.deserialize_artifact(json_content)
 
     @classmethod
+    def verify_artifact_integrity(cls, artifact: ModelArtifact) -> bool:
+        """Verify structural validity, model type support, and content hash."""
+        m_type = artifact.metadata.model_type
+        if m_type not in SUPPORTED_MODEL_TYPES:
+            raise ValueError(
+                f"Unsupported model type '{m_type}'. "
+                f"Expected one of {SUPPORTED_MODEL_TYPES}."
+            )
+
+        if not artifact.metadata.model_id or not artifact.metadata.target_id:
+            raise ValueError(
+                "Artifact metadata missing required model_id or target_id."
+            )
+
+        if not artifact.class_vocabulary:
+            raise ValueError("Artifact class_vocabulary cannot be empty.")
+
+        if len(artifact.class_vocabulary) != len(set(artifact.class_vocabulary)):
+            raise ValueError("Artifact class_vocabulary contains duplicate entries.")
+
+        # If sha256_hash is provided, verify content hash match
+        if artifact.sha256_hash:
+            computed_hash = artifact.compute_content_hash()
+            if artifact.sha256_hash != computed_hash:
+                raise ValueError(
+                    f"Artifact content hash mismatch: stored={artifact.sha256_hash}, "
+                    f"computed={computed_hash}. Artifact may be tampered with."
+                )
+
+        return True
+
+    @classmethod
     def reconstruct_pipeline(
         cls, artifact: ModelArtifact
     ) -> tuple[FeaturePreprocessor, BaseMLModel]:
         """Reconstruct fitted FeaturePreprocessor and BaseMLModel from artifact."""
+        cls.verify_artifact_integrity(artifact)
+
         # 1. Reconstruct preprocessor
         preprocessor = FeaturePreprocessor.from_dict(artifact.preprocessor_state)
 
@@ -69,20 +133,40 @@ class ModelRegistry:
         model: BaseMLModel
 
         if m_type == "MajorityClassClassifier":
-            model = MajorityClassClassifier()
+            model = MajorityClassClassifier(random_seed=artifact.metadata.random_seed)
         elif m_type == "DeterministicContextualClassifier":
-            model = DeterministicContextualClassifier()
+            model = DeterministicContextualClassifier(
+                random_seed=artifact.metadata.random_seed
+            )
         elif m_type == "LogisticRegressionClassifier":
-            model = LogisticRegressionClassifier()
+            model = LogisticRegressionClassifier(
+                random_seed=artifact.metadata.random_seed
+            )
         elif m_type == "DecisionTreeClassifier":
-            model = DecisionTreeClassifier()
+            model = DecisionTreeClassifier(random_seed=artifact.metadata.random_seed)
         elif m_type == "RandomForestClassifier":
-            model = RandomForestClassifier()
+            model = RandomForestClassifier(random_seed=artifact.metadata.random_seed)
         else:
             raise ValueError(f"Unknown model type '{m_type}' in artifact.")
 
         model.set_parameters(artifact.model_parameters)
         return preprocessor, model
+
+    @classmethod
+    def list_artifacts(cls, directory: Path | str) -> list[ModelArtifact]:
+        """List and validate all artifacts in a local directory."""
+        dir_path = Path(directory)
+        if not dir_path.exists():
+            return []
+
+        artifacts: list[ModelArtifact] = []
+        for p in sorted(dir_path.glob("*.json")):
+            try:
+                art = cls.load_from_file(p)
+                artifacts.append(art)
+            except Exception:
+                continue
+        return artifacts
 
     @classmethod
     def _audit_no_secrets(cls, obj: Any, path: str = "") -> None:
@@ -99,3 +183,10 @@ class ModelRegistry:
         elif isinstance(obj, list):
             for i, item in enumerate(obj):
                 cls._audit_no_secrets(item, f"{path}[{i}]")
+        elif isinstance(obj, str):
+            # Check string value for suspicious authorization tokens or map keys
+            lower_str = obj.lower()
+            if "bearer " in lower_str or "firms_map_key" in lower_str:
+                raise ValueError(
+                    f"Prohibited credential token detected in value at '{path}'"
+                )
