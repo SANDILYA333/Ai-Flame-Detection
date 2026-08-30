@@ -22,5 +22,5 @@ class HealthResponse(BaseModel):
     )
     environment: str = Field(
         ...,
-        description="Active runtime environment mode (e.g. development, test, production)",
+        description="Active runtime environment mode (e.g. development, test)",
     )
