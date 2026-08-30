@@ -95,15 +95,18 @@ class SupervisedDatasetBuilder:
             for ev_id in source.linked_event_ids:
                 source_by_event_id[ev_id] = source
 
-        # 3. Map context evidence per event
+        # 3. Map context evidence per event via reference_evidence and spatial verification
+        context_id_to_event_id: dict[str, str] = {}
+        for ref in enriched_dataset.reference_evidence:
+            ctx_id = ref.evidence_payload.get("contributing_context_id")
+            if ctx_id:
+                context_id_to_event_id[ctx_id] = ref.entity_id
+
         context_by_event_id: dict[str, list[ContextEvidence]] = {}
         for c_item in enriched_dataset.context_evidence:
-            for ev in enriched_dataset.events:
-                if (
-                    c_item.distance_to_event_meters is not None
-                    and c_item.distance_to_event_meters <= 2500.0
-                ):
-                    context_by_event_id.setdefault(ev.event_id, []).append(c_item)
+            matched_ev_id = context_id_to_event_id.get(c_item.context_id)
+            if matched_ev_id:
+                context_by_event_id.setdefault(matched_ev_id, []).append(c_item)
 
         # 4. Build event tuples for FeatureDatasetBuilder
         event_tuples: list[
