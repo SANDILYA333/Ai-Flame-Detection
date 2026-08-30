@@ -34,6 +34,13 @@ from packages.schemas.intelligence import (
     IntelligenceResult,
     UncertaintyMetric,
 )
+from packages.schemas.job import (
+    JobRecord,
+    JobState,
+    JobType,
+    PipelineRun,
+    PipelineRunStatus,
+)
 from packages.schemas.ml import (
     AblationExperimentResult,
     AblationStudyReport,
@@ -118,6 +125,9 @@ __all__ = [
     "InferenceMode",
     "InferencePredictionResult",
     "IntelligenceResult",
+    "JobRecord",
+    "JobState",
+    "JobType",
     "LabelConflictPolicy",
     "LabelDecision",
     "LabelMetadata",
@@ -133,6 +143,8 @@ __all__ = [
     "PersistenceState",
     "PersistentSource",
     "PhenomenonType",
+    "PipelineRun",
+    "PipelineRunStatus",
     "ProvenanceReference",
     "ReadinessStatus",
     "RealEnrichedEventDataset",
