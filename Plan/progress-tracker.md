@@ -2,9 +2,9 @@
 
 ## Current Phase
 
--   **Phase:** Specification refinement → scientific/data feasibility
+-   **Phase:** Phase 3 — Scientific Derivation (EVENT → SOURCE → CONTEXT → INTELLIGENCE)
 -   **Status:** In progress
--   **Implementation status:** In progress (DB-008 completed; DB-009 next)
+-   **Implementation status:** In progress (Geospatial Core & EVENT Spatiotemporal Clustering active)
 -   **UI:** Intentionally deferred
 
 ------------------------------------------------------------------------
@@ -92,7 +92,7 @@ The immediate objective is to lock:
 -   [x] DB-005 Source snapshots migration established (alembic/versions/0004_source_snapshots.py, source_snapshots table, SnapshotAvailabilityState enum, integrity hashes, RESTRICT FK).
 -   [x] DB-006 Source records migration established (alembic/versions/0005_source_records.py, source_records table, PostGIS geometry EPSG:4326, composite unique constraint, GiST spatial index, RESTRICT FK).
 -   [x] DB-007 Canonical detections migration established (alembic/versions/0006_detections.py, detections table, PostGIS Point geometry EPSG:4326, FRP in MW, temperatures in Kelvin, pixel dimensions in km, RESTRICT FKs).
--   [x] DB-008 Thermal events migration established (alembic/versions/0007_thermal_events.py, thermal_events and event_detections tables, PostGIS Point centroid & observation footprint, FRP stats in MW, RESTRICT FKs).
+-   [x] Phase 3 Thermal events persistence migration established (alembic/versions/0007_thermal_events.py, thermal_events and event_detections tables, PostGIS Point centroid & observation footprint, FRP stats in MW, RESTRICT FKs).
 
 ------------------------------------------------------------------------
 
