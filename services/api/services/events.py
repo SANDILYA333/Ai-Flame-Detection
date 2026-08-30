@@ -4,10 +4,17 @@ from datetime import UTC, datetime
 
 from packages.context.pipeline import RealContextLabelingService
 from packages.errors import ErrorCode, NotFoundError, ValidationError
-from packages.events.pipeline import RealEventConstructionService
+from packages.events.pipeline import (
+    RealEventConstructionService,
+    get_default_calibrated_scientific_config,
+)
+from packages.geospatial.distance import haversine_distance_meters
+from packages.intelligence.service import derive_intelligence
 from packages.schemas.event import RealEnrichedEventDataset
+from packages.schemas.intelligence import IntelligenceResult
 from services.api.schemas.events import (
     EventDetailResponse,
+    EventEvidenceResponse,
     EventPagination,
     EventResponse,
     EventsResponse,
@@ -272,4 +279,82 @@ class EventQueryService:
             started_at=target_event.started_at,
             ended_at=target_event.ended_at,
             timeline=timeline,
+        )
+
+    @classmethod
+    def get_event_evidence(cls, event_id: str) -> EventEvidenceResponse:
+        """Retrieve canonical event evidence (API-009)."""
+        dataset = cls.get_canonical_enriched_dataset()
+
+        target_event = next(
+            (ev for ev in dataset.events if ev.event_id == event_id), None
+        )
+        if target_event is None:
+            raise NotFoundError(
+                message=f"Thermal event '{event_id}' not found.",
+                code=ErrorCode.RESOURCE_NOT_FOUND,
+            )
+
+        config = get_default_calibrated_scientific_config()
+
+        context_evidence = [
+            ce
+            for ce in dataset.context_evidence
+            if haversine_distance_meters(
+                target_event.centroid_geometry.latitude,
+                target_event.centroid_geometry.longitude,
+                ce.geometry.latitude,
+                ce.geometry.longitude,
+            )
+            <= (config.attribution_radius_meters or 1500.0)
+        ]
+        reference_evidence = [
+            re for re in dataset.reference_evidence if re.entity_id == event_id
+        ]
+
+        return EventEvidenceResponse(
+            event_id=event_id,
+            context_evidence=context_evidence,
+            reference_evidence=reference_evidence,
+        )
+
+    @classmethod
+    def get_event_intelligence(cls, event_id: str) -> IntelligenceResult:
+        """Retrieve canonical event intelligence (API-011)."""
+        dataset = cls.get_canonical_enriched_dataset()
+
+        target_event = next(
+            (ev for ev in dataset.events if ev.event_id == event_id), None
+        )
+        if target_event is None:
+            raise NotFoundError(
+                message=f"Thermal event '{event_id}' not found.",
+                code=ErrorCode.RESOURCE_NOT_FOUND,
+            )
+
+        source = next(
+            (s for s in dataset.persistent_sources if event_id in s.linked_event_ids),
+            None,
+        )
+
+        config = get_default_calibrated_scientific_config()
+
+        context_evidence = [
+            ce
+            for ce in dataset.context_evidence
+            if haversine_distance_meters(
+                target_event.centroid_geometry.latitude,
+                target_event.centroid_geometry.longitude,
+                ce.geometry.latitude,
+                ce.geometry.longitude,
+            )
+            <= (config.attribution_radius_meters or 1500.0)
+        ]
+
+        return derive_intelligence(
+            event=target_event,
+            source=source,
+            context_evidence=context_evidence,
+            config=config,
+            pipeline_run_id=None,
         )
