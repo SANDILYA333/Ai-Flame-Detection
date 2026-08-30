@@ -4,7 +4,7 @@
 
 -   **Phase:** Phase 3 — Scientific Derivation (EVENT → SOURCE → CONTEXT → INTELLIGENCE)
 -   **Status:** In progress
--   **Implementation status:** In progress (Geospatial Core & EVENT Spatiotemporal Clustering active)
+-   **Implementation status:** In progress (Geospatial Core, Component 1 EVENT, Component 2 SOURCE, and Component 3 CONTEXT completed; Component 4 INTELLIGENCE next)
 -   **UI:** Intentionally deferred
 
 ------------------------------------------------------------------------
@@ -93,6 +93,10 @@ The immediate objective is to lock:
 -   [x] DB-006 Source records migration established (alembic/versions/0005_source_records.py, source_records table, PostGIS geometry EPSG:4326, composite unique constraint, GiST spatial index, RESTRICT FK).
 -   [x] DB-007 Canonical detections migration established (alembic/versions/0006_detections.py, detections table, PostGIS Point geometry EPSG:4326, FRP in MW, temperatures in Kelvin, pixel dimensions in km, RESTRICT FKs).
 -   [x] Phase 3 Thermal events persistence migration established (alembic/versions/0007_thermal_events.py, thermal_events and event_detections tables, PostGIS Point centroid & observation footprint, FRP stats in MW, RESTRICT FKs).
+-   [x] Phase 3 Geospatial Core established (packages/geospatial/, WGS84 coordinates validation, WKT POINT format/parse, Haversine geodesic physical distance in meters, 3D spherical centroid averaging, bounding envelope).
+-   [x] Phase 3 Component 1 EVENT established (packages/events/, deterministic spatiotemporal graph clustering, Event builder, content-addressable event_id, derive_thermal_events service, uncalibrated config enforcement).
+-   [x] Phase 3 Component 2 SOURCE established (packages/sources/, longitudinal spatial event association, persistence state classification [PERSISTENT, RECURRING, TRANSIENT, INSUFFICIENT_HISTORY], active calendar days & recurrence ratio metrics, deterministic content-addressable source_id, derive_persistent_sources service).
+-   [x] Phase 3 Component 3 CONTEXT established (packages/context/, normalized ContextFeature domain representation, geodesic proximity & containment matching rules, temporal validity evaluation preventing hindsight leakage, ContextProvider abstraction, deterministic content-addressable context_id, ContextEvidence synthesis, derive/enrich service).
 
 ------------------------------------------------------------------------
 
