@@ -3,8 +3,8 @@
 ## Current Phase
 
 -   **Phase:** Phase 3 — Scientific Derivation (EVENT → SOURCE → CONTEXT → INTELLIGENCE)
--   **Status:** In progress
--   **Implementation status:** In progress (Geospatial Core, Component 1 EVENT, Component 2 SOURCE, and Component 3 CONTEXT completed; Component 4 INTELLIGENCE next)
+-   **Status:** Complete
+-   **Implementation status:** Complete (Geospatial Core, Component 1 EVENT, Component 2 SOURCE, Component 3 CONTEXT, and Component 4 INTELLIGENCE completed and verified across 203 automated tests)
 -   **UI:** Intentionally deferred
 
 ------------------------------------------------------------------------
@@ -97,6 +97,7 @@ The immediate objective is to lock:
 -   [x] Phase 3 Component 1 EVENT established (packages/events/, deterministic spatiotemporal graph clustering, Event builder, content-addressable event_id, derive_thermal_events service, uncalibrated config enforcement).
 -   [x] Phase 3 Component 2 SOURCE established (packages/sources/, longitudinal spatial event association, persistence state classification [PERSISTENT, RECURRING, TRANSIENT, INSUFFICIENT_HISTORY], active calendar days & recurrence ratio metrics, deterministic content-addressable source_id, derive_persistent_sources service).
 -   [x] Phase 3 Component 3 CONTEXT established (packages/context/, normalized ContextFeature domain representation, geodesic proximity & containment matching rules, temporal validity evaluation preventing hindsight leakage, ContextProvider abstraction, deterministic content-addressable context_id, ContextEvidence synthesis, derive/enrich service).
+-   [x] Phase 3 Component 4 INTELLIGENCE established (packages/intelligence/, orthogonal ontology reasoning engine [phenomenon, context, persistence, attribution], evidence completeness auditing, calibrated confidence, explicit abstention recommendation, deterministic content-addressable intelligence_id, derive_intelligence service).
 
 ------------------------------------------------------------------------
 
