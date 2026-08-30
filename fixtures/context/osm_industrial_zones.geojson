@@ -1,0 +1,111 @@
+{
+  "type": "FeatureCollection",
+  "name": "osm_industrial_zones",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "way_1001",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [70.0450, 22.4450],
+            [70.0550, 22.4450],
+            [70.0550, 22.4550],
+            [70.0450, 22.4550],
+            [70.0450, 22.4450]
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "1001",
+        "name": "Jamnagar Refinery Complex",
+        "industrial": "refinery",
+        "landuse": "industrial",
+        "operator": "Reliance Industries Limited",
+        "start_date": "1999"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node_2002",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [70.0512, 22.4502]
+      },
+      "properties": {
+        "osm_id": "2002",
+        "name": "Jamnagar Flare Stack Unit 1",
+        "man_made": "flare",
+        "industrial": "oil"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way_3003",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [82.6500, 24.1000],
+            [82.6700, 24.1000],
+            [82.6700, 24.1200],
+            [82.6500, 24.1200],
+            [82.6500, 24.1000]
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "3003",
+        "name": "Singrauli Super Thermal Power Station",
+        "power": "plant",
+        "plant:source": "coal",
+        "operator": "NTPC"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way_4004",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [82.7000, 24.1500],
+            [82.7200, 24.1500],
+            [82.7200, 24.1700],
+            [82.7000, 24.1700],
+            [82.7000, 24.1500]
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "4004",
+        "name": "Jayant Open Cast Coal Mine",
+        "landuse": "quarry",
+        "resource": "coal",
+        "operator": "NCL"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way_5005",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [75.8000, 30.5000],
+            [75.8500, 30.5000],
+            [75.8500, 30.5500],
+            [75.8000, 30.5500],
+            [75.8000, 30.5000]
+          ]
+        ]
+      },
+      "properties": {
+        "osm_id": "5005",
+        "landuse": "farmland",
+        "crop": "paddy"
+      }
+    }
+  ]
+}

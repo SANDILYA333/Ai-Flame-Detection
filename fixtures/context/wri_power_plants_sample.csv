@@ -1,0 +1,5 @@
+country,country_long,name,gppd_idnr,capacity_mw,latitude,longitude,primary_fuel,other_fuel1,commissioning_year,owner,source,url,geolocation_source,wepp_id,year_of_capacity_data,generation_gwh_2018
+IND,India,Singrauli STPS,WRI1000100,2000.0,24.1025,82.6041,Coal,Gas,1982,NTPC,Central Electricity Authority,http://www.cea.nic.in,WRI,1001,2019,15230.5
+IND,India,Vindhyachal STPS,WRI1000200,4760.0,24.0980,82.6680,Coal,,1987,NTPC,Central Electricity Authority,http://www.cea.nic.in,WRI,1002,2019,34120.0
+IND,India,Jamnagar Captive TPP,WRI1000300,1050.0,22.4550,70.0600,Gas,Oil,1999,Reliance Industries,Central Electricity Authority,http://www.cea.nic.in,WRI,1003,2019,6500.0
+IND,India,Bhakra Hydro,WRI1000400,1325.0,31.4080,76.4350,Hydro,,1963,BBMB,Central Electricity Authority,http://www.cea.nic.in,WRI,1004,2019,5100.0
