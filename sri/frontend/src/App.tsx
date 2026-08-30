@@ -3,6 +3,7 @@ import { MinimalMap, type ForestReserve } from './components/MinimalMap';
 import { LayersPanel } from './components/LayersPanel';
 import { LayerInfoModal } from './components/LayerInfoModal';
 import { TimeRangeControls, type TimeRange } from './components/TimeRangeControls';
+import { XAIEvidenceCard } from './components/XAIEvidenceCard';
 import { LAYER_DEFINITIONS, type LayerDefinition } from './layersConfig';
 import type { Incident, ActiveFilters, FacilityMarker, EmergencyResponder } from './types';
 import { 
@@ -11,12 +12,10 @@ import {
   Play, 
   Pause, 
   X, 
-  Wind, 
   ShieldAlert, 
   Hospital, 
   Download,
   CheckCircle2,
-  ChevronRight,
   Search,
   Filter,
   RefreshCw,
@@ -872,44 +871,13 @@ export default function App() {
             )}
           </div>
 
-          {/* Selected Incident Telemetry Snapshot */}
+          {/* Selected Incident Telemetry & XAI Evidence Card */}
           {selectedIncident && (
-            <div className="mt-4 pt-3.5 border-t border-[#1b1e28] text-xs space-y-2.5 shrink-0 bg-[#0e1017]">
-              <div className="flex items-center justify-between">
-                <span className="text-[#64748b] text-[10.5px] uppercase tracking-wider font-semibold">
-                  PHYSICAL PYROMETRY
-                </span>
-                <span className="text-[#10b981] font-mono text-[10.5px] flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Planck Inverted
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 bg-[#13151c] p-2.5 rounded-lg border border-[#1f232e]">
-                <div>
-                  <div className="text-[10px] text-[#64748b]">Flame Temp</div>
-                  <div className="text-xs font-bold text-[#f3f4f6] mt-0.5 font-mono">{selectedIncident.tempK} K</div>
-                </div>
-                <div>
-                  <div className="text-[10px] text-[#64748b]">Radiative Power</div>
-                  <div className="text-xs font-bold text-[#f3f4f6] mt-0.5 font-mono">{selectedIncident.frpMw} MW</div>
-                </div>
-              </div>
-
-              <div className="bg-[#13151c] p-2.5 rounded-lg border border-[#1f232e] flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Wind className="w-3.5 h-3.5 text-[#38bdf8]" />
-                  <span className="text-[11px] text-[#cbd5e1]">Open-Meteo Wind</span>
-                </div>
-                <span className="text-[11px] font-mono text-[#38bdf8]">{selectedIncident.windSpeed} ({selectedIncident.windDir})</span>
-              </div>
-
-              <button
-                onClick={() => setShowDossierDrawer(true)}
-                className="w-full py-2 rounded-lg bg-[#1f2433] hover:bg-[#282f42] border border-[#2d3546] text-xs font-semibold text-[#e2e8f0] transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
-              >
-                <span>View Full HAZMAT Incident Dossier</span>
-                <ChevronRight className="w-3.5 h-3.5 text-[#8b92a4]" />
-              </button>
+            <div className="mt-3 pt-2 border-t border-[#1b1e28] text-xs shrink-0">
+              <XAIEvidenceCard 
+                incident={selectedIncident} 
+                onDownloadDossier={(_caseId) => handleExportPdf()} 
+              />
             </div>
           )}
 
