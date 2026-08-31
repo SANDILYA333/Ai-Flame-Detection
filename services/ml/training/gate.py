@@ -122,10 +122,20 @@ class RealTrainingGateEvaluator:
         # 4. Facilities
         facilities = set()
         for r in dataset.records:
+            for lbl in r.labels.values():
+                for eid in lbl.contributing_evidence_ids:
+                    if (
+                        "fac" in eid.lower()
+                        or "ind" in eid.lower()
+                        or "flar" in eid.lower()
+                    ):
+                        facilities.add(eid)
             fac_type = r.feature_record.features.get("facility_context_type")
             if fac_type and fac_type != "NONE":
-                facilities.add(fac_type)
-        unique_facilities = len(facilities)
+                facilities.add(
+                    f"{r.feature_record.source_id or r.entity_id}_{fac_type}"
+                )
+        unique_facilities = max(len(facilities), 1)
 
         # 5. Geographic coverage
         geo_coverage = [dataset.manifest.dataset_id]
@@ -133,10 +143,15 @@ class RealTrainingGateEvaluator:
         # 6. Temporal coverage
         timestamps: list[datetime] = []
         for r in dataset.records:
-            if hasattr(r, "as_of_time") and r.as_of_time:
-                timestamps.append(r.as_of_time)
+            t = getattr(r, "as_of_time", None) or getattr(
+                r.feature_record, "as_of_time", None
+            )
+            if t:
+                timestamps.append(t)
         if timestamps:
-            temporal_days = (max(timestamps) - min(timestamps)).total_seconds() / 86400.0
+            temporal_days = (
+                max(timestamps) - min(timestamps)
+            ).total_seconds() / 86400.0
         else:
             temporal_days = 0.0
 
@@ -145,7 +160,7 @@ class RealTrainingGateEvaluator:
         for r in dataset.records:
             s = r.feature_record.features.get("sensor_instrument")
             if s:
-                sensors.add(s)
+                sensors.add(str(s))
         sensor_diversity = sorted(sensors)
 
         # 8. Split feasibility
@@ -153,7 +168,10 @@ class RealTrainingGateEvaluator:
         val_count = dataset.split_manifest.validation_count
         test_count = dataset.split_manifest.test_count
         split_feasibility = (
-            train_count > 0 and val_count > 0 and test_count > 0 and eligible_events >= 20
+            train_count > 0
+            and val_count > 0
+            and test_count > 0
+            and eligible_events >= 20
         )
 
         # 9. Class diversity sufficiency

@@ -13,9 +13,7 @@ from typing import Any
 from packages.schemas.ml import (
     ModelArtifact,
     ModelMetadata,
-    SplitPartition,
     SupervisedDataset,
-    TrainingRunManifest,
 )
 from services.ml.models.base import BaseMLModel
 from services.ml.models.contextual import DeterministicContextualClassifier
@@ -25,14 +23,17 @@ from services.ml.models.tree import DecisionTreeClassifier, RandomForestClassifi
 from services.ml.models.trivial import MajorityClassClassifier
 from services.ml.preprocessing.extractor import DatasetSplitExtractor
 from services.ml.preprocessing.transformer import FeaturePreprocessor
-from services.ml.training.gate import RealTrainingGateEvaluation, RealTrainingGateEvaluator
+from services.ml.training.gate import (
+    RealTrainingGateEvaluation,
+    RealTrainingGateEvaluator,
+)
 
 CANONICAL_REAL_MODELS: tuple[str, ...] = (
-    "MajorityClassClassifier",           # B0 Majority baseline
+    "MajorityClassClassifier",  # B0 Majority baseline
     "DeterministicContextualClassifier",  # B2 Deterministic contextual baseline
-    "LogisticRegressionClassifier",       # B3 Softmax Logistic Regression
-    "DecisionTreeClassifier",             # B4-DT CART Decision Tree
-    "RandomForestClassifier",             # B4-RF Random Forest Ensemble
+    "LogisticRegressionClassifier",  # B3 Softmax Logistic Regression
+    "DecisionTreeClassifier",  # B4-DT CART Decision Tree
+    "RandomForestClassifier",  # B4-RF Random Forest Ensemble
 )
 
 
@@ -98,7 +99,9 @@ class RealMLTrainer:
         params_map = hyperparameters or {}
 
         # 1. Scientific Gate Evaluation
-        gate_eval = RealTrainingGateEvaluator.evaluate(dataset=dataset, target_id=target_id)
+        gate_eval = RealTrainingGateEvaluator.evaluate(
+            dataset=dataset, target_id=target_id
+        )
 
         # 2. Extract Training Matrices (strictly filtered, anti-leakage enforced)
         (
@@ -144,7 +147,9 @@ class RealMLTrainer:
                 model_inst.fit(x_train_vec, y_train)
 
             train_preds = model_inst.predict(
-                x_train_raw if m_type == "DeterministicContextualClassifier" else x_train_vec
+                x_train_raw
+                if m_type == "DeterministicContextualClassifier"
+                else x_train_vec
             )
 
             # Construct Metadata with strict Pilot & Gate markers
@@ -159,10 +164,13 @@ class RealMLTrainer:
                 else "HeuristicBaseline"
             )
 
+            is_prod = gate_eval.is_production_ready
+            model_version = "v1.0.0-production" if is_prod else "v1.0.0-pilot"
+
             model_meta = ModelMetadata(
                 model_id=model_id,
                 model_type=m_type,
-                model_version="v1.0.0-pilot",
+                model_version=model_version,
                 model_family=model_family,
                 target_id=target_id,
                 target_version="target_v1.0.0",
@@ -180,14 +188,18 @@ class RealMLTrainer:
                 feature_names=preprocessor.output_column_names,
                 feature_dimensionality=len(preprocessor.output_column_names),
                 validation_metrics={
-                    "pilot_mode": True,
+                    "pilot_mode": not is_prod,
                     "scientific_gate_status": gate_eval.gate_status,
-                    "is_production_ready": False,
+                    "is_production_ready": is_prod,
                     "circularity_warning": gate_eval.circularity_warning,
+                    "val_samples": len(x_val_raw),
                 },
                 test_metrics={
-                    "pilot_mode": True,
-                    "evaluation_status": "BLOCKED_BY_GATE",
+                    "pilot_mode": not is_prod,
+                    "evaluation_status": "READY_FOR_NEXT_007"
+                    if is_prod
+                    else "BLOCKED_BY_GATE",
+                    "test_samples": len(x_test_raw),
                 },
             )
 
@@ -220,7 +232,9 @@ class RealMLTrainer:
             )
 
             status_str = (
-                "TRAINED_PRODUCTION" if gate_eval.is_production_ready else "TRAINED_PILOT"
+                "TRAINED_PRODUCTION"
+                if gate_eval.is_production_ready
+                else "TRAINED_PILOT"
             )
             reason_str = (
                 "Production training completed successfully."
@@ -262,7 +276,9 @@ class RealMLTrainer:
             return MajorityClassClassifier(random_seed=random_seed)
         if model_type == "DeterministicContextualClassifier":
             return DeterministicContextualClassifier(
-                proximity_threshold_m=float(params.get("proximity_threshold_m", 1000.0)),
+                proximity_threshold_m=float(
+                    params.get("proximity_threshold_m", 1000.0)
+                ),
                 random_seed=random_seed,
             )
         if model_type == "LogisticRegressionClassifier":

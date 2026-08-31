@@ -28,7 +28,6 @@ from packages.schemas.ml import (
     SupervisedDataset,
     TargetDefinition,
 )
-from services.ml.features.builder import FeatureDatasetBuilder
 from services.ml.features.standard_set import (
     STANDARD_FEATURE_VERSION,
     get_standard_feature_registry,
@@ -142,6 +141,8 @@ class SupervisedDatasetBuilder:
             event_tuples.append((ev, member_dets, as_of, preceding, src, ctx_items))
 
         # 5. Extract features using FeatureDatasetBuilder (FEAT-001 / FEAT-003)
+        from services.ml.features.builder import FeatureDatasetBuilder
+
         feature_builder = FeatureDatasetBuilder(
             registry=get_standard_feature_registry()
         )
