@@ -1,0 +1,130 @@
+{
+  "Oil Refinery": {
+    "sector": "Petroleum Refining",
+    "primary_chemicals": ["Crude Oil", "Benzene", "LPG (Propane/Butane)", "Naphtha", "Hydrogen Sulfide (H2S)"],
+    "cameo_hazmat_class": "Class 3 - Flammable Liquid / Class 2.1 Flammable Gas",
+    "un_na_numbers": ["UN1267", "UN1114", "UN1075", "UN1255"],
+    "primary_disaster_risk": "BLEVE (Boiling Liquid Expanding Vapor Explosion) & Toxic Aromatic Hydrocarbon Inhalation",
+    "initial_isolation_distance_meters": 800,
+    "downwind_evacuation_day_meters": 1600,
+    "downwind_evacuation_night_meters": 2400,
+    "toxic_combustion_byproducts": ["Carbon Monoxide (CO)", "Sulfur Dioxide (SO2)", "Benzene Vapor", "Polycyclic Aromatic Hydrocarbons"],
+    "firefighting_protocol": "Aqueous Film-Forming Foam (AFFF), Alcohol-Resistant Foam, High-Volume Water Deluge to cool adjacent tanks",
+    "idlh_ppm": {
+      "Benzene": 500,
+      "H2S": 100,
+      "SO2": 100
+    }
+  },
+  "Petrochemical & Polymer Complex": {
+    "sector": "Petrochemicals",
+    "primary_chemicals": ["Styrene Monomer", "Ethylene Oxide", "Propylene", "Vinyl Chloride", "Butadiene"],
+    "cameo_hazmat_class": "Class 2.1 / Class 3 - Flammable Monomers & Polymerization Hazards",
+    "un_na_numbers": ["UN2055", "UN1040", "UN1077", "UN1086"],
+    "primary_disaster_risk": "Uncontrolled Runaway Polymerization, Severe Pulmonary Edema, Vapor Cloud Explosion",
+    "initial_isolation_distance_meters": 1000,
+    "downwind_evacuation_day_meters": 2500,
+    "downwind_evacuation_night_meters": 3500,
+    "toxic_combustion_byproducts": ["Phosgene (COCl2)", "Hydrogen Chloride (HCl)", "Styrene Oligomers", "Carbon Monoxide"],
+    "firefighting_protocol": "Alcohol-Resistant Foam, Water Fog for vapor suppression (do not apply direct stream into molten polymer)",
+    "idlh_ppm": {
+      "Styrene": 700,
+      "Ethylene Oxide": 800,
+      "Vinyl Chloride": "Carcinogen (Immediate Evacuation)"
+    }
+  },
+  "Fertilizer & Chemical Complex": {
+    "sector": "Agrochemicals & Nitrogenous Fertilizers",
+    "primary_chemicals": ["Anhydrous Ammonia (NH3)", "Ammonium Nitrate", "Phosphoric Acid", "Sulfuric Acid"],
+    "cameo_hazmat_class": "Class 2.3 - Toxic / Inhalation Hazard Gas & Class 5.1 Oxidizer",
+    "un_na_numbers": ["UN1005", "UN1942", "UN1805", "UN1830"],
+    "primary_disaster_risk": "Massive Detonation of Nitrate Stockpiles & Dense Alkaline Toxic Ammonia Vapor Cloud",
+    "initial_isolation_distance_meters": 1500,
+    "downwind_evacuation_day_meters": 3200,
+    "downwind_evacuation_night_meters": 5000,
+    "toxic_combustion_byproducts": ["Ammonia Gas (NH3)", "Nitrogen Oxides (NOx)", "Nitric Acid Vapors"],
+    "firefighting_protocol": "Massive flooding with water from unmanned monitors. Do NOT attempt to fight Ammonium Nitrate fires in enclosed areas.",
+    "idlh_ppm": {
+      "Ammonia": 300,
+      "Nitrogen Dioxide": 20
+    }
+  },
+  "Chlor-Alkali & Basic Chemicals": {
+    "sector": "Inorganic Chemicals",
+    "primary_chemicals": ["Liquid Chlorine (Cl2)", "Sodium Hydroxide (Caustic Soda)", "Hydrogen Gas (H2)", "Hydrochloric Acid (HCl)"],
+    "cameo_hazmat_class": "Class 2.3 - Poison Gas (Corrosive / Oxidizer)",
+    "un_na_numbers": ["UN1017", "UN1824", "UN1049", "UN1789"],
+    "primary_disaster_risk": "Heavy Choking Green-Yellow Toxic Cloud Hugging the Ground & Rapid Hydrogen Explosions",
+    "initial_isolation_distance_meters": 1200,
+    "downwind_evacuation_day_meters": 3000,
+    "downwind_evacuation_night_meters": 4500,
+    "toxic_combustion_byproducts": ["Chlorine Gas", "Hydrogen Chloride Fumes", "Chlorinated Organics"],
+    "firefighting_protocol": "Water spray curtain to knock down chlorine gas cloud (do NOT spray water directly on liquid chlorine leak source)",
+    "idlh_ppm": {
+      "Chlorine": 10,
+      "HCl": 50
+    }
+  },
+  "Thermal Power Plant": {
+    "sector": "Power Generation",
+    "primary_chemicals": ["Pulverized Sub-bituminous Coal", "Heavy Fuel Oil (HFO)", "Transformer PCB Oil", "Hydrazine"],
+    "cameo_hazmat_class": "Class 4.1 - Flammable Solid / Spontaneous Combustion",
+    "un_na_numbers": ["UN1361", "UN1993", "UN2315", "UN2029"],
+    "primary_disaster_risk": "Coal Bunker Silo Dust Explosion & Dense Sulfurous Acid Particulate Smoke",
+    "initial_isolation_distance_meters": 400,
+    "downwind_evacuation_day_meters": 1000,
+    "downwind_evacuation_night_meters": 1500,
+    "toxic_combustion_byproducts": ["Sulfur Dioxide (SO2)", "Carbon Monoxide (CO)", "Fly Ash PM2.5 / PM10", "Nitric Oxide"],
+    "firefighting_protocol": "Inert gas smothering (Nitrogen/CO2 injection in silos), deluge water spray on conveyor belts",
+    "idlh_ppm": {
+      "SO2": 100,
+      "CO": 1200
+    }
+  },
+  "Iron, Steel & Smelting Works": {
+    "sector": "Metallurgy & Heavy Industry",
+    "primary_chemicals": ["Blast Furnace Gas (BFG)", "Coke Oven Gas", "Liquid Molten Iron/Slag", "Carbon Monoxide"],
+    "cameo_hazmat_class": "Class 2.3 / Class 2.1 - Toxic Flammable Gas Asphyxiant",
+    "un_na_numbers": ["UN1971", "UN1016"],
+    "primary_disaster_risk": "Molten Metal Water Steam Explosion & Acute Asphyxiation from High CO Flue Leaks",
+    "initial_isolation_distance_meters": 500,
+    "downwind_evacuation_day_meters": 1200,
+    "downwind_evacuation_night_meters": 1800,
+    "toxic_combustion_byproducts": ["Carbon Monoxide (CO)", "Hydrogen Cyanide (HCN in coke oven)", "Sulfur Compounds"],
+    "firefighting_protocol": "Dry Chemical Powder, Dry Sand for molten metal (NEVER USE WATER ON MOLTEN LIQUID METAL)",
+    "idlh_ppm": {
+      "CO": 1200,
+      "HCN": 50
+    }
+  },
+  "LNG & Cryogenic Gas Terminal": {
+    "sector": "Cryogenic Gas Logistics",
+    "primary_chemicals": ["Liquefied Natural Gas (Methane CH4)", "Liquefied Ethane", "Refrigerant Gases"],
+    "cameo_hazmat_class": "Class 2.1 - Flammable Cryogenic Liquid",
+    "un_na_numbers": ["UN1972", "UN1038"],
+    "primary_disaster_risk": "Rapid Phase Transition (RPT) Explosion, Cryogenic Frostbite, Massive Thermal Flashover",
+    "initial_isolation_distance_meters": 1600,
+    "downwind_evacuation_day_meters": 3200,
+    "downwind_evacuation_night_meters": 4800,
+    "toxic_combustion_byproducts": ["Carbon Dioxide", "Carbon Monoxide", "Unburnt Methane Cloud"],
+    "firefighting_protocol": "High-Expansion Foam for vapor suppression, Dry Chemical for active fire extinguishment, Water curtain for exposure protection",
+    "idlh_ppm": {
+      "Methane": "Simple Asphyxiant / LEL 5%"
+    }
+  },
+  "Open Cast & Underground Coal Mining": {
+    "sector": "Mining & Extraction",
+    "primary_chemicals": ["Methane (Firedamp)", "Coal Seam Deposits", "Explosives (ANFO)"],
+    "cameo_hazmat_class": "Class 4.2 - Spontaneously Combustible / Class 1.1D Explosive",
+    "un_na_numbers": ["UN1361", "UN0082"],
+    "primary_disaster_risk": "Subsurface Coal Seam Smoldering, Methane Underground Detonation, Land Subsidence",
+    "initial_isolation_distance_meters": 600,
+    "downwind_evacuation_day_meters": 1200,
+    "downwind_evacuation_night_meters": 2000,
+    "toxic_combustion_byproducts": ["Carbon Monoxide", "Methane", "Coal Tar Aerosols", "Sulfur Fumes"],
+    "firefighting_protocol": "Nitrogen foam injection, High-pressure hydraulic sand stowing, Surface soil capping",
+    "idlh_ppm": {
+      "CO": 1200
+    }
+  }
+}
