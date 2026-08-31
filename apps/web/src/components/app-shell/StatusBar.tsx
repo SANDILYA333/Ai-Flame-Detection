@@ -1,17 +1,27 @@
 "use client";
 
 import React from "react";
-import { Database, Cpu, Activity, Clock, Flame, Factory, AlertTriangle } from "lucide-react";
+import { Database, Cpu, Clock, RotateCcw, Play } from "lucide-react";
 import { StatusDot } from "@/components/ui/StatusDot";
 import { Badge } from "@/components/ui/Badge";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { APP_CONFIG } from "@/config/ui";
 import { useEventContext } from "@/context/EventContext";
+import { cn } from "@/lib/utils";
 
-export type TimeRange = "1h" | "6h" | "24h" | "48h" | "7d" | "All";
+export type TimeRange = "1h" | "6h" | "24h" | "48h" | "7d" | "ALL";
 
 export function StatusBar() {
-  const { stats, timeRange, setTimeRange, isLiveBackend } = useEventContext();
+  const {
+    stats,
+    timeRange,
+    setTimeRange,
+    isLiveBackend,
+    playbackMode,
+    resetToLive,
+  } = useEventContext();
+
+  const isPlayback = playbackMode === "PLAYBACK";
 
   return (
     <footer className="h-9 w-full bg-surface border-t border-border flex items-center justify-between px-3 z-40 select-none shrink-0 font-mono text-[11px]">
@@ -40,6 +50,21 @@ export function StatusBar() {
             REVIEW REQ: <strong className="text-state-warning">{stats.reviewRequired}</strong>
           </span>
         </div>
+
+        {/* Playback mode pill if active */}
+        {isPlayback && (
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-accent/15 border border-accent/40 text-accent text-[10px] font-bold">
+            <Play className="w-2.5 h-2.5 animate-pulse" />
+            <span>PLAYBACK ACTIVE</span>
+            <button
+              onClick={resetToLive}
+              title="Return to live stream"
+              className="ml-1 px-1 py-0.2 rounded bg-surface hover:bg-surface-raised text-state-success border border-state-success/40 transition-colors"
+            >
+              LIVE ⟲
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 2. Center: Time Filter Segmented Control */}
@@ -49,7 +74,7 @@ export function StatusBar() {
         </span>
         <SegmentedControl<TimeRange>
           size="sm"
-          value={timeRange as TimeRange}
+          value={timeRange.toUpperCase() === "ALL" ? "ALL" : (timeRange.toLowerCase() as TimeRange)}
           onChange={(val) => setTimeRange(val)}
           options={[
             { value: "1h", label: "1h" },
@@ -57,7 +82,7 @@ export function StatusBar() {
             { value: "24h", label: "24h" },
             { value: "48h", label: "48h" },
             { value: "7d", label: "7d" },
-            { value: "All", label: "ALL" },
+            { value: "ALL", label: "ALL" },
           ]}
         />
       </div>
