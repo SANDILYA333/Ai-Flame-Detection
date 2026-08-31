@@ -6,21 +6,26 @@ tracks longitudinal Persistent Thermal Sources, and guarantees point-in-time
 temporal integrity without future leakage.
 """
 
+from __future__ import annotations
+
 import json
-from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from packages.config.scientific import ScientificConfig
-from packages.data.firms.schemas import RealDetectionDataset
 from packages.events.service import derive_thermal_events
-from packages.feasibility.models import StudyArea
 from packages.schemas.common import BoundingBox
-from packages.schemas.detection import Detection
 from packages.schemas.event import Event, RealThermalEventDataset
-from packages.schemas.source import PersistentSource
 from packages.sources.service import derive_persistent_sources
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from packages.data.firms.schemas import RealDetectionDataset
+    from packages.feasibility.models import StudyArea
+    from packages.schemas.detection import Detection
+    from packages.schemas.source import PersistentSource
 
 SENSITIVE_KEY_PATTERNS = (
     "map_key",
