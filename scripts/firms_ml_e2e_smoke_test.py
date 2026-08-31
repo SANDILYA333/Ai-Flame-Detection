@@ -9,7 +9,7 @@ Executes 3 authoritative scenarios:
 - Scenario B: Ambiguous / Moderate-Confidence Signature (Abstention to Unknown)
 - Scenario C: High-Confidence Non-Industrial Thermal Signature
 
-Explicitly differentiates real pipeline execution with deterministic integration fixtures.
+Differentiates real pipeline execution with deterministic integration fixtures.
 """
 
 from __future__ import annotations
@@ -167,12 +167,14 @@ def run_smoke_test() -> None:
     print(f"Predicted Class:      {res_a.predicted_class}")
     print(f"Assigned Class:       {res_a.assigned_class}")
     print(
-        f"Confidence:           {res_a.confidence:.4f} (Threshold: {res_a.threshold:.2f})"
+        f"Confidence:           {res_a.confidence:.4f} "
+        f"(Threshold: {res_a.threshold:.2f})"
     )
     print(f"Is Abstained:         {res_a.is_abstained}")
     print(f"Review Required:      {res_a.review_required}")
     print(
-        f"Pipeline Latencies:   Feature Ext: {res_a.feature_extraction_latency_ms:.2f} ms | "
+        f"Pipeline Latencies:   Feature Ext: "
+        f"{res_a.feature_extraction_latency_ms:.2f} ms | "
         f"Inference: {res_a.inference_latency_ms:.2f} ms | "
         f"Total: {res_a.total_latency_ms:.2f} ms"
     )
@@ -207,20 +209,22 @@ def run_smoke_test() -> None:
     print(f"Predicted Class:      {res_b.predicted_class}")
     print(f"Assigned Class:       {res_b.assigned_class}")
     print(
-        f"Confidence:           {res_b.confidence:.4f} (Threshold: {res_b.threshold:.2f})"
+        f"Confidence:           {res_b.confidence:.4f} "
+        f"(Threshold: {res_b.threshold:.2f})"
     )
     print(f"Is Abstained:         {res_b.is_abstained}")
     print(f"Review Required:      {res_b.review_required}")
     print(f"Abstention Reason:    {res_b.abstention_reason}")
     print(
-        f"Pipeline Latencies:   Feature Ext: {res_b.feature_extraction_latency_ms:.2f} ms | "
+        f"Pipeline Latencies:   Feature Ext: "
+        f"{res_b.feature_extraction_latency_ms:.2f} ms | "
         f"Inference: {res_b.inference_latency_ms:.2f} ms | "
         f"Total: {res_b.total_latency_ms:.2f} ms"
     )
     print()
 
     # --------------------------------------------------------------------------
-    # Scenario C: High-Confidence Non-Industrial Signature (Wildfire / Biomass)
+    # Scenario C: High-Confidence Non-Industrial Signature (Biomass Fire)
     # --------------------------------------------------------------------------
     print("-" * 80)
     print("SCENARIO C: High-Confidence Non-Industrial Signature (Biomass Fire)")
@@ -249,12 +253,14 @@ def run_smoke_test() -> None:
     print(f"Predicted Class:      {res_c.predicted_class}")
     print(f"Assigned Class:       {res_c.assigned_class}")
     print(
-        f"Confidence:           {res_c.confidence:.4f} (Threshold: {res_c.threshold:.2f})"
+        f"Confidence:           {res_c.confidence:.4f} "
+        f"(Threshold: {res_c.threshold:.2f})"
     )
     print(f"Is Abstained:         {res_c.is_abstained}")
     print(f"Review Required:      {res_c.review_required}")
     print(
-        f"Pipeline Latencies:   Feature Ext: {res_c.feature_extraction_latency_ms:.2f} ms | "
+        f"Pipeline Latencies:   Feature Ext: "
+        f"{res_c.feature_extraction_latency_ms:.2f} ms | "
         f"Inference: {res_c.inference_latency_ms:.2f} ms | "
         f"Total: {res_c.total_latency_ms:.2f} ms"
     )
@@ -267,7 +273,8 @@ def run_smoke_test() -> None:
     print("SCENARIO D: Raw NASA FIRMS CSV Ingestion & Evaluation")
     print("-" * 80)
     csv_payload = (
-        "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_t31,frp,daynight\n"
+        "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,"
+        "instrument,confidence,version,bright_t31,frp,daynight\n"
         "22.470,70.050,385.4,0.5,0.5,2026-08-15,1830,N,VIIRS,high,2.0NRT,312.1,88.5,N\n"
         "22.472,70.051,387.1,0.5,0.5,2026-08-15,1830,N,VIIRS,high,2.0NRT,314.0,92.3,N\n"
         "15.300,76.200,308.2,0.6,0.5,2026-08-15,0815,N,VIIRS,nominal,2.0NRT,298.5,7.8,D\n"
@@ -276,12 +283,13 @@ def run_smoke_test() -> None:
         csv_content=csv_payload,
         mode=ProductionOperatingMode.HIGH_RECALL,
     )
-    print(f"Raw CSV Rows Ingested:    3 rows")
+    print("Raw CSV Rows Ingested:    3 rows")
     print(f"Derived Thermal Events:   {len(csv_results)} events")
     for r in csv_results:
         print(
-            f"  * Event [{r.event_id}]: Lat={r.centroid_latitude:.3f}, Lon={r.centroid_longitude:.3f}, "
-            f"Dets={r.detection_count} -> Class='{r.assigned_class}' (Conf={r.confidence:.4f}, "
+            f"  * Event [{r.event_id}]: Lat={r.centroid_latitude:.3f}, "
+            f"Lon={r.centroid_longitude:.3f}, Dets={r.detection_count} -> "
+            f"Class='{r.assigned_class}' (Conf={r.confidence:.4f}, "
             f"Abstained={r.is_abstained})"
         )
     print()
