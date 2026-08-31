@@ -52,9 +52,18 @@ def cluster_detections_spatiotemporal(
             f"temporal_window_hours must be non-negative, got {temporal_window_hours}"
         )
 
-    # 1. Deterministic canonical sorting of all input detections
+    # 1. Deduplicate detections by detection_id to prevent redundant nodes
+    unique_dets: dict[str, Detection] = {}
+    for d in detections:
+        if d.detection_id not in unique_dets:
+            unique_dets[d.detection_id] = d
+
+    if not unique_dets:
+        return []
+
+    # 2. Deterministic canonical sorting of all input detections
     sorted_detections = sorted(
-        detections,
+        unique_dets.values(),
         key=lambda d: (
             d.acquired_at.timestamp(),
             d.geometry.latitude,
