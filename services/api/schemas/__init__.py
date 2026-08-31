@@ -15,6 +15,12 @@ from services.api.schemas.events import (
     TimelineObservation,
 )
 from services.api.schemas.health import HealthResponse
+from services.api.schemas.inference import (
+    BatchPredictionRequestBody,
+    BatchPredictionResponseBody,
+    PredictionRequestBody,
+    PredictionResponseBody,
+)
 from services.api.schemas.layers import (
     GeoJsonFeature,
     GeoJsonFeatureCollection,
@@ -37,6 +43,8 @@ from services.api.schemas.version import (
 )
 
 __all__ = [
+    "BatchPredictionRequestBody",
+    "BatchPredictionResponseBody",
     "DependencyHealth",
     "DependencyStatus",
     "DetectionPagination",
@@ -52,6 +60,8 @@ __all__ = [
     "GeoJsonGeometry",
     "HealthResponse",
     "IntelligenceResult",
+    "PredictionRequestBody",
+    "PredictionResponseBody",
     "ReadinessResponse",
     "SourceAvailabilityState",
     "SourceOperationalMode",

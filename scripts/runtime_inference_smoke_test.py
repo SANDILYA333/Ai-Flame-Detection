@@ -14,8 +14,6 @@ Verifies:
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
 from typing import Any
 
 from services.ml.deployment.policy import ProductionOperatingMode
@@ -88,7 +86,7 @@ def run_smoke_test() -> None:
         print(f"TESTING OPERATING MODE: [{mode.value}]")
         print("-" * 75)
 
-        engine, policy = ProductionMLRuntimeService.get_or_load_engine(mode)
+        _engine, policy = ProductionMLRuntimeService.get_or_load_engine(mode)
         print(f"Resolved Model:      {policy.assigned_model_type}")
         print(f"Model Version:       {policy.model_version}")
         print(f"Operating Threshold: tau >= {policy.confidence_threshold:.2f}")
@@ -104,7 +102,10 @@ def run_smoke_test() -> None:
             print(f"  Input Scenario:    {label}")
             print(f"    * Predicted Class:     {res.predicted_class}")
             print(f"    * Assigned Class:      {res.assigned_class}")
-            print(f"    * Confidence:          {res.confidence:.4f} (Threshold: {res.threshold:.2f})")
+            conf_str = (
+                f"{res.confidence:.4f} (Threshold: {res.threshold:.2f})"
+            )
+            print(f"    * Confidence:          {conf_str}")
             print(f"    * Is Abstained:        {res.is_abstained}")
             print(f"    * Review Required:     {res.review_required}")
             print(f"    * Latency:             {res.latency_ms:.2f} ms")
