@@ -381,16 +381,13 @@ class LayerQueryService:
             detections = [
                 d
                 for d in detections
-                if src_query in d.source.lower()
-                or src_query in d.product_type.lower()
+                if src_query in d.source.lower() or src_query in d.product_type.lower()
             ]
 
         # 4. FRP filter
         if min_frp_mw is not None:
             detections = [
-                d
-                for d in detections
-                if d.frp_mw is not None and d.frp_mw >= min_frp_mw
+                d for d in detections if d.frp_mw is not None and d.frp_mw >= min_frp_mw
             ]
 
         # 5. Deterministic sorting & pagination

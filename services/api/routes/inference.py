@@ -71,7 +71,9 @@ def predict_features(
     response_model=BatchPredictionResponseBody,
     operation_id="predict_batch_features",
     summary="Execute batch production ML inference",
-    description="Executes high-throughput batch prediction over multiple feature vectors.",
+    description=(
+        "Executes high-throughput batch prediction over multiple feature vectors."
+    ),
 )
 def predict_batch_features(
     request: BatchPredictionRequestBody,
