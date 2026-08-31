@@ -3,7 +3,43 @@ import assert from "node:assert/strict";
 import { DEMO_THERMAL_EVENTS } from "../features/events/mock/demo-events.ts";
 import type { ThermalEvent } from "../types/event.ts";
 
-describe("NEXT-FE-010 Operational Integration & Polish Suite", () => {
+describe("NEXT-FE-013 Frontend Stabilization & Multi-Source QA Suite", () => {
+  it("renders multi-source events across multiple distinct global coordinates", () => {
+    const events: ThermalEvent[] = DEMO_THERMAL_EVENTS;
+
+    // Verify events span distinct geographical regions
+    const uniqueLats = new Set(events.map((e) => e.latitude.toFixed(1)));
+    const uniqueLngs = new Set(events.map((e) => e.longitude.toFixed(1)));
+
+    assert.ok(uniqueLats.size >= 15, "Expected at least 15 distinct latitudes");
+    assert.ok(uniqueLngs.size >= 15, "Expected at least 15 distinct longitudes");
+    assert.ok(events.length >= 20, "Expected at least 20 multi-source events");
+  });
+
+  it("filters events dynamically by time window intervals", () => {
+    const events: ThermalEvent[] = DEMO_THERMAL_EVENTS;
+
+    const maxTimeMs = Math.max(
+      ...events.map((e) => new Date(e.start_time).getTime()).filter((t) => !isNaN(t))
+    );
+    assert.ok(maxTimeMs > 0);
+
+    // 1h filter (cutoff = maxTime - 1h)
+    const cutoff1h = maxTimeMs - 1 * 60 * 60 * 1000;
+    const events1h = events.filter((e) => new Date(e.start_time).getTime() >= cutoff1h);
+    assert.ok(events1h.length > 0);
+    assert.ok(events1h.length < events.length);
+
+    // 6h filter
+    const cutoff6h = maxTimeMs - 6 * 60 * 60 * 1000;
+    const events6h = events.filter((e) => new Date(e.start_time).getTime() >= cutoff6h);
+    assert.ok(events6h.length >= events1h.length);
+    assert.ok(events6h.length <= events.length);
+
+    // ALL filter
+    assert.equal(events.length, 20);
+  });
+
   it("filters events by search query matching location name or ID", () => {
     const events: ThermalEvent[] = DEMO_THERMAL_EVENTS;
 
