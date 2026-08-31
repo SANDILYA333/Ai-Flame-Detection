@@ -1,0 +1,1349 @@
+{
+  "class_vocabulary": [
+    "industrial",
+    "non_industrial"
+  ],
+  "metadata": {
+    "artifact_hash": "42e5f2ef690cf1b3a532e93eebce572e155a58fcba29ee3478c2dc72f3e12559",
+    "dataset_hash": "0d38add41c20c8edf28338bda2bcdfce35b72604673ddff2ac3ee68e9fe9e4e2",
+    "dataset_id": "feat_ds_real_supervised_v1.0.0",
+    "dataset_version": "v1.0.0",
+    "feature_dimensionality": 38,
+    "feature_names": [
+      "num_brightness_max_kelvin",
+      "num_brightness_mean_kelvin",
+      "num_daynight_ratio",
+      "num_detection_count",
+      "num_duration_hours",
+      "num_facility_distance_meters",
+      "num_frp_max_mw",
+      "num_frp_mean_mw",
+      "num_frp_min_mw",
+      "num_frp_std_mw",
+      "num_frp_sum_mw",
+      "num_persistence_active_days",
+      "num_persistence_recurrence_ratio",
+      "num_persistence_total_events",
+      "num_power_plant_distance_meters",
+      "num_prior_event_count_24h",
+      "num_prior_event_count_30d",
+      "num_prior_event_count_7d",
+      "num_satellite_platform_diversity",
+      "num_spatial_extent_radius_meters",
+      "num_temporal_density",
+      "num_time_since_previous_event_hours",
+      "num_water_distance_meters",
+      "bool_is_near_industrial_facility",
+      "bool_is_persistent_source",
+      "bool_is_protected_area",
+      "cat_facility_context_type_NONE",
+      "cat_facility_context_type_industrial",
+      "cat_facility_context_type_mining",
+      "cat_facility_context_type_oil_gas",
+      "cat_landcover_class_UNKNOWN",
+      "cat_persistence_state_insufficient_history",
+      "cat_persistence_state_persistent",
+      "cat_persistence_state_recurring",
+      "cat_persistence_state_transient",
+      "cat_sensor_instrument_HYBRID",
+      "cat_sensor_instrument_MODIS",
+      "cat_sensor_instrument_VIIRS"
+    ],
+    "feature_set_version": "feat_v1.0.0",
+    "hyperparameters": {},
+    "label_set_version": "label_v1.0.0",
+    "model_family": "TreeEnsemble",
+    "model_id": "real_randomforestclassifier_target_industrial_segregation_v1.0.0",
+    "model_type": "RandomForestClassifier",
+    "model_version": "v1.0.0-production",
+    "random_seed": 42,
+    "split_strategy": "PERSISTENT_SOURCE_HOLDOUT",
+    "split_version": "PERSISTENT_SOURCE_HOLDOUT",
+    "target_id": "target_industrial_segregation",
+    "target_version": "target_v1.0.0",
+    "test_metrics": {
+      "evaluation_status": "READY_FOR_NEXT_007",
+      "pilot_mode": false,
+      "test_samples": 346
+    },
+    "train_record_count": 1515,
+    "training_timestamp": "2026-08-31T00:47:38.743104Z",
+    "validation_metrics": {
+      "circularity_warning": "Reference labels are derived from contextual proximity to industrial infrastructure. Models trained on this data without feature ablation risk learning the attribution rule rather than thermal anomaly physics. Rigorous feature ablation required.",
+      "is_production_ready": true,
+      "pilot_mode": false,
+      "scientific_gate_status": "PASSED",
+      "val_samples": 324
+    }
+  },
+  "model_parameters": {
+    "class_vocabulary": [
+      "industrial",
+      "non_industrial"
+    ],
+    "feature_importances": [
+      0.037219595444995,
+      0.03305687902944089,
+      0.0,
+      0.0,
+      0.0,
+      0.011963312589285551,
+      0.0,
+      0.0,
+      0.0,
+      0.014240373804444848,
+      0.0,
+      0.39833500804029154,
+      0.014085392158677806,
+      0.2875591956842794,
+      0.0,
+      0.0016866588744927045,
+      0.02758468682678365,
+      0.0,
+      0.0,
+      0.0038491571647355713,
+      0.0013092771510905443,
+      0.0,
+      0.0,
+      0.09672448476967234,
+      0.024800955851619563,
+      0.0,
+      0.04590550646023962,
+      0.0,
+      0.0,
+      0.0016795161499510343,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "max_depth": 3,
+    "max_features": "sqrt",
+    "min_samples_leaf": 1,
+    "min_samples_split": 2,
+    "n_estimators": 5,
+    "n_features": 38,
+    "random_seed": 42,
+    "trees": [
+      {
+        "class_vocabulary": [
+          "industrial",
+          "non_industrial"
+        ],
+        "feature_importances": [
+          0.0,
+          0.16528439514720444,
+          0.0,
+          0.0,
+          0.0,
+          0.05981656294642775,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.07042696079338903,
+          0.5809619557917324,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.12351012532124638,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_depth": 3,
+        "max_features": "sqrt",
+        "min_samples_leaf": 1,
+        "min_samples_split": 2,
+        "n_features": 38,
+        "random_seed": 42,
+        "tree_structure": {
+          "class_probabilities": {
+            "industrial": 0.4389438943894389,
+            "non_industrial": 0.5610561056105611
+          },
+          "feature_index": 1,
+          "gain": 0.03607163539953445,
+          "is_leaf": false,
+          "left": {
+            "class_probabilities": {
+              "industrial": 0.14925373134328357,
+              "non_industrial": 0.8507462686567164
+            },
+            "feature_index": 5,
+            "gain": 0.013054355479446108,
+            "is_leaf": false,
+            "left": {
+              "class_probabilities": {
+                "industrial": 1.0,
+                "non_industrial": 0.0
+              },
+              "feature_index": null,
+              "gain": 0.0,
+              "is_leaf": true,
+              "left": null,
+              "predicted_class": "industrial",
+              "right": null,
+              "sample_count": 13,
+              "threshold": null
+            },
+            "predicted_class": "non_industrial",
+            "right": {
+              "class_probabilities": {
+                "industrial": 0.10588235294117647,
+                "non_industrial": 0.8941176470588236
+              },
+              "feature_index": 12,
+              "gain": 0.015369966715695751,
+              "is_leaf": false,
+              "left": {
+                "class_probabilities": {
+                  "industrial": 0.7142857142857143,
+                  "non_industrial": 0.2857142857142857
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "industrial",
+                "right": null,
+                "sample_count": 28,
+                "threshold": null
+              },
+              "predicted_class": "non_industrial",
+              "right": {
+                "class_probabilities": {
+                  "industrial": 0.030837004405286344,
+                  "non_industrial": 0.9691629955947136
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "non_industrial",
+                "right": null,
+                "sample_count": 227,
+                "threshold": null
+              },
+              "sample_count": 255,
+              "threshold": -2.171106481598824
+            },
+            "sample_count": 268,
+            "threshold": -0.5215218669894022
+          },
+          "predicted_class": "non_industrial",
+          "right": {
+            "class_probabilities": {
+              "industrial": 0.5012028869286287,
+              "non_industrial": 0.4987971130713713
+            },
+            "feature_index": 26,
+            "gain": 0.0269548265870528,
+            "is_leaf": false,
+            "left": {
+              "class_probabilities": {
+                "industrial": 1.0,
+                "non_industrial": 0.0
+              },
+              "feature_index": null,
+              "gain": 0.0,
+              "is_leaf": true,
+              "left": null,
+              "predicted_class": "industrial",
+              "right": null,
+              "sample_count": 77,
+              "threshold": null
+            },
+            "predicted_class": "industrial",
+            "right": {
+              "class_probabilities": {
+                "industrial": 0.4683760683760684,
+                "non_industrial": 0.5316239316239316
+              },
+              "feature_index": 13,
+              "gain": 0.12678902827853722,
+              "is_leaf": false,
+              "left": {
+                "class_probabilities": {
+                  "industrial": 0.23319027181688126,
+                  "non_industrial": 0.7668097281831188
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "non_industrial",
+                "right": null,
+                "sample_count": 699,
+                "threshold": null
+              },
+              "predicted_class": "non_industrial",
+              "right": {
+                "class_probabilities": {
+                  "industrial": 0.8174097664543525,
+                  "non_industrial": 0.18259023354564755
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "industrial",
+                "right": null,
+                "sample_count": 471,
+                "threshold": null
+              },
+              "sample_count": 1170,
+              "threshold": 0.019216753747692564
+            },
+            "sample_count": 1247,
+            "threshold": 0.5
+          },
+          "sample_count": 1515,
+          "threshold": -1.1538838510354021
+        }
+      },
+      {
+        "class_vocabulary": [
+          "industrial",
+          "non_industrial"
+        ],
+        "feature_importances": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.07120186902222424,
+          0.0,
+          0.1787753934583307,
+          0.0,
+          0.7255876996456975,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.009491071368539708,
+          0.006546385755452722,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.008397580749755171,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_depth": 3,
+        "max_features": "sqrt",
+        "min_samples_leaf": 1,
+        "min_samples_split": 2,
+        "n_features": 38,
+        "random_seed": 1055,
+        "tree_structure": {
+          "class_probabilities": {
+            "industrial": 0.4396039603960396,
+            "non_industrial": 0.5603960396039604
+          },
+          "feature_index": 13,
+          "gain": 0.1416211728882325,
+          "is_leaf": false,
+          "left": {
+            "class_probabilities": {
+              "industrial": 0.26908752327746743,
+              "non_industrial": 0.7309124767225326
+            },
+            "feature_index": 9,
+            "gain": 0.01389727555702163,
+            "is_leaf": false,
+            "left": {
+              "class_probabilities": {
+                "industrial": 0.3129175946547884,
+                "non_industrial": 0.6870824053452116
+              },
+              "feature_index": 11,
+              "gain": 0.03489361922409509,
+              "is_leaf": false,
+              "left": {
+                "class_probabilities": {
+                  "industrial": 0.2297111416781293,
+                  "non_industrial": 0.7702888583218707
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "non_industrial",
+                "right": null,
+                "sample_count": 727,
+                "threshold": null
+              },
+              "predicted_class": "non_industrial",
+              "right": {
+                "class_probabilities": {
+                  "industrial": 0.6666666666666666,
+                  "non_industrial": 0.3333333333333333
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "industrial",
+                "right": null,
+                "sample_count": 171,
+                "threshold": null
+              },
+              "sample_count": 898,
+              "threshold": 0.3030683955635646
+            },
+            "predicted_class": "non_industrial",
+            "right": {
+              "class_probabilities": {
+                "industrial": 0.045454545454545456,
+                "non_industrial": 0.9545454545454546
+              },
+              "feature_index": 20,
+              "gain": 0.0012777322842142118,
+              "is_leaf": false,
+              "left": {
+                "class_probabilities": {
+                  "industrial": 0.1891891891891892,
+                  "non_industrial": 0.8108108108108109
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "non_industrial",
+                "right": null,
+                "sample_count": 37,
+                "threshold": null
+              },
+              "predicted_class": "non_industrial",
+              "right": {
+                "class_probabilities": {
+                  "industrial": 0.007194244604316547,
+                  "non_industrial": 0.9928057553956835
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "non_industrial",
+                "right": null,
+                "sample_count": 139,
+                "threshold": null
+              },
+              "sample_count": 176,
+              "threshold": -0.1196372352692263
+            },
+            "sample_count": 1074,
+            "threshold": -0.0066433854875166615
+          },
+          "predicted_class": "non_industrial",
+          "right": {
+            "class_probabilities": {
+              "industrial": 0.854875283446712,
+              "non_industrial": 0.14512471655328799
+            },
+            "feature_index": 29,
+            "gain": 0.0016390509869236897,
+            "is_leaf": false,
+            "left": {
+              "class_probabilities": {
+                "industrial": 0.8354755784061697,
+                "non_industrial": 0.16452442159383032
+              },
+              "feature_index": 19,
+              "gain": 0.0018524799412047003,
+              "is_leaf": false,
+              "left": {
+                "class_probabilities": {
+                  "industrial": 0.8397932816537468,
+                  "non_industrial": 0.16020671834625322
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "industrial",
+                "right": null,
+                "sample_count": 387,
+                "threshold": null
+              },
+              "predicted_class": "industrial",
+              "right": {
+                "class_probabilities": {
+                  "industrial": 0.0,
+                  "non_industrial": 1.0
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "non_industrial",
+                "right": null,
+                "sample_count": 2,
+                "threshold": null
+              },
+              "sample_count": 389,
+              "threshold": 6.304930570324853
+            },
+            "predicted_class": "industrial",
+            "right": {
+              "class_probabilities": {
+                "industrial": 1.0,
+                "non_industrial": 0.0
+              },
+              "feature_index": null,
+              "gain": 0.0,
+              "is_leaf": true,
+              "left": null,
+              "predicted_class": "industrial",
+              "right": null,
+              "sample_count": 52,
+              "threshold": null
+            },
+            "sample_count": 441,
+            "threshold": 0.5
+          },
+          "sample_count": 1515,
+          "threshold": 0.4063198929532899
+        }
+      },
+      {
+        "class_vocabulary": [
+          "industrial",
+          "non_industrial"
+        ],
+        "feature_importances": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.680557476036419,
+          0.0,
+          0.06801670394806797,
+          0.0,
+          0.008433294372463523,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.11898774638495167,
+          0.12400477925809782,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_depth": 3,
+        "max_features": "sqrt",
+        "min_samples_leaf": 1,
+        "min_samples_split": 2,
+        "n_features": 38,
+        "random_seed": 2068,
+        "tree_structure": {
+          "class_probabilities": {
+            "industrial": 0.4752475247524752,
+            "non_industrial": 0.5247524752475248
+          },
+          "feature_index": 24,
+          "gain": 0.03596083204975786,
+          "is_leaf": false,
+          "left": {
+            "class_probabilities": {
+              "industrial": 0.04477611940298507,
+              "non_industrial": 0.9552238805970149
+            },
+            "feature_index": 15,
+            "gain": 0.002445617696097989,
+            "is_leaf": false,
+            "left": {
+              "class_probabilities": {
+                "industrial": 1.0,
+                "non_industrial": 0.0
+              },
+              "feature_index": null,
+              "gain": 0.0,
+              "is_leaf": true,
+              "left": null,
+              "predicted_class": "industrial",
+              "right": null,
+              "sample_count": 2,
+              "threshold": null
+            },
+            "predicted_class": "non_industrial",
+            "right": {
+              "class_probabilities": {
+                "industrial": 0.030303030303030304,
+                "non_industrial": 0.9696969696969697
+              },
+              "feature_index": 23,
+              "gain": 0.0025208674713625163,
+              "is_leaf": false,
+              "left": {
+                "class_probabilities": {
+                  "industrial": 0.015384615384615385,
+                  "non_industrial": 0.9846153846153847
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "non_industrial",
+                "right": null,
+                "sample_count": 130,
+                "threshold": null
+              },
+              "predicted_class": "non_industrial",
+              "right": {
+                "class_probabilities": {
+                  "industrial": 1.0,
+                  "non_industrial": 0.0
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "industrial",
+                "right": null,
+                "sample_count": 2,
+                "threshold": null
+              },
+              "sample_count": 132,
+              "threshold": 0.5
+            },
+            "sample_count": 134,
+            "threshold": -2.2990080827737827
+          },
+          "predicted_class": "non_industrial",
+          "right": {
+            "class_probabilities": {
+              "industrial": 0.5170166545981173,
+              "non_industrial": 0.4829833454018827
+            },
+            "feature_index": 11,
+            "gain": 0.1973586279688055,
+            "is_leaf": false,
+            "left": {
+              "class_probabilities": {
+                "industrial": 0.25934579439252337,
+                "non_industrial": 0.7406542056074766
+              },
+              "feature_index": 23,
+              "gain": 0.0319850474565011,
+              "is_leaf": false,
+              "left": {
+                "class_probabilities": {
+                  "industrial": 0.22113022113022113,
+                  "non_industrial": 0.7788697788697788
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "non_industrial",
+                "right": null,
+                "sample_count": 814,
+                "threshold": null
+              },
+              "predicted_class": "non_industrial",
+              "right": {
+                "class_probabilities": {
+                  "industrial": 1.0,
+                  "non_industrial": 0.0
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "industrial",
+                "right": null,
+                "sample_count": 42,
+                "threshold": null
+              },
+              "sample_count": 856,
+              "threshold": 0.5
+            },
+            "predicted_class": "industrial",
+            "right": {
+              "class_probabilities": {
+                "industrial": 0.9371428571428572,
+                "non_industrial": 0.06285714285714286
+              },
+              "feature_index": 13,
+              "gain": 0.019724540311173926,
+              "is_leaf": false,
+              "left": {
+                "class_probabilities": {
+                  "industrial": 0.484375,
+                  "non_industrial": 0.515625
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "non_industrial",
+                "right": null,
+                "sample_count": 64,
+                "threshold": null
+              },
+              "predicted_class": "industrial",
+              "right": {
+                "class_probabilities": {
+                  "industrial": 1.0,
+                  "non_industrial": 0.0
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "industrial",
+                "right": null,
+                "sample_count": 461,
+                "threshold": null
+              },
+              "sample_count": 525,
+              "threshold": 0.0030874562807926727
+            },
+            "sample_count": 1381,
+            "threshold": 0.8156670773931396
+          },
+          "sample_count": 1515,
+          "threshold": 0.5
+        }
+      },
+      {
+        "class_vocabulary": [
+          "industrial",
+          "non_industrial"
+        ],
+        "feature_importances": [
+          0.186097977224975,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.3113439111776967,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.13792343413391825,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.36463467746341,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_depth": 3,
+        "max_features": "sqrt",
+        "min_samples_leaf": 1,
+        "min_samples_split": 2,
+        "n_features": 38,
+        "random_seed": 3081,
+        "tree_structure": {
+          "class_probabilities": {
+            "industrial": 0.4561056105610561,
+            "non_industrial": 0.5438943894389439
+          },
+          "feature_index": 23,
+          "gain": 0.04181217058136555,
+          "is_leaf": false,
+          "left": {
+            "class_probabilities": {
+              "industrial": 0.4176678445229682,
+              "non_industrial": 0.5823321554770318
+            },
+            "feature_index": 16,
+            "gain": 0.015815495649762534,
+            "is_leaf": false,
+            "left": {
+              "class_probabilities": {
+                "industrial": 0.5946843853820598,
+                "non_industrial": 0.4053156146179402
+              },
+              "feature_index": 11,
+              "gain": 0.03570138971474454,
+              "is_leaf": false,
+              "left": {
+                "class_probabilities": {
+                  "industrial": 0.3333333333333333,
+                  "non_industrial": 0.6666666666666666
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "non_industrial",
+                "right": null,
+                "sample_count": 171,
+                "threshold": null
+              },
+              "predicted_class": "industrial",
+              "right": {
+                "class_probabilities": {
+                  "industrial": 0.9384615384615385,
+                  "non_industrial": 0.06153846153846154
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "industrial",
+                "right": null,
+                "sample_count": 130,
+                "threshold": null
+              },
+              "sample_count": 301,
+              "threshold": 0.8156670773931396
+            },
+            "predicted_class": "non_industrial",
+            "right": {
+              "class_probabilities": {
+                "industrial": 0.36983842010771995,
+                "non_industrial": 0.63016157989228
+              },
+              "feature_index": 0,
+              "gain": 0.021339606048189293,
+              "is_leaf": false,
+              "left": {
+                "class_probabilities": {
+                  "industrial": 0.055944055944055944,
+                  "non_industrial": 0.9440559440559441
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "non_industrial",
+                "right": null,
+                "sample_count": 143,
+                "threshold": null
+              },
+              "predicted_class": "non_industrial",
+              "right": {
+                "class_probabilities": {
+                  "industrial": 0.4160659114315139,
+                  "non_industrial": 0.583934088568486
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "non_industrial",
+                "right": null,
+                "sample_count": 971,
+                "threshold": null
+              },
+              "sample_count": 1114,
+              "threshold": -1.231949148488816
+            },
+            "sample_count": 1415,
+            "threshold": -0.930767134732917
+          },
+          "predicted_class": "non_industrial",
+          "right": {
+            "class_probabilities": {
+              "industrial": 1.0,
+              "non_industrial": 0.0
+            },
+            "feature_index": null,
+            "gain": 0.0,
+            "is_leaf": true,
+            "left": null,
+            "predicted_class": "industrial",
+            "right": null,
+            "sample_count": 100,
+            "threshold": null
+          },
+          "sample_count": 1515,
+          "threshold": 0.5
+        }
+      },
+      {
+        "class_vocabulary": [
+          "industrial",
+          "non_industrial"
+        ],
+        "feature_importances": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.820998259529011,
+          0.0,
+          0.06322961903589915,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.009754714455138147,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.10601740697995171,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_depth": 3,
+        "max_features": "sqrt",
+        "min_samples_leaf": 1,
+        "min_samples_split": 2,
+        "n_features": 38,
+        "random_seed": 4094,
+        "tree_structure": {
+          "class_probabilities": {
+            "industrial": 0.4303630363036304,
+            "non_industrial": 0.5696369636963696
+          },
+          "feature_index": 11,
+          "gain": 0.23458555514834883,
+          "is_leaf": false,
+          "left": {
+            "class_probabilities": {
+              "industrial": 0.2020972354623451,
+              "non_industrial": 0.797902764537655
+            },
+            "feature_index": 26,
+            "gain": 0.03133183609909274,
+            "is_leaf": false,
+            "left": {
+              "class_probabilities": {
+                "industrial": 1.0,
+                "non_industrial": 0.0
+              },
+              "feature_index": null,
+              "gain": 0.0,
+              "is_leaf": true,
+              "left": null,
+              "predicted_class": "industrial",
+              "right": null,
+              "sample_count": 36,
+              "threshold": null
+            },
+            "predicted_class": "non_industrial",
+            "right": {
+              "class_probabilities": {
+                "industrial": 0.17374136229022705,
+                "non_industrial": 0.8262586377097729
+              },
+              "feature_index": 11,
+              "gain": 0.008048023977650429,
+              "is_leaf": false,
+              "left": {
+                "class_probabilities": {
+                  "industrial": 0.05154639175257732,
+                  "non_industrial": 0.9484536082474226
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "non_industrial",
+                "right": null,
+                "sample_count": 291,
+                "threshold": null
+              },
+              "predicted_class": "non_industrial",
+              "right": {
+                "class_probabilities": {
+                  "industrial": 0.22299168975069253,
+                  "non_industrial": 0.7770083102493075
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "non_industrial",
+                "right": null,
+                "sample_count": 722,
+                "threshold": null
+              },
+              "sample_count": 1013,
+              "threshold": -1.0949280094261855
+            },
+            "sample_count": 1049,
+            "threshold": 0.5
+          },
+          "predicted_class": "non_industrial",
+          "right": {
+            "class_probabilities": {
+              "industrial": 0.944206008583691,
+              "non_industrial": 0.055793991416309016
+            },
+            "feature_index": 19,
+            "gain": 0.002882857855216508,
+            "is_leaf": false,
+            "left": {
+              "class_probabilities": {
+                "industrial": 0.8602150537634409,
+                "non_industrial": 0.13978494623655913
+              },
+              "feature_index": 13,
+              "gain": 0.01868655456377555,
+              "is_leaf": false,
+              "left": {
+                "class_probabilities": {
+                  "industrial": 0.3157894736842105,
+                  "non_industrial": 0.6842105263157895
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "non_industrial",
+                "right": null,
+                "sample_count": 38,
+                "threshold": null
+              },
+              "predicted_class": "industrial",
+              "right": {
+                "class_probabilities": {
+                  "industrial": 1.0,
+                  "non_industrial": 0.0
+                },
+                "feature_index": null,
+                "gain": 0.0,
+                "is_leaf": true,
+                "left": null,
+                "predicted_class": "industrial",
+                "right": null,
+                "sample_count": 148,
+                "threshold": null
+              },
+              "sample_count": 186,
+              "threshold": 0.0030874562807926727
+            },
+            "predicted_class": "industrial",
+            "right": {
+              "class_probabilities": {
+                "industrial": 1.0,
+                "non_industrial": 0.0
+              },
+              "feature_index": null,
+              "gain": 0.0,
+              "is_leaf": true,
+              "left": null,
+              "predicted_class": "industrial",
+              "right": null,
+              "sample_count": 280,
+              "threshold": null
+            },
+            "sample_count": 466,
+            "threshold": -0.3181828103382525
+          },
+          "sample_count": 1515,
+          "threshold": 0.8156670773931396
+        }
+      }
+    ]
+  },
+  "preprocessor_state": {
+    "boolean_features": [
+      "is_near_industrial_facility",
+      "is_persistent_source",
+      "is_protected_area"
+    ],
+    "categorical_features": [
+      "facility_context_type",
+      "landcover_class",
+      "persistence_state",
+      "sensor_instrument"
+    ],
+    "category_maps": {
+      "facility_context_type": [
+        "NONE",
+        "industrial",
+        "mining",
+        "oil_gas"
+      ],
+      "landcover_class": [
+        "UNKNOWN"
+      ],
+      "persistence_state": [
+        "insufficient_history",
+        "persistent",
+        "recurring",
+        "transient"
+      ],
+      "sensor_instrument": [
+        "HYBRID",
+        "MODIS",
+        "VIIRS"
+      ]
+    },
+    "feature_names": [
+      "brightness_max_kelvin",
+      "brightness_mean_kelvin",
+      "daynight_ratio",
+      "detection_count",
+      "duration_hours",
+      "facility_context_type",
+      "facility_distance_meters",
+      "frp_max_mw",
+      "frp_mean_mw",
+      "frp_min_mw",
+      "frp_std_mw",
+      "frp_sum_mw",
+      "is_near_industrial_facility",
+      "is_persistent_source",
+      "is_protected_area",
+      "landcover_class",
+      "persistence_active_days",
+      "persistence_recurrence_ratio",
+      "persistence_state",
+      "persistence_total_events",
+      "power_plant_distance_meters",
+      "prior_event_count_24h",
+      "prior_event_count_30d",
+      "prior_event_count_7d",
+      "satellite_platform_diversity",
+      "sensor_instrument",
+      "spatial_extent_radius_meters",
+      "temporal_density",
+      "time_since_previous_event_hours",
+      "water_distance_meters"
+    ],
+    "is_fitted": true,
+    "numeric_features": [
+      "brightness_max_kelvin",
+      "brightness_mean_kelvin",
+      "daynight_ratio",
+      "detection_count",
+      "duration_hours",
+      "facility_distance_meters",
+      "frp_max_mw",
+      "frp_mean_mw",
+      "frp_min_mw",
+      "frp_std_mw",
+      "frp_sum_mw",
+      "persistence_active_days",
+      "persistence_recurrence_ratio",
+      "persistence_total_events",
+      "power_plant_distance_meters",
+      "prior_event_count_24h",
+      "prior_event_count_30d",
+      "prior_event_count_7d",
+      "satellite_platform_diversity",
+      "spatial_extent_radius_meters",
+      "temporal_density",
+      "time_since_previous_event_hours",
+      "water_distance_meters"
+    ],
+    "numeric_means": {
+      "brightness_max_kelvin": 334.0701650165016,
+      "brightness_mean_kelvin": 329.15001606807067,
+      "daynight_ratio": 0.4693069306930693,
+      "detection_count": 3.2422442244224423,
+      "duration_hours": 0.0,
+      "facility_distance_meters": 380.10214343422115,
+      "frp_max_mw": 11.32662706270627,
+      "frp_mean_mw": 7.777820142942839,
+      "frp_min_mw": 5.708019801980198,
+      "frp_std_mw": 2.2703229552324418,
+      "frp_sum_mw": 44.166825082508254,
+      "persistence_active_days": 15.248184818481848,
+      "persistence_recurrence_ratio": 0.8186120148521174,
+      "persistence_total_events": 31.904290429042906,
+      "power_plant_distance_meters": 702.5042747832315,
+      "prior_event_count_24h": 324.9174917491749,
+      "prior_event_count_30d": 4978.075247524753,
+      "prior_event_count_7d": 2037.6138613861385,
+      "satellite_platform_diversity": 1.0033003300330032,
+      "spatial_extent_radius_meters": 408.3752902432735,
+      "temporal_density": 3.2422442244224423,
+      "time_since_previous_event_hours": 0.9462926292629263,
+      "water_distance_meters": 0.0
+    },
+    "numeric_medians": {
+      "brightness_max_kelvin": 336.05,
+      "brightness_mean_kelvin": 332.21,
+      "daynight_ratio": 0.0,
+      "detection_count": 2.0,
+      "duration_hours": 0.0,
+      "facility_distance_meters": 214.78871605858214,
+      "frp_max_mw": 4.91,
+      "frp_mean_mw": 4.39,
+      "frp_min_mw": 3.61,
+      "frp_std_mw": 0.0,
+      "frp_sum_mw": 7.82,
+      "persistence_active_days": 14.0,
+      "persistence_recurrence_ratio": 0.9333333333333333,
+      "persistence_total_events": 22.0,
+      "power_plant_distance_meters": 668.7273735024921,
+      "prior_event_count_24h": 336.0,
+      "prior_event_count_30d": 4785.0,
+      "prior_event_count_7d": 2240.0,
+      "satellite_platform_diversity": 1.0,
+      "spatial_extent_radius_meters": 216.19321471419914,
+      "temporal_density": 2.0,
+      "time_since_previous_event_hours": 0.31666666666666665,
+      "water_distance_meters": 0.0
+    },
+    "numeric_stds": {
+      "brightness_max_kelvin": 20.187655510788627,
+      "brightness_mean_kelvin": 17.240339557186214,
+      "daynight_ratio": 0.49905704633490544,
+      "detection_count": 6.204123847831563,
+      "duration_hours": 1.0,
+      "facility_distance_meters": 378.3748150748698,
+      "frp_max_mw": 27.247533534960652,
+      "frp_mean_mw": 11.678285712624172,
+      "frp_min_mw": 7.622272975939651,
+      "frp_std_mw": 8.81835805793781,
+      "frp_sum_mw": 293.7214853214263,
+      "persistence_active_days": 10.729641325586941,
+      "persistence_recurrence_ratio": 0.24038835615491416,
+      "persistence_total_events": 30.99949027699976,
+      "power_plant_distance_meters": 483.9954073618237,
+      "prior_event_count_24h": 94.57012934328527,
+      "prior_event_count_30d": 2475.995511150111,
+      "prior_event_count_7d": 696.860395841958,
+      "satellite_platform_diversity": 0.05735362111215434,
+      "spatial_extent_radius_meters": 624.0410618957821,
+      "temporal_density": 6.204123847831563,
+      "time_since_previous_event_hours": 1.3213142298129041,
+      "water_distance_meters": 1.0
+    },
+    "output_column_names": [
+      "num_brightness_max_kelvin",
+      "num_brightness_mean_kelvin",
+      "num_daynight_ratio",
+      "num_detection_count",
+      "num_duration_hours",
+      "num_facility_distance_meters",
+      "num_frp_max_mw",
+      "num_frp_mean_mw",
+      "num_frp_min_mw",
+      "num_frp_std_mw",
+      "num_frp_sum_mw",
+      "num_persistence_active_days",
+      "num_persistence_recurrence_ratio",
+      "num_persistence_total_events",
+      "num_power_plant_distance_meters",
+      "num_prior_event_count_24h",
+      "num_prior_event_count_30d",
+      "num_prior_event_count_7d",
+      "num_satellite_platform_diversity",
+      "num_spatial_extent_radius_meters",
+      "num_temporal_density",
+      "num_time_since_previous_event_hours",
+      "num_water_distance_meters",
+      "bool_is_near_industrial_facility",
+      "bool_is_persistent_source",
+      "bool_is_protected_area",
+      "cat_facility_context_type_NONE",
+      "cat_facility_context_type_industrial",
+      "cat_facility_context_type_mining",
+      "cat_facility_context_type_oil_gas",
+      "cat_landcover_class_UNKNOWN",
+      "cat_persistence_state_insufficient_history",
+      "cat_persistence_state_persistent",
+      "cat_persistence_state_recurring",
+      "cat_persistence_state_transient",
+      "cat_sensor_instrument_HYBRID",
+      "cat_sensor_instrument_MODIS",
+      "cat_sensor_instrument_VIIRS"
+    ]
+  },
+  "sha256_hash": "42e5f2ef690cf1b3a532e93eebce572e155a58fcba29ee3478c2dc72f3e12559"
+}

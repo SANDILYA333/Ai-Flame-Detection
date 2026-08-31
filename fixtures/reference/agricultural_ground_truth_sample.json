@@ -3,7 +3,7 @@
     "source_id": "icar_pau_crop_burn_registry_2026",
     "source_name": "ICAR-PAU Punjab Agricultural Stubble Burning Ground Survey",
     "source_type": "AUTHORITATIVE_REGISTRY",
-    "tier": "TIER_A_AUTHORITATIVE_GT",
+    "tier": "TIER_A_AUTHORITATIVE",
     "version": "v1.0.0",
     "study_area_id": "punjab_agricultural",
     "description": "Ground-verified crop residue burning registry collected across Ludhiana, Sangrur, and Patiala districts."
@@ -16,7 +16,7 @@
       "longitude": 75.8000,
       "classification": "crop_residue",
       "confidence": 1.0,
-      "tier": "TIER_A_AUTHORITATIVE_GT",
+      "tier": "TIER_A_AUTHORITATIVE",
       "metadata": {
         "crop_type": "paddy_straw",
         "district": "Ludhiana",
@@ -30,7 +30,7 @@
       "longitude": 75.8400,
       "classification": "crop_residue",
       "confidence": 1.0,
-      "tier": "TIER_A_AUTHORITATIVE_GT",
+      "tier": "TIER_A_AUTHORITATIVE",
       "metadata": {
         "crop_type": "paddy_straw",
         "district": "Sangrur",
@@ -44,7 +44,7 @@
       "longitude": 76.4000,
       "classification": "crop_residue",
       "confidence": 1.0,
-      "tier": "TIER_A_AUTHORITATIVE_GT",
+      "tier": "TIER_A_AUTHORITATIVE",
       "metadata": {
         "crop_type": "paddy_straw",
         "district": "Patiala",
