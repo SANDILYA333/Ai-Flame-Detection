@@ -1,4 +1,5 @@
 import { ThermalEvent } from "@/types/event";
+import { calculateOperationalRisk } from "@/lib/risk/scoring";
 import { formatFrp } from "@/lib/format/numbers";
 import { formatCoordinate } from "@/lib/format/coordinates";
 import { formatUtcTime } from "@/lib/format/dates";
@@ -14,6 +15,8 @@ export function createFireMarkerElement({
   isSelected = false,
   onSelect,
 }: CreateMarkerOptions): HTMLElement {
+  const risk = calculateOperationalRisk(event);
+
   const el = document.createElement("div");
   el.className = "group relative flex items-center justify-center cursor-pointer select-none";
   el.style.transform = "translate(-50%, -50%) translateZ(0)";
@@ -21,7 +24,7 @@ export function createFireMarkerElement({
   el.setAttribute("tabindex", "0");
   el.setAttribute(
     "aria-label",
-    `Thermal Event ${event.event_id}, ${event.classification}, ${event.frp_mw.toFixed(1)} MW`
+    `Thermal Event ${event.event_id}, ${event.classification}, ${event.frp_mw.toFixed(1)} MW, Risk ${risk.level}`
   );
 
   // Size calculation based on FRP (MW)
@@ -95,9 +98,11 @@ export function createFireMarkerElement({
 
   el.appendChild(core);
 
-  // Hover Tooltip Popup with full metadata
+  // Hover Tooltip Popup with full metadata and risk score
   const coordText = formatCoordinate(event.latitude, event.longitude);
   const timeText = event.start_time ? formatUtcTime(event.start_time) : "LIVE";
+
+  const riskLabel = risk.isIndeterminate ? "RISK: UNK" : `RISK: ${risk.level} ${risk.score}`;
 
   const tooltip = document.createElement("div");
   tooltip.className =
@@ -114,6 +119,7 @@ export function createFireMarkerElement({
             ? "bg-accent-cyan/15 text-accent-cyan border border-accent-cyan/30"
             : "bg-state-warning/15 text-state-warning border border-state-warning/30"
         }">${event.classification}</span>
+        <span class="text-[9px] px-1 py-0.5 rounded bg-surface border border-border text-foreground font-semibold">${riskLabel}</span>
       </div>
       <div class="text-[10px] text-foreground-muted mt-1 flex items-center justify-between gap-3 font-mono">
         <span class="text-foreground font-semibold">${formatFrp(event.frp_mw)}</span>
