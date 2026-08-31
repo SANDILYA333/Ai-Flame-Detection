@@ -117,25 +117,25 @@ def test_study_area_resolution() -> None:
 
 def test_temporal_chunking() -> None:
     """Verify temporal chunking divides date ranges into contiguous <= 10-day chunks."""
-    # 25-day range -> 3 chunks (10, 10, 5 days)
+    # 25-day range -> 5 chunks of 5 days
     chunks = BulkDataAcquisitionService.plan_temporal_chunks(
         study_area=JAMNAGAR_KUTCH,
         product=FirmsProduct.VIIRS_SNPP_NRT,
         start_date="2026-08-01",
         end_date="2026-08-25",
     )
-    assert len(chunks) == 3
+    assert len(chunks) == 5
     assert chunks[0].start_date == "2026-08-01"
-    assert chunks[0].end_date == "2026-08-10"
-    assert chunks[0].day_range == 10
+    assert chunks[0].end_date == "2026-08-05"
+    assert chunks[0].day_range == 5
 
-    assert chunks[1].start_date == "2026-08-11"
-    assert chunks[1].end_date == "2026-08-20"
-    assert chunks[1].day_range == 10
+    assert chunks[1].start_date == "2026-08-06"
+    assert chunks[1].end_date == "2026-08-10"
+    assert chunks[1].day_range == 5
 
-    assert chunks[2].start_date == "2026-08-21"
-    assert chunks[2].end_date == "2026-08-25"
-    assert chunks[2].day_range == 5
+    assert chunks[4].start_date == "2026-08-21"
+    assert chunks[4].end_date == "2026-08-25"
+    assert chunks[4].day_range == 5
 
     # Invalid dates
     with pytest.raises(ValueError, match="cannot be after end_date"):
@@ -162,7 +162,8 @@ def test_multi_sensor_product_planning() -> None:
         products=[FirmsProduct.VIIRS_SNPP_NRT, FirmsProduct.MODIS_NRT],
         dry_run=True,
     )
-    assert summary.total_chunks_planned == 2
+    # 10 days -> 2 chunks of 5 days * 2 products = 4 chunks
+    assert summary.total_chunks_planned == 4
     assert "VIIRS_SNPP_NRT" in summary.products
     assert "MODIS_NRT" in summary.products
 
@@ -178,7 +179,7 @@ def test_dry_run_planning() -> None:
     summary = service.acquire_bulk_dataset(
         study_areas="all",
         start_date="2026-08-01",
-        end_date="2026-08-20",  # 20 days -> 2 chunks per region * 3 products = 24 chunks
+        end_date="2026-08-20",  # 20 days -> 4 chunks per region * 3 products * 4 regions = 48 chunks
         products=[
             FirmsProduct.VIIRS_SNPP_NRT,
             FirmsProduct.VIIRS_NOAA20_NRT,
@@ -187,7 +188,7 @@ def test_dry_run_planning() -> None:
         dry_run=True,
     )
     assert summary.is_dry_run is True
-    assert summary.total_chunks_planned == 24
+    assert summary.total_chunks_planned == 48
     assert len(summary.raw_files) == 0
     assert len(summary.manifest_paths) == 0
 
@@ -216,10 +217,10 @@ def test_acquisition_with_mock_provider(
     )
 
     assert summary.is_dry_run is False
-    assert summary.successful_chunks == 1
-    assert summary.total_raw_rows == 3
-    assert len(summary.raw_files) == 1
-    assert len(summary.manifest_paths) == 1
+    assert summary.successful_chunks == 2
+    assert summary.total_raw_rows == 6
+    assert len(summary.raw_files) == 2
+    assert len(summary.manifest_paths) == 2
 
     # Verify written raw file
     raw_path = Path(summary.raw_files[0])
@@ -405,12 +406,12 @@ def test_multi_region_bulk_integration(tmp_path: Path) -> None:
         mock_raw_provider=mock_provider,
     )
 
-    # 4 study areas * 2 products = 8 chunks
-    assert summary.total_chunks_planned == 8
-    assert summary.successful_chunks == 8
-    assert summary.total_raw_rows == 8
-    assert len(summary.raw_files) == 8
-    assert len(summary.manifest_paths) == 8
+    # 4 study areas * 2 products * 2 chunks (5 days each) = 16 chunks
+    assert summary.total_chunks_planned == 16
+    assert summary.successful_chunks == 16
+    assert summary.total_raw_rows == 16
+    assert len(summary.raw_files) == 16
+    assert len(summary.manifest_paths) == 16
     assert len(summary.quality_breakdown["regional_observations"]) == 4
     assert len(summary.quality_breakdown["sensor_observations"]) == 2
 
