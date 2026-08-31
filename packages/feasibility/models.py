@@ -17,50 +17,58 @@ class FeasibilityLevel(StrEnum):
 
 
 class StudyAreaRole(StrEnum):
-    """Recommended role of a candidate study area in the benchmark design."""
+    """Recommended role of a candidate study area in benchmark design & data acquisition."""
 
     PRIMARY_BENCHMARK_CANDIDATE = "PRIMARY_BENCHMARK_CANDIDATE"
     CONTRAST_NEGATIVE_CONTROL = "CONTRAST_NEGATIVE_CONTROL"
     SECONDARY_VALIDATION = "SECONDARY_VALIDATION"
     RESERVE_CANDIDATE = "RESERVE_CANDIDATE"
+    CALIBRATION_CORRIDOR = "CALIBRATION_CORRIDOR"
+    GLOBAL_ACQUISITION = "GLOBAL_ACQUISITION"
+    OPERATIONAL_REGION = "OPERATIONAL_REGION"
 
 
 class StudyArea(BaseDomainModel):
-    """Definition of a candidate geographic study area in India."""
+    """Definition of a geographic study area for regional calibration or global acquisition."""
 
     area_id: str = Field(
         ...,
         min_length=1,
-        description="Unique slug identifier (e.g. 'jamnagar_kutch').",
+        description="Unique slug identifier (e.g. 'jamnagar_kutch', 'global_tile_lat_20_lon_70').",
     )
     name: str = Field(
         ...,
         min_length=1,
         description="Human-readable study area title.",
     )
+    country: str = Field(
+        default="India",
+        description="Country or multi-national territory.",
+    )
     state: str = Field(
-        ...,
-        min_length=1,
-        description="Indian State(s) or administrative territory.",
+        default="N/A",
+        description="State, province, or administrative subdivision.",
+    )
+    role: StudyAreaRole = Field(
+        default=StudyAreaRole.PRIMARY_BENCHMARK_CANDIDATE,
+        description="Role in benchmark calibration, validation, or global data acquisition.",
     )
     bounding_box: BoundingBox = Field(
         ...,
         description="Geographic WGS-84 bounding envelope.",
     )
     approx_area_sqkm: float = Field(
-        ...,
+        default=10000.0,
         gt=0.0,
         description="Approximate surface area in square kilometers.",
     )
     description: str = Field(
-        ...,
-        min_length=1,
+        default="",
         description="Summary of regional geography and industrial/natural activity.",
     )
     scientific_rationale: str = Field(
-        ...,
-        min_length=1,
-        description="Scientific reason for evaluating this region as a candidate.",
+        default="",
+        description="Scientific reason for evaluating this region.",
     )
     is_provisional: bool = Field(
         default=True,

@@ -226,5 +226,14 @@ class TestStructuredLogging:
             assert "Request" not in mod_vars
             assert "Response" not in mod_vars
 
-        for web_lib in ["fastapi", "starlette", "requests", "httpx", "aiohttp"]:
-            assert web_lib not in sys.modules
+        import subprocess
+
+        cmd = [
+            sys.executable,
+            "-c",
+            "import packages.logging, sys; "
+            "libs = ['fastapi', 'starlette', 'requests', 'httpx', 'aiohttp']; "
+            "assert all(lib not in sys.modules for lib in libs)",
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        assert result.returncode == 0, f"Imported web framework: {result.stderr}"

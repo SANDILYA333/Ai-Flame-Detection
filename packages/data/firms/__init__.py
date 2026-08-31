@@ -1,5 +1,14 @@
 """NASA FIRMS data ingestion, raw capture adapter, and canonical parser package."""
 
+from packages.data.firms.activation import FirmsDataActivationService
+from packages.data.firms.bulk import (
+    CANONICAL_STUDY_AREAS,
+    GLOBAL_VALIDATION_AREAS,
+    STUDY_AREA_REGISTRY,
+    AcquisitionChunkPlan,
+    BulkAcquisitionSummary,
+    BulkDataAcquisitionService,
+)
 from packages.data.firms.capture import (
     FirmsRawCaptureAdapter,
     compute_content_hash,
@@ -36,14 +45,22 @@ from packages.data.firms.schemas import (
     FirmsRawCapture,
     FirmsRowError,
     RawFirmsCsvRow,
+    RealDataAcquisitionManifest,
+    RealDetectionDataset,
 )
 
 __all__ = [
+    "AcquisitionChunkPlan",
+    "BulkAcquisitionSummary",
+    "BulkDataAcquisitionService",
+    "CANONICAL_STUDY_AREAS",
+    "GLOBAL_VALIDATION_AREAS",
     "FirmsApiError",
     "FirmsAreaRequest",
     "FirmsAuthenticationError",
     "FirmsClient",
     "FirmsCountryRequest",
+    "FirmsDataActivationService",
     "FirmsMalformedPayloadError",
     "FirmsParseReport",
     "FirmsProduct",
@@ -54,6 +71,9 @@ __all__ = [
     "FirmsTimeoutError",
     "FirmsUnavailableError",
     "RawFirmsCsvRow",
+    "RealDataAcquisitionManifest",
+    "RealDetectionDataset",
+    "STUDY_AREA_REGISTRY",
     "compute_canonical_detection_id",
     "compute_content_hash",
     "compute_firms_raw_hash",

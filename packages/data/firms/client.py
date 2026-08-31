@@ -5,6 +5,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from collections.abc import Callable
+from typing import Any
 
 from pydantic import SecretStr
 
@@ -24,6 +25,9 @@ logger = logging.getLogger(__name__)
 _REDACTED_MASK = "***_REDACTED_***"
 
 
+_UNSET: Any = object()
+
+
 class FirmsClient:
     """Authenticated HTTP client for communicating with NASA FIRMS API.
 
@@ -37,7 +41,7 @@ class FirmsClient:
     def __init__(
         self,
         base_url: str | None = None,
-        map_key: SecretStr | str | None = None,
+        map_key: Any = _UNSET,
         timeout_seconds: float | None = None,
         max_retries: int | None = None,
         retry_backoff_factor: float | None = None,
@@ -52,10 +56,13 @@ class FirmsClient:
 
         self.base_url = (base_url or settings.FIRMS_BASE_URL).rstrip("/")
         self.map_key: SecretStr | None
-        if isinstance(map_key, str):
-            self.map_key = SecretStr(map_key)
-        elif isinstance(map_key, SecretStr):
-            self.map_key = map_key
+        if map_key is not _UNSET:
+            if isinstance(map_key, str):
+                self.map_key = SecretStr(map_key) if map_key else None
+            elif isinstance(map_key, SecretStr):
+                self.map_key = map_key
+            else:
+                self.map_key = None
         else:
             self.map_key = settings.FIRMS_MAP_KEY
 
@@ -276,9 +283,15 @@ class FirmsClient:
                     )
 
                 # 5. Other HTTP client errors (400, 404, etc.)
+                body_text = body.decode("utf-8", errors="replace").strip()
+                err_detail = f": {body_text}" if body_text and len(body_text) < 200 else ""
                 raise FirmsMalformedPayloadError(
-                    f"NASA FIRMS request failed with HTTP {status}.",
-                    details={"safe_url": safe_url, "http_status": status},
+                    f"NASA FIRMS request failed with HTTP {status}{err_detail}.",
+                    details={
+                        "safe_url": safe_url,
+                        "http_status": status,
+                        "response_body": body_text[:500],
+                    },
                 )
 
             except (urllib.error.URLError, TimeoutError) as exc:

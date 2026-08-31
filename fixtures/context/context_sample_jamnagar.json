@@ -1,0 +1,141 @@
+{
+  "snapshot_metadata": {
+    "snapshot_id": "snap_ctx_jamnagar_v1.0.0",
+    "description": "Deterministic contextual geospatial features for Jamnagar & Gulf of Kutch pilot area",
+    "study_area_id": "jamnagar_kutch",
+    "sources": ["OSM", "WRI", "GEM", "LandCover"],
+    "created_at": "2026-08-30T14:00:00Z"
+  },
+  "features": [
+    {
+      "feature_id": "osm_refinery_reliance_01",
+      "provider": "osm",
+      "dataset_name": "planet_osm_polygon",
+      "dataset_version": "2026-08-01",
+      "context_type": "industrial",
+      "geometry": {
+        "latitude": 22.4502,
+        "longitude": 70.0512
+      },
+      "facility_name": "Reliance Jamnagar Refinery Complex",
+      "bounding_box": {
+        "min_latitude": 22.4300,
+        "max_latitude": 22.4700,
+        "min_longitude": 70.0300,
+        "max_longitude": 70.0700
+      },
+      "valid_from": "2000-01-01T00:00:00Z",
+      "valid_to": null,
+      "raw_metadata": {
+        "landuse": "industrial",
+        "industrial": "refinery",
+        "operator": "Reliance Industries Limited"
+      }
+    },
+    {
+      "feature_id": "wri_power_jamnagar_01",
+      "provider": "wri",
+      "dataset_name": "global_power_plant_database",
+      "dataset_version": "v1.3.0",
+      "context_type": "power",
+      "geometry": {
+        "latitude": 22.4550,
+        "longitude": 70.0550
+      },
+      "facility_name": "Jamnagar Captive Thermal Power Station",
+      "bounding_box": null,
+      "valid_from": "2005-01-01T00:00:00Z",
+      "valid_to": null,
+      "raw_metadata": {
+        "fuel": "petcoke_gas",
+        "capacity_mw": "2500",
+        "primary_fuel": "petcoke"
+      }
+    },
+    {
+      "feature_id": "gem_flare_jamnagar_01",
+      "provider": "gem",
+      "dataset_name": "global_gas_flaring_tracker",
+      "dataset_version": "2026.1",
+      "context_type": "oil_gas",
+      "geometry": {
+        "latitude": 22.4506,
+        "longitude": 70.0516
+      },
+      "facility_name": "Jamnagar Flare Stack Array",
+      "bounding_box": null,
+      "valid_from": "2010-01-01T00:00:00Z",
+      "valid_to": null,
+      "raw_metadata": {
+        "infrastructure": "flare_stack",
+        "sector": "petrochemical"
+      }
+    },
+    {
+      "feature_id": "osm_refinery_nayara_01",
+      "provider": "osm",
+      "dataset_name": "planet_osm_polygon",
+      "dataset_version": "2026-08-01",
+      "context_type": "industrial",
+      "geometry": {
+        "latitude": 22.4800,
+        "longitude": 70.1200
+      },
+      "facility_name": "Nayara Vadinar Refinery",
+      "bounding_box": {
+        "min_latitude": 22.4600,
+        "max_latitude": 22.5000,
+        "min_longitude": 70.1000,
+        "max_longitude": 70.1400
+      },
+      "valid_from": "2006-01-01T00:00:00Z",
+      "valid_to": null,
+      "raw_metadata": {
+        "landuse": "industrial",
+        "operator": "Nayara Energy"
+      }
+    },
+    {
+      "feature_id": "lc_cropland_kutch_01",
+      "provider": "landcover",
+      "dataset_name": "dynamic_world_v1",
+      "dataset_version": "2026-08-01",
+      "context_type": "agricultural",
+      "geometry": {
+        "latitude": 22.5804,
+        "longitude": 70.2003
+      },
+      "facility_name": "Kutch Coastal Agricultural Zone",
+      "bounding_box": {
+        "min_latitude": 22.5600,
+        "max_latitude": 22.6000,
+        "min_longitude": 70.1800,
+        "max_longitude": 70.2200
+      },
+      "valid_from": "2015-01-01T00:00:00Z",
+      "valid_to": null,
+      "raw_metadata": {
+        "land_cover": "crops",
+        "seasonality": "kharif"
+      }
+    },
+    {
+      "feature_id": "osm_future_hydrogen_01",
+      "provider": "osm",
+      "dataset_name": "planet_osm_polygon",
+      "dataset_version": "2026-08-01",
+      "context_type": "industrial",
+      "geometry": {
+        "latitude": 22.4500,
+        "longitude": 70.0500
+      },
+      "facility_name": "Planned Green Hydrogen Complex (Future)",
+      "bounding_box": null,
+      "valid_from": "2026-12-01T00:00:00Z",
+      "valid_to": null,
+      "raw_metadata": {
+        "status": "planned_commissioning"
+      }
+    }
+  ]
+}

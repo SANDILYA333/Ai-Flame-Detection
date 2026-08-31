@@ -5,7 +5,7 @@ These study areas are explicitly marked as PROVISIONAL CANDIDATES.
 The final benchmark geography is NOT frozen at this stage.
 """
 
-from packages.feasibility.models import StudyArea
+from packages.feasibility.models import StudyArea, StudyAreaRole
 from packages.schemas.common import BoundingBox
 
 JAMNAGAR_KUTCH = StudyArea(
@@ -103,6 +103,79 @@ PUNJAB_AGRICULTURAL = StudyArea(
     is_provisional=True,
 )
 
+# Global Calibration and Validation Corridors
+PERSIAN_GULF_FLARING = StudyArea(
+    area_id="persian_gulf",
+    name="Persian Gulf Upstream/Downstream Petroleum Flaring Corridor",
+    country="Saudi Arabia / UAE / Qatar",
+    state="Gulf Coast",
+    role=StudyAreaRole.SECONDARY_VALIDATION,
+    bounding_box=BoundingBox(
+        min_latitude=24.0,
+        min_longitude=48.0,
+        max_latitude=28.5,
+        max_longitude=54.0,
+    ),
+    approx_area_sqkm=240000.0,
+    description="Dense offshore and onshore continuous natural gas and petroleum flaring infrastructure.",
+    scientific_rationale="Continuous mega-scale industrial thermal signatures in arid terrain for global model calibration.",
+    is_provisional=True,
+)
+
+NORTH_AMERICA_CALIFORNIA = StudyArea(
+    area_id="california_wui",
+    name="California Wildland-Urban Interface & Sierra Forest Fire Corridor",
+    country="United States",
+    state="California",
+    role=StudyAreaRole.CONTRAST_NEGATIVE_CONTROL,
+    bounding_box=BoundingBox(
+        min_latitude=34.0,
+        min_longitude=-122.0,
+        max_latitude=40.0,
+        max_longitude=-118.0,
+    ),
+    approx_area_sqkm=200000.0,
+    description="High-intensity summer/autumn forest and chaparral wildfires in complex mountainous terrain.",
+    scientific_rationale="High-energy natural wildfire benchmarks with rigorous CalFire / MTBS ground truth.",
+    is_provisional=True,
+)
+
+SOUTH_AMERICA_AMAZON = StudyArea(
+    area_id="amazon_basin",
+    name="Amazon Basin Deforestation and Agricultural Burning Corridor",
+    country="Brazil",
+    state="Mato Grosso / Para",
+    role=StudyAreaRole.CONTRAST_NEGATIVE_CONTROL,
+    bounding_box=BoundingBox(
+        min_latitude=-14.0,
+        min_longitude=-62.0,
+        max_latitude=-8.0,
+        max_longitude=-52.0,
+    ),
+    approx_area_sqkm=500000.0,
+    description="Large-scale seasonal agricultural clearing and tropical forest margin fires.",
+    scientific_rationale="Dense tropical non-industrial burning signatures with INPE ground truth registries.",
+    is_provisional=True,
+)
+
+AUSTRALIA_SOUTHEAST = StudyArea(
+    area_id="australia_southeast",
+    name="Southeast Australia Eucalyptus & Bushfire Corridor",
+    country="Australia",
+    state="New South Wales / Victoria",
+    role=StudyAreaRole.CONTRAST_NEGATIVE_CONTROL,
+    bounding_box=BoundingBox(
+        min_latitude=-38.0,
+        min_longitude=144.0,
+        max_latitude=-32.0,
+        max_longitude=152.0,
+    ),
+    approx_area_sqkm=300000.0,
+    description="Extreme-rate pyrocumulonimbus and temperate forest bushfires.",
+    scientific_rationale="Natural high-intensity non-industrial fire benchmarks under dry windy conditions.",
+    is_provisional=True,
+)
+
 PROVISIONAL_CANDIDATE_AREAS: list[StudyArea] = [
     JAMNAGAR_KUTCH,
     SINGRAULI_SONBHADRA,
@@ -110,10 +183,21 @@ PROVISIONAL_CANDIDATE_AREAS: list[StudyArea] = [
     PUNJAB_AGRICULTURAL,
 ]
 
+GLOBAL_CANDIDATE_AREAS: list[StudyArea] = [
+    PERSIAN_GULF_FLARING,
+    NORTH_AMERICA_CALIFORNIA,
+    SOUTH_AMERICA_AMAZON,
+    AUSTRALIA_SOUTHEAST,
+]
+
+ALL_CANDIDATE_AREAS: list[StudyArea] = (
+    PROVISIONAL_CANDIDATE_AREAS + GLOBAL_CANDIDATE_AREAS
+)
+
 
 def get_candidate_study_area(area_id: str) -> StudyArea:
-    """Retrieve provisional candidate study area by area_id."""
-    for candidate in PROVISIONAL_CANDIDATE_AREAS:
+    """Retrieve candidate study area by area_id."""
+    for candidate in ALL_CANDIDATE_AREAS:
         if candidate.area_id == area_id:
             return candidate
     raise KeyError(f"Candidate study area '{area_id}' not found.")

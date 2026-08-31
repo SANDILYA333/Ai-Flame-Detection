@@ -79,6 +79,29 @@ class Settings(BaseSettings):
         description="Secret key for signing and operational tokens",
     )
 
+    # CORS Configuration
+    CORS_ORIGINS: list[str] = Field(
+        default=[
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:5173",
+        ],
+        description="Allowed CORS origin URLs",
+    )
+    CORS_ALLOW_CREDENTIALS: bool = Field(
+        default=True,
+        description="Whether to support credentials for cross-origin requests",
+    )
+    CORS_ALLOW_METHODS: list[str] = Field(
+        default=["*"],
+        description="Allowed HTTP methods for CORS requests",
+    )
+    CORS_ALLOW_HEADERS: list[str] = Field(
+        default=["*"],
+        description="Allowed HTTP headers for CORS requests",
+    )
+
     # Database Configuration (PostgreSQL + PostGIS)
     POSTGRES_DB: str = Field(
         default="sih26162",
@@ -153,6 +176,53 @@ class Settings(BaseSettings):
         default="SIH26162-Flare-Intelligence/1.0",
         description="Safe HTTP User-Agent identifier for NASA FIRMS requests",
     )
+
+    # Redis Job Queue Configuration (WORK-002 / Section 21)
+    REDIS_URL: SecretStr | None = Field(
+        default=None,
+        description="Explicit Redis connection URL (e.g. redis://localhost:6379/0)",
+    )
+    REDIS_HOST: str = Field(
+        default="localhost",
+        min_length=1,
+        description="Redis server host",
+    )
+    REDIS_PORT: int = Field(
+        default=6379,
+        ge=1,
+        le=65535,
+        description="Redis server port",
+    )
+    REDIS_DB: int = Field(
+        default=0,
+        ge=0,
+        le=15,
+        description="Redis database index",
+    )
+    REDIS_PASSWORD: SecretStr | None = Field(
+        default=None,
+        description="Redis authentication password (secret)",
+    )
+    REDIS_TIMEOUT_SECONDS: float = Field(
+        default=5.0,
+        gt=0.0,
+        le=60.0,
+        description="Redis connection/operation timeout in seconds",
+    )
+    REDIS_QUEUE_KEY_PREFIX: str = Field(
+        default="sih26162:queue",
+        min_length=1,
+        description="Prefix key namespace for Redis job queues",
+    )
+
+    def get_redis_url(self) -> str:
+        """Construct full Redis connection URL."""
+        if self.REDIS_URL is not None:
+            return self.REDIS_URL.get_secret_value()
+        if self.REDIS_PASSWORD is not None:
+            pwd = self.REDIS_PASSWORD.get_secret_value()
+            return f"redis://:{pwd}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
 
     def get_database_url(self, driver: str = "postgresql+psycopg") -> str:
         """Construct full plaintext database connection URL for driver connections.

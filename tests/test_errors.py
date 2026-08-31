@@ -230,8 +230,17 @@ class TestApplicationErrorFramework:
             assert "Request" not in mod_vars
 
         # Confirm no web frameworks were imported into sys.modules by packages.errors
-        for web_lib in ["fastapi", "starlette", "requests", "httpx", "aiohttp"]:
-            assert web_lib not in sys.modules
+        import subprocess
+
+        cmd = [
+            sys.executable,
+            "-c",
+            "import packages.errors, sys; "
+            "libs = ['fastapi', 'starlette', 'requests', 'httpx', 'aiohttp']; "
+            "assert all(lib not in sys.modules for lib in libs)",
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        assert result.returncode == 0, f"Imported web framework: {result.stderr}"
 
     def test_native_exceptions_not_altered(self) -> None:
         """TEST 10: Standard Python exceptions are not subclasses of AppError."""

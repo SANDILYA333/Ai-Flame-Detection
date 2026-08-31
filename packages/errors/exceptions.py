@@ -163,3 +163,24 @@ class JobExecutionError(PipelineError):
 
     default_code: ErrorCode | str = ErrorCode.JOB_EXECUTION_ERROR
     default_message: str = "A background job execution failed."
+
+
+class InvalidJobStateTransitionError(JobExecutionError):
+    """Raised when an illegal or unsupported job state transition is attempted."""
+
+    default_code: ErrorCode | str = ErrorCode.INVALID_JOB_STATE_TRANSITION
+    default_message: str = "Invalid job state transition attempted."
+
+
+class JobBlockedError(JobExecutionError):
+    """Raised when a job cannot proceed due to missing configuration."""
+
+    default_code: ErrorCode | str = ErrorCode.JOB_BLOCKED_ERROR
+    default_message: str = "Job is blocked on missing configuration or dependencies."
+
+
+class JobCancelledError(JobExecutionError):
+    """Raised when a job execution is aborted due to cancellation."""
+
+    default_code: ErrorCode | str = ErrorCode.JOB_CANCELLED_ERROR
+    default_message: str = "Job execution was cancelled."

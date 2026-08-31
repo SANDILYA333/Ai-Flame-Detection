@@ -5,11 +5,16 @@ from packages.context.builder import (
     build_not_found_evidence,
     generate_deterministic_context_id,
 )
+from packages.context.ground_truth import (
+    ExternalReferenceRecord,
+    GroundTruthIngestionService,
+)
 from packages.context.matching import (
     evaluate_spatial_association,
     evaluate_temporal_validity,
 )
 from packages.context.models import ContextFeature, SpatialMatchRule
+from packages.context.pipeline import RealContextLabelingService
 from packages.context.providers import ContextProvider, InMemoryContextProvider
 from packages.context.service import (
     enrich_event_with_context,
@@ -20,7 +25,10 @@ from packages.context.service import (
 __all__ = [
     "ContextFeature",
     "ContextProvider",
+    "ExternalReferenceRecord",
+    "GroundTruthIngestionService",
     "InMemoryContextProvider",
+    "RealContextLabelingService",
     "SpatialMatchRule",
     "build_context_evidence_from_feature",
     "build_not_found_evidence",
