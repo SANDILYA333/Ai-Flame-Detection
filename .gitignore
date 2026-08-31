@@ -91,6 +91,14 @@ pnpm-debug.log*
 out/
 .nuxt/
 .cache/
+.turbo/
+
+# TypeScript Build Cache
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Copied dynamic web worker bundles
+apps/web/public/maplibre-gl*.mjs
 
 # ==============================================================================
 # IDE & Operating System
@@ -113,9 +121,8 @@ Thumbs.db
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-.env.example
 stat-index.json
+
 # Raw large archives
 sri/data/raw_thermal/
 *.zip
-
