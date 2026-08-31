@@ -4,6 +4,7 @@ import { LayersPanel } from './components/LayersPanel';
 import { LayerInfoModal } from './components/LayerInfoModal';
 import { TimeRangeControls, type TimeRange } from './components/TimeRangeControls';
 import { XAIEvidenceCard } from './components/XAIEvidenceCard';
+import { InteractiveClassifierModal } from './components/InteractiveClassifierModal';
 import { LAYER_DEFINITIONS, type LayerDefinition } from './layersConfig';
 import type { Incident, ActiveFilters, FacilityMarker, EmergencyResponder } from './types';
 import { 
@@ -20,7 +21,8 @@ import {
   Filter,
   RefreshCw,
   AlertTriangle,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Sparkles
 } from 'lucide-react';
 
 const SEED_INCIDENTS: Incident[] = [
@@ -213,6 +215,7 @@ export default function App() {
   const [incidents, setIncidents] = useState<Incident[]>(SEED_INCIDENTS);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(SEED_INCIDENTS[0]);
   const [showDossierDrawer, setShowDossierDrawer] = useState<boolean>(false);
+  const [showClassifierModal, setShowClassifierModal] = useState<boolean>(false);
   const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);
   const [showFilterModal, setShowFilterModal] = useState<boolean>(false);
   const [isRefreshingFeed, setIsRefreshingFeed] = useState<boolean>(false);
@@ -490,6 +493,37 @@ export default function App() {
     }));
   };
 
+  const handleClassifiedEventCreated = (classifiedData: any) => {
+    const c = classifiedData.classification;
+    const p = classifiedData.physical_characterization;
+    const s = classifiedData.spatial_attribution;
+    const newInc: Incident = {
+      id: `INC-SIM-${Date.now().toString().slice(-4)}`,
+      caseId: 'SIMULATED_EVENT',
+      title: c.predicted_class_name.replace(/_/g, ' '),
+      category: c.predicted_class_id === 1 ? 'accidental' : (c.predicted_class_id === 0 ? 'routine' : (c.predicted_class_id === 2 ? 'wildfire' : (c.predicted_class_id === 3 ? 'crop' : 'coal'))),
+      confidence: Math.round(c.confidence_score),
+      subtitle: `${s.nearest_facility} · ${s.dist_km.toFixed(1)} km`,
+      facility: s.nearest_facility,
+      state: 'Classified Zone',
+      sector: s.dominant_lulc,
+      severity: c.predicted_class_id === 1 ? 'high' : 'medium',
+      lat: classifiedData.event_coordinates[1],
+      lon: classifiedData.event_coordinates[0],
+      tempK: p.estimated_emitter_temp_k,
+      frpMw: p.frp_mw,
+      areaM2: p.estimated_emitter_area_m2,
+      windSpeed: '14.2 km/h',
+      windDir: 'SW → NE (45°)',
+      chemicals: ['Combustion Byproducts', 'Thermal Radiation'],
+      unNumber: 'UN 1993',
+      evacRadiusKm: c.predicted_class_id === 1 ? 3.0 : 0.5,
+      dayIndex: currentDay
+    };
+    setIncidents(prev => [newInc, ...prev]);
+    setSelectedIncident(newInc);
+  };
+
   return (
     <div className="h-screen w-screen bg-[#0c0d12] text-[#f3f4f6] flex flex-col font-sans select-none overflow-hidden">
       
@@ -556,6 +590,15 @@ export default function App() {
           >
             <AlertTriangle className="w-3 h-3" />
             <span>{activeAlertsCount} Alerts</span>
+          </button>
+
+          {/* AI Classifier Lab Modal Button */}
+          <button
+            onClick={() => setShowClassifierModal(true)}
+            className="px-3 py-1.5 rounded-lg bg-indigo-600/20 border border-indigo-500/40 hover:bg-indigo-600/30 text-indigo-300 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-[0_0_12px_rgba(99,102,241,0.2)] active:scale-95"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+            <span>AI Classifier Lab</span>
           </button>
 
           {/* Dossier Modal Button */}
@@ -1067,7 +1110,14 @@ export default function App() {
         </div>
       )}
 
-      {/* 6. Metadata Inspector Modal for Layers */}
+      {/* 6. Live Anomaly Classification & Pyrometry Lab Modal */}
+      <InteractiveClassifierModal
+        isOpen={showClassifierModal}
+        onClose={() => setShowClassifierModal(false)}
+        onClassifiedEventCreated={handleClassifiedEventCreated}
+      />
+
+      {/* 7. Metadata Inspector Modal for Layers */}
       <LayerInfoModal
         layer={inspectedLayer}
         onClose={() => setInspectedLayer(null)}
