@@ -5,8 +5,9 @@ import dynamic from "next/dynamic";
 import { ViewModeToggle, ViewMode } from "./ViewModeToggle";
 import { MapControls } from "./MapControls";
 import { LayerPanelPlaceholder } from "./LayerPanelPlaceholder";
-import { IntelligencePanelPlaceholder } from "./IntelligencePanelPlaceholder";
+import { EventIntelligenceFeed } from "@/components/events/EventIntelligenceFeed";
 import { EventIntelligencePanel } from "@/components/events/EventIntelligencePanel";
+import { TimelinePlaybackBar } from "@/components/playback/TimelinePlaybackBar";
 import { MapOverlayContainer } from "./MapOverlayContainer";
 import { useEventContext } from "@/context/EventContext";
 import { ThermalEvent } from "@/types/event";
@@ -121,7 +122,7 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
     });
   }, [selectedEvent]);
 
-  // Global Keyboard Shortcuts (Left/Right arrow for navigation, Esc to close)
+  // Global Keyboard Shortcuts (Left/Right arrow for navigation, Space for play/pause, Esc to close)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Avoid intercepting if focus is on an input or textarea
@@ -185,10 +186,24 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
 
   const handleViewModeChange = useCallback((mode: ViewMode) => {
     setViewMode(mode);
+    if (mode === "2D") {
+      flatRef.current?.resize();
+    }
     setTimeout(() => {
       window.dispatchEvent(new Event("resize"));
-    }, 50);
+      if (mode === "2D") {
+        flatRef.current?.resize();
+      }
+    }, 60);
   }, []);
+
+  // Display coordinates: prioritize selected target datum or active center datum
+  const displayCoordinates = useMemo(() => {
+    if (selectedEvent) {
+      return formatCoordinate(selectedEvent.latitude, selectedEvent.longitude);
+    }
+    return formatCoordinate(cameraState.lat, cameraState.lng);
+  }, [selectedEvent, cameraState.lat, cameraState.lng]);
 
   return (
     <div className={cn("relative w-full h-full overflow-hidden bg-background select-none", className)}>
@@ -208,6 +223,7 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
             initialLng={APP_CONFIG.defaultCenter.lon}
             events={filteredEvents}
             selectedEvent={selectedEvent}
+            isVisible={viewMode === "3D"}
             onSelectEvent={handleSelectEvent}
             onCameraChange={handleCameraChange}
             onSwitchTo2D={() => handleViewModeChange("2D")}
@@ -229,6 +245,7 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
             initialZoom={APP_CONFIG.defaultCenter.zoom}
             events={filteredEvents}
             selectedEvent={selectedEvent}
+            isVisible={viewMode === "2D"}
             onSelectEvent={handleSelectEvent}
             onCameraChange={handleCameraChange}
           />
@@ -239,7 +256,7 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
       {filteredEvents.length === 0 && (
         <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 bg-surface-raised/95 backdrop-blur-md border border-border px-4 py-2.5 rounded-panel shadow-panel flex items-center gap-3 font-mono text-xs text-foreground-muted animate-in fade-in zoom-in-95 duration-150">
           <AlertTriangle className="w-4 h-4 text-state-warning shrink-0" />
-          <span>No thermal events match active filters ({rawEvents.length} in catalog).</span>
+          <span>No thermal events in this time window ({rawEvents.length} in catalog).</span>
           <button
             onClick={resetFilters}
             className="flex items-center gap-1 px-2.5 py-1 rounded-control bg-accent/15 border border-accent/30 text-accent hover:bg-accent/25 transition-colors font-semibold"
@@ -257,7 +274,7 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
             {/* Left Telemetry HUD */}
             <div className="pointer-events-auto flex items-center gap-2 bg-surface/85 backdrop-blur-md px-3 py-1.5 rounded-control border border-border text-[11px] font-mono text-foreground-secondary shadow-panel">
               <Crosshair className="w-3.5 h-3.5 text-accent-cyan" />
-              <span>{formatCoordinate(cameraState.lat, cameraState.lng)}</span>
+              <span>{displayCoordinates}</span>
               <span className="text-border-strong">|</span>
               <span className="text-thermal-primary font-semibold flex items-center gap-1">
                 <Flame className="w-3 h-3 animate-flame" />
@@ -266,7 +283,7 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
               <span className="text-border-strong">|</span>
               <span className="flex items-center gap-1 text-[10px] text-accent">
                 <Wifi className="w-3 h-3 text-accent" />
-                {isLiveBackend ? "LIVE FASTAPI" : "DEMO READY"}
+                {isLiveBackend ? "LIVE FASTAPI" : "MULTI-SOURCE READY"}
               </span>
             </div>
 
@@ -287,7 +304,7 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
                 )}
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">INTELLIGENCE</span>
+                <span className="hidden sm:inline">LIVE FEED</span>
               </button>
             </div>
           </div>
@@ -299,7 +316,7 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
         }
         rightPanel={
           showIntel ? (
-            <IntelligencePanelPlaceholder
+            <EventIntelligenceFeed
               events={filteredEvents}
               selectedEvent={selectedEvent}
               onSelectEvent={handleSelectEvent}
@@ -330,8 +347,13 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
           />
         }
       >
+        {/* Floating Bottom Timeline Playback Bar */}
+        <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 w-[96%] sm:w-[640px] max-w-[96vw] z-30">
+          <TimelinePlaybackBar />
+        </div>
+
         {/* Geographic Projection & Datum annotation */}
-        <div className="absolute bottom-6 left-3 z-20 pointer-events-none hidden sm:flex items-center gap-2 bg-surface/75 backdrop-blur-md px-2.5 py-1.5 rounded-control border border-border/80 text-[10px] font-mono text-foreground-muted">
+        <div className="absolute bottom-3 left-3 z-20 pointer-events-none hidden lg:flex items-center gap-2 bg-surface/75 backdrop-blur-md px-2.5 py-1.5 rounded-control border border-border/80 text-[10px] font-mono text-foreground-muted">
           <Compass className="w-3.5 h-3.5 text-accent-cyan animate-pulse-subtle" />
           <span>WGS-84 · EPSG:4326 · {viewMode === "3D" ? "ORTHOGRAPHIC" : "MERCATOR"}</span>
         </div>
