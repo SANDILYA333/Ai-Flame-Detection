@@ -1,0 +1,2028 @@
+{
+  "campaign_id": "next_007_eval_20260831_011207",
+  "dataset_id": "feat_ds_real_supervised_v1.0.0",
+  "dataset_version": "v1.0.0",
+  "dataset_hash": "b511e3dee5f05594567ca4460f2a7bc64e65c9dab82d2969f70bd8d041ff7256",
+  "evaluated_at": "2026-08-31T01:12:07.405234+00:00",
+  "target_id": "target_industrial_segregation",
+  "split_strategy": "PERSISTENT_SOURCE_HOLDOUT",
+  "random_seed": 42,
+  "total_physical_events": 14360,
+  "eligible_labeled_events": 1591,
+  "industrial_events": 751,
+  "non_industrial_events": 840,
+  "unknown_excluded_events": 12769,
+  "models_evaluated": [
+    {
+      "model_id": "real_majorityclassclassifier_target_industrial_segregation_v1.0.0",
+      "model_type": "MajorityClassClassifier",
+      "model_role": "B0 Baseline (Majority Class)",
+      "model_version": "v1.0.0-production",
+      "artifact_path": "artifacts/real/production/real_majorityclassclassifier_target_industrial_segregation_v1.0.0.json",
+      "artifact_hash": "9e947c61173c136ba813956e458903137c5c4181a5ec6d9667c277ceea2465ea",
+      "train_samples": 1591,
+      "val_samples": 312,
+      "test_samples": 271,
+      "positive_class": "industrial",
+      "accuracy": 0.5424354243542435,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "macro_f1": 0.35167464114832536,
+      "per_class_metrics": {
+        "industrial": {
+          "class_name": "industrial",
+          "true_positives": 0,
+          "false_positives": 0,
+          "false_negatives": 124,
+          "true_negatives": 147,
+          "support": 124,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1_score": 0.0
+        },
+        "non_industrial": {
+          "class_name": "non_industrial",
+          "true_positives": 147,
+          "false_positives": 124,
+          "false_negatives": 0,
+          "true_negatives": 0,
+          "support": 147,
+          "precision": 0.5424354243542435,
+          "recall": 1.0,
+          "f1_score": 0.7033492822966507
+        }
+      },
+      "confusion_matrix": {
+        "true_positives": 0,
+        "false_positives": 0,
+        "true_negatives": 147,
+        "false_negatives": 124,
+        "positive_class": "industrial"
+      },
+      "roc_auc": 0.5048825982005706,
+      "pr_auc": 0.4549471585965341,
+      "brier_score": 0.49650797647080513,
+      "log_loss": 0.6896518139910133,
+      "expected_calibration_error": 0.007399559144106338,
+      "calibration_bins": [
+        {
+          "bin_lower": 0.0,
+          "bin_upper": 0.1,
+          "sample_count": 0,
+          "mean_confidence": 0.05,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.1,
+          "bin_upper": 0.2,
+          "sample_count": 0,
+          "mean_confidence": 0.15,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.2,
+          "bin_upper": 0.3,
+          "sample_count": 0,
+          "mean_confidence": 0.25,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.3,
+          "bin_upper": 0.4,
+          "sample_count": 0,
+          "mean_confidence": 0.35,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.4,
+          "bin_upper": 0.5,
+          "sample_count": 271,
+          "mean_confidence": 0.4502,
+          "observed_accuracy": 0.4576,
+          "calibration_gap": 0.0074
+        },
+        {
+          "bin_lower": 0.5,
+          "bin_upper": 0.6,
+          "sample_count": 0,
+          "mean_confidence": 0.55,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.6,
+          "bin_upper": 0.7,
+          "sample_count": 0,
+          "mean_confidence": 0.65,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.7,
+          "bin_upper": 0.8,
+          "sample_count": 0,
+          "mean_confidence": 0.75,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.8,
+          "bin_upper": 0.9,
+          "sample_count": 0,
+          "mean_confidence": 0.85,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.9,
+          "bin_upper": 1.0,
+          "sample_count": 0,
+          "mean_confidence": 0.95,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        }
+      ],
+      "abstention_curve": [
+        {
+          "confidence_threshold": 0.5,
+          "coverage": 1.0,
+          "abstention_rate": 0.0,
+          "accepted_samples": 271,
+          "selective_accuracy": 0.5424,
+          "selective_precision": 0.0,
+          "selective_recall": 0.0,
+          "selective_macro_f1": 0.3517
+        },
+        {
+          "confidence_threshold": 0.6,
+          "coverage": 0.0,
+          "abstention_rate": 1.0,
+          "accepted_samples": 0,
+          "selective_accuracy": 0.0,
+          "selective_precision": 0.0,
+          "selective_recall": 0.0,
+          "selective_macro_f1": 0.0
+        },
+        {
+          "confidence_threshold": 0.7,
+          "coverage": 0.0,
+          "abstention_rate": 1.0,
+          "accepted_samples": 0,
+          "selective_accuracy": 0.0,
+          "selective_precision": 0.0,
+          "selective_recall": 0.0,
+          "selective_macro_f1": 0.0
+        },
+        {
+          "confidence_threshold": 0.8,
+          "coverage": 0.0,
+          "abstention_rate": 1.0,
+          "accepted_samples": 0,
+          "selective_accuracy": 0.0,
+          "selective_precision": 0.0,
+          "selective_recall": 0.0,
+          "selective_macro_f1": 0.0
+        },
+        {
+          "confidence_threshold": 0.9,
+          "coverage": 0.0,
+          "abstention_rate": 1.0,
+          "accepted_samples": 0,
+          "selective_accuracy": 0.0,
+          "selective_precision": 0.0,
+          "selective_recall": 0.0,
+          "selective_macro_f1": 0.0
+        }
+      ],
+      "top_feature_importances": {},
+      "geographic_stratification": [
+        {
+          "stratum_name": "Amazon Basin",
+          "sample_count": 118,
+          "industrial_count": 0,
+          "non_industrial_count": 118,
+          "status": "VALID",
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "balanced_accuracy": 1.0
+        },
+        {
+          "stratum_name": "Persian Gulf",
+          "sample_count": 115,
+          "industrial_count": 115,
+          "non_industrial_count": 0,
+          "status": "VALID",
+          "accuracy": 0.0,
+          "macro_f1": 0.0,
+          "balanced_accuracy": 0.0
+        },
+        {
+          "stratum_name": "California WUI",
+          "sample_count": 12,
+          "industrial_count": 0,
+          "non_industrial_count": 12,
+          "status": "VALID",
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "balanced_accuracy": 1.0
+        },
+        {
+          "stratum_name": "Australia Southeast",
+          "sample_count": 17,
+          "industrial_count": 0,
+          "non_industrial_count": 17,
+          "status": "VALID",
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "balanced_accuracy": 1.0
+        },
+        {
+          "stratum_name": "Angul-Talcher",
+          "sample_count": 0,
+          "industrial_count": 0,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        },
+        {
+          "stratum_name": "Jamnagar-Kutch",
+          "sample_count": 2,
+          "industrial_count": 2,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        },
+        {
+          "stratum_name": "Singrauli-Sonbhadra",
+          "sample_count": 7,
+          "industrial_count": 7,
+          "non_industrial_count": 0,
+          "status": "VALID",
+          "accuracy": 0.0,
+          "macro_f1": 0.0,
+          "balanced_accuracy": 0.0
+        },
+        {
+          "stratum_name": "Punjab Agricultural",
+          "sample_count": 0,
+          "industrial_count": 0,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        }
+      ],
+      "sensor_stratification": [
+        {
+          "stratum_name": "VIIRS",
+          "sample_count": 269,
+          "industrial_count": 122,
+          "non_industrial_count": 147,
+          "status": "VALID",
+          "accuracy": 0.5465,
+          "macro_f1": 0.3534,
+          "balanced_accuracy": 0.5
+        },
+        {
+          "stratum_name": "MODIS",
+          "sample_count": 0,
+          "industrial_count": 0,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        },
+        {
+          "stratum_name": "HYBRID",
+          "sample_count": 2,
+          "industrial_count": 2,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        }
+      ],
+      "temporal_stratification": [
+        {
+          "stratum_name": "Early Period (March - April)",
+          "sample_count": 90,
+          "industrial_count": 42,
+          "non_industrial_count": 48,
+          "status": "VALID",
+          "accuracy": 0.5333,
+          "macro_f1": 0.3478,
+          "balanced_accuracy": 0.5
+        },
+        {
+          "stratum_name": "Middle Period (May - June)",
+          "sample_count": 90,
+          "industrial_count": 41,
+          "non_industrial_count": 49,
+          "status": "VALID",
+          "accuracy": 0.5444,
+          "macro_f1": 0.3525,
+          "balanced_accuracy": 0.5
+        },
+        {
+          "stratum_name": "Late Period (July - August)",
+          "sample_count": 91,
+          "industrial_count": 41,
+          "non_industrial_count": 50,
+          "status": "VALID",
+          "accuracy": 0.5495,
+          "macro_f1": 0.3546,
+          "balanced_accuracy": 0.5
+        }
+      ],
+      "confidence_intervals": {
+        "macro_f1": [
+          0.3259,
+          0.3756
+        ],
+        "balanced_accuracy": [
+          0.5,
+          0.5
+        ],
+        "accuracy": [
+          0.4834,
+          0.6015
+        ],
+        "precision": [
+          0.0,
+          0.0
+        ],
+        "recall": [
+          0.0,
+          0.0
+        ],
+        "roc_auc": [
+          0.4333,
+          0.5698
+        ]
+      }
+    },
+    {
+      "model_id": "real_deterministiccontextualclassifier_target_industrial_segregation_v1.0.0",
+      "model_type": "DeterministicContextualClassifier",
+      "model_role": "B2 Reference (Deterministic)",
+      "model_version": "v1.0.0-production",
+      "artifact_path": "artifacts/real/production/real_deterministiccontextualclassifier_target_industrial_segregation_v1.0.0.json",
+      "artifact_hash": "6e02ca18b7cbf46cbcb1f19bd0d2e3a7438937373a246f288c87fdf54e72d2a5",
+      "train_samples": 1591,
+      "val_samples": 312,
+      "test_samples": 271,
+      "positive_class": "industrial",
+      "accuracy": 0.5424354243542435,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "macro_f1": 0.35167464114832536,
+      "per_class_metrics": {
+        "industrial": {
+          "class_name": "industrial",
+          "true_positives": 0,
+          "false_positives": 0,
+          "false_negatives": 124,
+          "true_negatives": 147,
+          "support": 124,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1_score": 0.0
+        },
+        "non_industrial": {
+          "class_name": "non_industrial",
+          "true_positives": 147,
+          "false_positives": 124,
+          "false_negatives": 0,
+          "true_negatives": 0,
+          "support": 147,
+          "precision": 0.5424354243542435,
+          "recall": 1.0,
+          "f1_score": 0.7033492822966507
+        }
+      },
+      "confusion_matrix": {
+        "true_positives": 0,
+        "false_positives": 0,
+        "true_negatives": 147,
+        "false_negatives": 124,
+        "positive_class": "industrial"
+      },
+      "roc_auc": 0.5048825982005706,
+      "pr_auc": 0.4549471585965341,
+      "brier_score": 0.6855904059040573,
+      "log_loss": 0.956210925321111,
+      "expected_calibration_error": 0.30756457564575646,
+      "calibration_bins": [
+        {
+          "bin_lower": 0.0,
+          "bin_upper": 0.1,
+          "sample_count": 0,
+          "mean_confidence": 0.05,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.1,
+          "bin_upper": 0.2,
+          "sample_count": 271,
+          "mean_confidence": 0.15,
+          "observed_accuracy": 0.4576,
+          "calibration_gap": 0.3076
+        },
+        {
+          "bin_lower": 0.2,
+          "bin_upper": 0.3,
+          "sample_count": 0,
+          "mean_confidence": 0.25,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.3,
+          "bin_upper": 0.4,
+          "sample_count": 0,
+          "mean_confidence": 0.35,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.4,
+          "bin_upper": 0.5,
+          "sample_count": 0,
+          "mean_confidence": 0.45,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.5,
+          "bin_upper": 0.6,
+          "sample_count": 0,
+          "mean_confidence": 0.55,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.6,
+          "bin_upper": 0.7,
+          "sample_count": 0,
+          "mean_confidence": 0.65,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.7,
+          "bin_upper": 0.8,
+          "sample_count": 0,
+          "mean_confidence": 0.75,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.8,
+          "bin_upper": 0.9,
+          "sample_count": 0,
+          "mean_confidence": 0.85,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.9,
+          "bin_upper": 1.0,
+          "sample_count": 0,
+          "mean_confidence": 0.95,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        }
+      ],
+      "abstention_curve": [
+        {
+          "confidence_threshold": 0.5,
+          "coverage": 1.0,
+          "abstention_rate": 0.0,
+          "accepted_samples": 271,
+          "selective_accuracy": 0.5424,
+          "selective_precision": 0.0,
+          "selective_recall": 0.0,
+          "selective_macro_f1": 0.3517
+        },
+        {
+          "confidence_threshold": 0.6,
+          "coverage": 1.0,
+          "abstention_rate": 0.0,
+          "accepted_samples": 271,
+          "selective_accuracy": 0.5424,
+          "selective_precision": 0.0,
+          "selective_recall": 0.0,
+          "selective_macro_f1": 0.3517
+        },
+        {
+          "confidence_threshold": 0.7,
+          "coverage": 1.0,
+          "abstention_rate": 0.0,
+          "accepted_samples": 271,
+          "selective_accuracy": 0.5424,
+          "selective_precision": 0.0,
+          "selective_recall": 0.0,
+          "selective_macro_f1": 0.3517
+        },
+        {
+          "confidence_threshold": 0.8,
+          "coverage": 1.0,
+          "abstention_rate": 0.0,
+          "accepted_samples": 271,
+          "selective_accuracy": 0.5424,
+          "selective_precision": 0.0,
+          "selective_recall": 0.0,
+          "selective_macro_f1": 0.3517
+        },
+        {
+          "confidence_threshold": 0.9,
+          "coverage": 0.0,
+          "abstention_rate": 1.0,
+          "accepted_samples": 0,
+          "selective_accuracy": 0.0,
+          "selective_precision": 0.0,
+          "selective_recall": 0.0,
+          "selective_macro_f1": 0.0
+        }
+      ],
+      "top_feature_importances": {},
+      "geographic_stratification": [
+        {
+          "stratum_name": "Amazon Basin",
+          "sample_count": 118,
+          "industrial_count": 0,
+          "non_industrial_count": 118,
+          "status": "VALID",
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "balanced_accuracy": 1.0
+        },
+        {
+          "stratum_name": "Persian Gulf",
+          "sample_count": 115,
+          "industrial_count": 115,
+          "non_industrial_count": 0,
+          "status": "VALID",
+          "accuracy": 0.0,
+          "macro_f1": 0.0,
+          "balanced_accuracy": 0.0
+        },
+        {
+          "stratum_name": "California WUI",
+          "sample_count": 12,
+          "industrial_count": 0,
+          "non_industrial_count": 12,
+          "status": "VALID",
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "balanced_accuracy": 1.0
+        },
+        {
+          "stratum_name": "Australia Southeast",
+          "sample_count": 17,
+          "industrial_count": 0,
+          "non_industrial_count": 17,
+          "status": "VALID",
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "balanced_accuracy": 1.0
+        },
+        {
+          "stratum_name": "Angul-Talcher",
+          "sample_count": 0,
+          "industrial_count": 0,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        },
+        {
+          "stratum_name": "Jamnagar-Kutch",
+          "sample_count": 2,
+          "industrial_count": 2,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        },
+        {
+          "stratum_name": "Singrauli-Sonbhadra",
+          "sample_count": 7,
+          "industrial_count": 7,
+          "non_industrial_count": 0,
+          "status": "VALID",
+          "accuracy": 0.0,
+          "macro_f1": 0.0,
+          "balanced_accuracy": 0.0
+        },
+        {
+          "stratum_name": "Punjab Agricultural",
+          "sample_count": 0,
+          "industrial_count": 0,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        }
+      ],
+      "sensor_stratification": [
+        {
+          "stratum_name": "VIIRS",
+          "sample_count": 269,
+          "industrial_count": 122,
+          "non_industrial_count": 147,
+          "status": "VALID",
+          "accuracy": 0.5465,
+          "macro_f1": 0.3534,
+          "balanced_accuracy": 0.5
+        },
+        {
+          "stratum_name": "MODIS",
+          "sample_count": 0,
+          "industrial_count": 0,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        },
+        {
+          "stratum_name": "HYBRID",
+          "sample_count": 2,
+          "industrial_count": 2,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        }
+      ],
+      "temporal_stratification": [
+        {
+          "stratum_name": "Early Period (March - April)",
+          "sample_count": 90,
+          "industrial_count": 42,
+          "non_industrial_count": 48,
+          "status": "VALID",
+          "accuracy": 0.5333,
+          "macro_f1": 0.3478,
+          "balanced_accuracy": 0.5
+        },
+        {
+          "stratum_name": "Middle Period (May - June)",
+          "sample_count": 90,
+          "industrial_count": 41,
+          "non_industrial_count": 49,
+          "status": "VALID",
+          "accuracy": 0.5444,
+          "macro_f1": 0.3525,
+          "balanced_accuracy": 0.5
+        },
+        {
+          "stratum_name": "Late Period (July - August)",
+          "sample_count": 91,
+          "industrial_count": 41,
+          "non_industrial_count": 50,
+          "status": "VALID",
+          "accuracy": 0.5495,
+          "macro_f1": 0.3546,
+          "balanced_accuracy": 0.5
+        }
+      ],
+      "confidence_intervals": {
+        "macro_f1": [
+          0.3259,
+          0.3756
+        ],
+        "balanced_accuracy": [
+          0.5,
+          0.5
+        ],
+        "accuracy": [
+          0.4834,
+          0.6015
+        ],
+        "precision": [
+          0.0,
+          0.0
+        ],
+        "recall": [
+          0.0,
+          0.0
+        ],
+        "roc_auc": [
+          0.4333,
+          0.5698
+        ]
+      }
+    },
+    {
+      "model_id": "real_logisticregressionclassifier_target_industrial_segregation_v1.0.0",
+      "model_type": "LogisticRegressionClassifier",
+      "model_role": "B3 Candidate (Softmax Linear)",
+      "model_version": "v1.0.0-production",
+      "artifact_path": "artifacts/real/production/real_logisticregressionclassifier_target_industrial_segregation_v1.0.0.json",
+      "artifact_hash": "7826c75998cf3197b1cff44b0dfeaadec116797b89b79651c69ce5cbfb742f53",
+      "train_samples": 1591,
+      "val_samples": 312,
+      "test_samples": 271,
+      "positive_class": "industrial",
+      "accuracy": 0.7638376383763837,
+      "balanced_accuracy": 0.7665404871626069,
+      "precision": 0.717391304347826,
+      "recall": 0.7983870967741935,
+      "f1_score": 0.7557251908396945,
+      "macro_f1": 0.7635768811341329,
+      "per_class_metrics": {
+        "industrial": {
+          "class_name": "industrial",
+          "true_positives": 99,
+          "false_positives": 39,
+          "false_negatives": 25,
+          "true_negatives": 108,
+          "support": 124,
+          "precision": 0.717391304347826,
+          "recall": 0.7983870967741935,
+          "f1_score": 0.7557251908396945
+        },
+        "non_industrial": {
+          "class_name": "non_industrial",
+          "true_positives": 108,
+          "false_positives": 25,
+          "false_negatives": 39,
+          "true_negatives": 99,
+          "support": 147,
+          "precision": 0.8120300751879699,
+          "recall": 0.7346938775510204,
+          "f1_score": 0.7714285714285714
+        }
+      },
+      "confusion_matrix": {
+        "true_positives": 99,
+        "false_positives": 39,
+        "true_negatives": 108,
+        "false_negatives": 25,
+        "positive_class": "industrial"
+      },
+      "roc_auc": 0.8442506034671934,
+      "pr_auc": 0.7808105919385631,
+      "brier_score": 0.3134635828349119,
+      "log_loss": 0.47254377613547177,
+      "expected_calibration_error": 0.09351028393559159,
+      "calibration_bins": [
+        {
+          "bin_lower": 0.0,
+          "bin_upper": 0.1,
+          "sample_count": 50,
+          "mean_confidence": 0.0596,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0596
+        },
+        {
+          "bin_lower": 0.1,
+          "bin_upper": 0.2,
+          "sample_count": 26,
+          "mean_confidence": 0.1435,
+          "observed_accuracy": 0.0769,
+          "calibration_gap": 0.0666
+        },
+        {
+          "bin_lower": 0.2,
+          "bin_upper": 0.3,
+          "sample_count": 27,
+          "mean_confidence": 0.2472,
+          "observed_accuracy": 0.1852,
+          "calibration_gap": 0.0621
+        },
+        {
+          "bin_lower": 0.3,
+          "bin_upper": 0.4,
+          "sample_count": 16,
+          "mean_confidence": 0.3425,
+          "observed_accuracy": 0.5625,
+          "calibration_gap": 0.22
+        },
+        {
+          "bin_lower": 0.4,
+          "bin_upper": 0.5,
+          "sample_count": 14,
+          "mean_confidence": 0.4482,
+          "observed_accuracy": 0.6429,
+          "calibration_gap": 0.1947
+        },
+        {
+          "bin_lower": 0.5,
+          "bin_upper": 0.6,
+          "sample_count": 10,
+          "mean_confidence": 0.5526,
+          "observed_accuracy": 0.6,
+          "calibration_gap": 0.0474
+        },
+        {
+          "bin_lower": 0.6,
+          "bin_upper": 0.7,
+          "sample_count": 19,
+          "mean_confidence": 0.6578,
+          "observed_accuracy": 0.5789,
+          "calibration_gap": 0.0788
+        },
+        {
+          "bin_lower": 0.7,
+          "bin_upper": 0.8,
+          "sample_count": 43,
+          "mean_confidence": 0.7568,
+          "observed_accuracy": 0.7907,
+          "calibration_gap": 0.0339
+        },
+        {
+          "bin_lower": 0.8,
+          "bin_upper": 0.9,
+          "sample_count": 60,
+          "mean_confidence": 0.8467,
+          "observed_accuracy": 0.7,
+          "calibration_gap": 0.1467
+        },
+        {
+          "bin_lower": 0.9,
+          "bin_upper": 1.0,
+          "sample_count": 6,
+          "mean_confidence": 0.9205,
+          "observed_accuracy": 1.0,
+          "calibration_gap": 0.0795
+        }
+      ],
+      "abstention_curve": [
+        {
+          "confidence_threshold": 0.5,
+          "coverage": 1.0,
+          "abstention_rate": 0.0,
+          "accepted_samples": 271,
+          "selective_accuracy": 0.7638,
+          "selective_precision": 0.7174,
+          "selective_recall": 0.7984,
+          "selective_macro_f1": 0.7636
+        },
+        {
+          "confidence_threshold": 0.6,
+          "coverage": 0.9114,
+          "abstention_rate": 0.0886,
+          "accepted_samples": 247,
+          "selective_accuracy": 0.7935,
+          "selective_precision": 0.7266,
+          "selective_recall": 0.8532,
+          "selective_macro_f1": 0.7932
+        },
+        {
+          "confidence_threshold": 0.7,
+          "coverage": 0.7823,
+          "abstention_rate": 0.2177,
+          "accepted_samples": 212,
+          "selective_accuracy": 0.8396,
+          "selective_precision": 0.7523,
+          "selective_recall": 0.9213,
+          "selective_macro_f1": 0.8389
+        },
+        {
+          "confidence_threshold": 0.8,
+          "coverage": 0.524,
+          "abstention_rate": 0.476,
+          "accepted_samples": 142,
+          "selective_accuracy": 0.8592,
+          "selective_precision": 0.7273,
+          "selective_recall": 0.96,
+          "selective_macro_f1": 0.8543
+        },
+        {
+          "confidence_threshold": 0.9,
+          "coverage": 0.2066,
+          "abstention_rate": 0.7934,
+          "accepted_samples": 56,
+          "selective_accuracy": 1.0,
+          "selective_precision": 1.0,
+          "selective_recall": 1.0,
+          "selective_macro_f1": 1.0
+        }
+      ],
+      "top_feature_importances": {},
+      "geographic_stratification": [
+        {
+          "stratum_name": "Amazon Basin",
+          "sample_count": 118,
+          "industrial_count": 0,
+          "non_industrial_count": 118,
+          "status": "VALID",
+          "accuracy": 0.7373,
+          "macro_f1": 0.4244,
+          "balanced_accuracy": 0.3686
+        },
+        {
+          "stratum_name": "Persian Gulf",
+          "sample_count": 115,
+          "industrial_count": 115,
+          "non_industrial_count": 0,
+          "status": "VALID",
+          "accuracy": 0.8261,
+          "macro_f1": 0.4524,
+          "balanced_accuracy": 0.413
+        },
+        {
+          "stratum_name": "California WUI",
+          "sample_count": 12,
+          "industrial_count": 0,
+          "non_industrial_count": 12,
+          "status": "VALID",
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "balanced_accuracy": 1.0
+        },
+        {
+          "stratum_name": "Australia Southeast",
+          "sample_count": 17,
+          "industrial_count": 0,
+          "non_industrial_count": 17,
+          "status": "VALID",
+          "accuracy": 0.5294,
+          "macro_f1": 0.3462,
+          "balanced_accuracy": 0.2647
+        },
+        {
+          "stratum_name": "Angul-Talcher",
+          "sample_count": 0,
+          "industrial_count": 0,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        },
+        {
+          "stratum_name": "Jamnagar-Kutch",
+          "sample_count": 2,
+          "industrial_count": 2,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        },
+        {
+          "stratum_name": "Singrauli-Sonbhadra",
+          "sample_count": 7,
+          "industrial_count": 7,
+          "non_industrial_count": 0,
+          "status": "VALID",
+          "accuracy": 0.4286,
+          "macro_f1": 0.3,
+          "balanced_accuracy": 0.2143
+        },
+        {
+          "stratum_name": "Punjab Agricultural",
+          "sample_count": 0,
+          "industrial_count": 0,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        }
+      ],
+      "sensor_stratification": [
+        {
+          "stratum_name": "VIIRS",
+          "sample_count": 269,
+          "industrial_count": 122,
+          "non_industrial_count": 147,
+          "status": "VALID",
+          "accuracy": 0.7621,
+          "macro_f1": 0.7617,
+          "balanced_accuracy": 0.7649
+        },
+        {
+          "stratum_name": "MODIS",
+          "sample_count": 0,
+          "industrial_count": 0,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        },
+        {
+          "stratum_name": "HYBRID",
+          "sample_count": 2,
+          "industrial_count": 2,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        }
+      ],
+      "temporal_stratification": [
+        {
+          "stratum_name": "Early Period (March - April)",
+          "sample_count": 90,
+          "industrial_count": 42,
+          "non_industrial_count": 48,
+          "status": "VALID",
+          "accuracy": 0.7556,
+          "macro_f1": 0.7551,
+          "balanced_accuracy": 0.7619
+        },
+        {
+          "stratum_name": "Middle Period (May - June)",
+          "sample_count": 90,
+          "industrial_count": 41,
+          "non_industrial_count": 49,
+          "status": "VALID",
+          "accuracy": 0.7667,
+          "macro_f1": 0.7652,
+          "balanced_accuracy": 0.7658
+        },
+        {
+          "stratum_name": "Late Period (July - August)",
+          "sample_count": 91,
+          "industrial_count": 41,
+          "non_industrial_count": 50,
+          "status": "VALID",
+          "accuracy": 0.7692,
+          "macro_f1": 0.7682,
+          "balanced_accuracy": 0.7702
+        }
+      ],
+      "confidence_intervals": {
+        "macro_f1": [
+          0.7108,
+          0.8113
+        ],
+        "balanced_accuracy": [
+          0.7153,
+          0.8144
+        ],
+        "accuracy": [
+          0.7122,
+          0.8118
+        ],
+        "precision": [
+          0.6412,
+          0.7895
+        ],
+        "recall": [
+          0.725,
+          0.8657
+        ],
+        "roc_auc": [
+          0.7969,
+          0.8868
+        ]
+      }
+    },
+    {
+      "model_id": "real_decisiontreeclassifier_target_industrial_segregation_v1.0.0",
+      "model_type": "DecisionTreeClassifier",
+      "model_role": "B4-DT Candidate (CART Decision Tree)",
+      "model_version": "v1.0.0-production",
+      "artifact_path": "artifacts/real/production/real_decisiontreeclassifier_target_industrial_segregation_v1.0.0.json",
+      "artifact_hash": "c64196a38fd4b4ee14adbbfeea8dd7f1bb2842eedd218ab3d1017be63fbdd7a2",
+      "train_samples": 1591,
+      "val_samples": 312,
+      "test_samples": 271,
+      "positive_class": "industrial",
+      "accuracy": 0.8302583025830258,
+      "balanced_accuracy": 0.814516129032258,
+      "precision": 1.0,
+      "recall": 0.6290322580645161,
+      "f1_score": 0.7722772277227723,
+      "macro_f1": 0.8184915550378568,
+      "per_class_metrics": {
+        "industrial": {
+          "class_name": "industrial",
+          "true_positives": 78,
+          "false_positives": 0,
+          "false_negatives": 46,
+          "true_negatives": 147,
+          "support": 124,
+          "precision": 1.0,
+          "recall": 0.6290322580645161,
+          "f1_score": 0.7722772277227723
+        },
+        "non_industrial": {
+          "class_name": "non_industrial",
+          "true_positives": 147,
+          "false_positives": 46,
+          "false_negatives": 0,
+          "true_negatives": 78,
+          "support": 147,
+          "precision": 0.7616580310880829,
+          "recall": 1.0,
+          "f1_score": 0.8647058823529412
+        }
+      },
+      "confusion_matrix": {
+        "true_positives": 78,
+        "false_positives": 0,
+        "true_negatives": 147,
+        "false_negatives": 46,
+        "positive_class": "industrial"
+      },
+      "roc_auc": 0.9740509106868553,
+      "pr_auc": 0.9687354560078374,
+      "brier_score": 0.17064167481909978,
+      "log_loss": 0.2627947789972212,
+      "expected_calibration_error": 0.10978423184821817,
+      "calibration_bins": [
+        {
+          "bin_lower": 0.0,
+          "bin_upper": 0.1,
+          "sample_count": 97,
+          "mean_confidence": 0.0678,
+          "observed_accuracy": 0.0103,
+          "calibration_gap": 0.0575
+        },
+        {
+          "bin_lower": 0.1,
+          "bin_upper": 0.2,
+          "sample_count": 0,
+          "mean_confidence": 0.15,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.2,
+          "bin_upper": 0.3,
+          "sample_count": 0,
+          "mean_confidence": 0.25,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.3,
+          "bin_upper": 0.4,
+          "sample_count": 52,
+          "mean_confidence": 0.3012,
+          "observed_accuracy": 0.1731,
+          "calibration_gap": 0.1281
+        },
+        {
+          "bin_lower": 0.4,
+          "bin_upper": 0.5,
+          "sample_count": 44,
+          "mean_confidence": 0.4202,
+          "observed_accuracy": 0.8182,
+          "calibration_gap": 0.398
+        },
+        {
+          "bin_lower": 0.5,
+          "bin_upper": 0.6,
+          "sample_count": 0,
+          "mean_confidence": 0.55,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.6,
+          "bin_upper": 0.7,
+          "sample_count": 0,
+          "mean_confidence": 0.65,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.7,
+          "bin_upper": 0.8,
+          "sample_count": 0,
+          "mean_confidence": 0.75,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.8,
+          "bin_upper": 0.9,
+          "sample_count": 0,
+          "mean_confidence": 0.85,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.9,
+          "bin_upper": 1.0,
+          "sample_count": 78,
+          "mean_confidence": 1.0,
+          "observed_accuracy": 1.0,
+          "calibration_gap": 0.0
+        }
+      ],
+      "abstention_curve": [
+        {
+          "confidence_threshold": 0.5,
+          "coverage": 1.0,
+          "abstention_rate": 0.0,
+          "accepted_samples": 271,
+          "selective_accuracy": 0.8303,
+          "selective_precision": 1.0,
+          "selective_recall": 0.629,
+          "selective_macro_f1": 0.8185
+        },
+        {
+          "confidence_threshold": 0.6,
+          "coverage": 0.8376,
+          "abstention_rate": 0.1624,
+          "accepted_samples": 227,
+          "selective_accuracy": 0.9559,
+          "selective_precision": 1.0,
+          "selective_recall": 0.8864,
+          "selective_macro_f1": 0.9525
+        },
+        {
+          "confidence_threshold": 0.7,
+          "coverage": 0.6458,
+          "abstention_rate": 0.3542,
+          "accepted_samples": 175,
+          "selective_accuracy": 0.9943,
+          "selective_precision": 1.0,
+          "selective_recall": 0.9873,
+          "selective_macro_f1": 0.9942
+        },
+        {
+          "confidence_threshold": 0.8,
+          "coverage": 0.6458,
+          "abstention_rate": 0.3542,
+          "accepted_samples": 175,
+          "selective_accuracy": 0.9943,
+          "selective_precision": 1.0,
+          "selective_recall": 0.9873,
+          "selective_macro_f1": 0.9942
+        },
+        {
+          "confidence_threshold": 0.9,
+          "coverage": 0.6458,
+          "abstention_rate": 0.3542,
+          "accepted_samples": 175,
+          "selective_accuracy": 0.9943,
+          "selective_precision": 1.0,
+          "selective_recall": 0.9873,
+          "selective_macro_f1": 0.9942
+        }
+      ],
+      "top_feature_importances": {
+        "num_persistence_active_days": 0.79,
+        "num_persistence_recurrence_ratio": 0.11614,
+        "num_persistence_total_events": 0.0528,
+        "bool_is_near_industrial_facility": 0.04105,
+        "num_brightness_max_kelvin": 0.0,
+        "num_brightness_mean_kelvin": 0.0,
+        "num_daynight_ratio": 0.0,
+        "num_detection_count": 0.0,
+        "num_duration_hours": 0.0,
+        "num_facility_distance_meters": 0.0
+      },
+      "geographic_stratification": [
+        {
+          "stratum_name": "Amazon Basin",
+          "sample_count": 118,
+          "industrial_count": 0,
+          "non_industrial_count": 118,
+          "status": "VALID",
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "balanced_accuracy": 1.0
+        },
+        {
+          "stratum_name": "Persian Gulf",
+          "sample_count": 115,
+          "industrial_count": 115,
+          "non_industrial_count": 0,
+          "status": "VALID",
+          "accuracy": 0.6609,
+          "macro_f1": 0.3979,
+          "balanced_accuracy": 0.3304
+        },
+        {
+          "stratum_name": "California WUI",
+          "sample_count": 12,
+          "industrial_count": 0,
+          "non_industrial_count": 12,
+          "status": "VALID",
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "balanced_accuracy": 1.0
+        },
+        {
+          "stratum_name": "Australia Southeast",
+          "sample_count": 17,
+          "industrial_count": 0,
+          "non_industrial_count": 17,
+          "status": "VALID",
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "balanced_accuracy": 1.0
+        },
+        {
+          "stratum_name": "Angul-Talcher",
+          "sample_count": 0,
+          "industrial_count": 0,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        },
+        {
+          "stratum_name": "Jamnagar-Kutch",
+          "sample_count": 2,
+          "industrial_count": 2,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        },
+        {
+          "stratum_name": "Singrauli-Sonbhadra",
+          "sample_count": 7,
+          "industrial_count": 7,
+          "non_industrial_count": 0,
+          "status": "VALID",
+          "accuracy": 0.0,
+          "macro_f1": 0.0,
+          "balanced_accuracy": 0.0
+        },
+        {
+          "stratum_name": "Punjab Agricultural",
+          "sample_count": 0,
+          "industrial_count": 0,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        }
+      ],
+      "sensor_stratification": [
+        {
+          "stratum_name": "VIIRS",
+          "sample_count": 269,
+          "industrial_count": 122,
+          "non_industrial_count": 147,
+          "status": "VALID",
+          "accuracy": 0.8327,
+          "macro_f1": 0.8206,
+          "balanced_accuracy": 0.8156
+        },
+        {
+          "stratum_name": "MODIS",
+          "sample_count": 0,
+          "industrial_count": 0,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        },
+        {
+          "stratum_name": "HYBRID",
+          "sample_count": 2,
+          "industrial_count": 2,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        }
+      ],
+      "temporal_stratification": [
+        {
+          "stratum_name": "Early Period (March - April)",
+          "sample_count": 90,
+          "industrial_count": 42,
+          "non_industrial_count": 48,
+          "status": "VALID",
+          "accuracy": 0.8667,
+          "macro_f1": 0.8611,
+          "balanced_accuracy": 0.8571
+        },
+        {
+          "stratum_name": "Middle Period (May - June)",
+          "sample_count": 90,
+          "industrial_count": 41,
+          "non_industrial_count": 49,
+          "status": "VALID",
+          "accuracy": 0.7889,
+          "macro_f1": 0.768,
+          "balanced_accuracy": 0.7683
+        },
+        {
+          "stratum_name": "Late Period (July - August)",
+          "sample_count": 91,
+          "industrial_count": 41,
+          "non_industrial_count": 50,
+          "status": "VALID",
+          "accuracy": 0.8352,
+          "macro_f1": 0.8228,
+          "balanced_accuracy": 0.8171
+        }
+      ],
+      "confidence_intervals": {
+        "macro_f1": [
+          0.7694,
+          0.8678
+        ],
+        "balanced_accuracy": [
+          0.7712,
+          0.86
+        ],
+        "accuracy": [
+          0.786,
+          0.8782
+        ],
+        "precision": [
+          1.0,
+          1.0
+        ],
+        "recall": [
+          0.5424,
+          0.72
+        ],
+        "roc_auc": [
+          0.9532,
+          0.9868
+        ]
+      }
+    },
+    {
+      "model_id": "real_randomforestclassifier_target_industrial_segregation_v1.0.0",
+      "model_type": "RandomForestClassifier",
+      "model_role": "B4-RF Candidate (Random Forest)",
+      "model_version": "v1.0.0-production",
+      "artifact_path": "artifacts/real/production/real_randomforestclassifier_target_industrial_segregation_v1.0.0.json",
+      "artifact_hash": "42e5f2ef690cf1b3a532e93eebce572e155a58fcba29ee3478c2dc72f3e12559",
+      "train_samples": 1591,
+      "val_samples": 312,
+      "test_samples": 271,
+      "positive_class": "industrial",
+      "accuracy": 0.7675276752767528,
+      "balanced_accuracy": 0.7566929997805574,
+      "precision": 0.8210526315789474,
+      "recall": 0.6290322580645161,
+      "f1_score": 0.7123287671232877,
+      "macro_f1": 0.7586411637474024,
+      "per_class_metrics": {
+        "industrial": {
+          "class_name": "industrial",
+          "true_positives": 78,
+          "false_positives": 17,
+          "false_negatives": 46,
+          "true_negatives": 130,
+          "support": 124,
+          "precision": 0.8210526315789474,
+          "recall": 0.6290322580645161,
+          "f1_score": 0.7123287671232877
+        },
+        "non_industrial": {
+          "class_name": "non_industrial",
+          "true_positives": 130,
+          "false_positives": 46,
+          "false_negatives": 17,
+          "true_negatives": 78,
+          "support": 147,
+          "precision": 0.7386363636363636,
+          "recall": 0.8843537414965986,
+          "f1_score": 0.8049535603715171
+        }
+      },
+      "confusion_matrix": {
+        "true_positives": 78,
+        "false_positives": 17,
+        "true_negatives": 130,
+        "false_negatives": 46,
+        "positive_class": "industrial"
+      },
+      "roc_auc": 0.8595567259161729,
+      "pr_auc": 0.8703924995503599,
+      "brier_score": 0.2868476104126254,
+      "log_loss": 0.4469832347887667,
+      "expected_calibration_error": 0.15238813699483778,
+      "calibration_bins": [
+        {
+          "bin_lower": 0.0,
+          "bin_upper": 0.1,
+          "sample_count": 2,
+          "mean_confidence": 0.0767,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0767
+        },
+        {
+          "bin_lower": 0.1,
+          "bin_upper": 0.2,
+          "sample_count": 37,
+          "mean_confidence": 0.1608,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.1608
+        },
+        {
+          "bin_lower": 0.2,
+          "bin_upper": 0.3,
+          "sample_count": 111,
+          "mean_confidence": 0.2517,
+          "observed_accuracy": 0.3243,
+          "calibration_gap": 0.0727
+        },
+        {
+          "bin_lower": 0.3,
+          "bin_upper": 0.4,
+          "sample_count": 19,
+          "mean_confidence": 0.3514,
+          "observed_accuracy": 0.5263,
+          "calibration_gap": 0.1749
+        },
+        {
+          "bin_lower": 0.4,
+          "bin_upper": 0.5,
+          "sample_count": 7,
+          "mean_confidence": 0.4869,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.4869
+        },
+        {
+          "bin_lower": 0.5,
+          "bin_upper": 0.6,
+          "sample_count": 17,
+          "mean_confidence": 0.5035,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.5035
+        },
+        {
+          "bin_lower": 0.6,
+          "bin_upper": 0.7,
+          "sample_count": 0,
+          "mean_confidence": 0.65,
+          "observed_accuracy": 0.0,
+          "calibration_gap": 0.0
+        },
+        {
+          "bin_lower": 0.7,
+          "bin_upper": 0.8,
+          "sample_count": 1,
+          "mean_confidence": 0.7888,
+          "observed_accuracy": 1.0,
+          "calibration_gap": 0.2112
+        },
+        {
+          "bin_lower": 0.8,
+          "bin_upper": 0.9,
+          "sample_count": 52,
+          "mean_confidence": 0.8153,
+          "observed_accuracy": 1.0,
+          "calibration_gap": 0.1847
+        },
+        {
+          "bin_lower": 0.9,
+          "bin_upper": 1.0,
+          "sample_count": 25,
+          "mean_confidence": 0.9191,
+          "observed_accuracy": 1.0,
+          "calibration_gap": 0.0809
+        }
+      ],
+      "abstention_curve": [
+        {
+          "confidence_threshold": 0.5,
+          "coverage": 1.0,
+          "abstention_rate": 0.0,
+          "accepted_samples": 271,
+          "selective_accuracy": 0.7675,
+          "selective_precision": 0.8211,
+          "selective_recall": 0.629,
+          "selective_macro_f1": 0.7586
+        },
+        {
+          "confidence_threshold": 0.6,
+          "coverage": 0.9114,
+          "abstention_rate": 0.0886,
+          "accepted_samples": 247,
+          "selective_accuracy": 0.8138,
+          "selective_precision": 1.0,
+          "selective_recall": 0.629,
+          "selective_macro_f1": 0.8074
+        },
+        {
+          "confidence_threshold": 0.7,
+          "coverage": 0.8413,
+          "abstention_rate": 0.1587,
+          "accepted_samples": 228,
+          "selective_accuracy": 0.8421,
+          "selective_precision": 1.0,
+          "selective_recall": 0.6842,
+          "selective_macro_f1": 0.8381
+        },
+        {
+          "confidence_threshold": 0.8,
+          "coverage": 0.428,
+          "abstention_rate": 0.572,
+          "accepted_samples": 116,
+          "selective_accuracy": 1.0,
+          "selective_precision": 1.0,
+          "selective_recall": 1.0,
+          "selective_macro_f1": 1.0
+        },
+        {
+          "confidence_threshold": 0.9,
+          "coverage": 0.0996,
+          "abstention_rate": 0.9004,
+          "accepted_samples": 27,
+          "selective_accuracy": 1.0,
+          "selective_precision": 1.0,
+          "selective_recall": 1.0,
+          "selective_macro_f1": 1.0
+        }
+      ],
+      "top_feature_importances": {
+        "num_persistence_active_days": 0.39834,
+        "num_persistence_total_events": 0.28756,
+        "bool_is_near_industrial_facility": 0.09672,
+        "cat_facility_context_type_NONE": 0.04591,
+        "num_brightness_max_kelvin": 0.03722,
+        "num_brightness_mean_kelvin": 0.03306,
+        "num_prior_event_count_30d": 0.02758,
+        "bool_is_persistent_source": 0.0248,
+        "num_frp_std_mw": 0.01424,
+        "num_persistence_recurrence_ratio": 0.01409
+      },
+      "geographic_stratification": [
+        {
+          "stratum_name": "Amazon Basin",
+          "sample_count": 118,
+          "industrial_count": 0,
+          "non_industrial_count": 118,
+          "status": "VALID",
+          "accuracy": 0.8559,
+          "macro_f1": 0.4612,
+          "balanced_accuracy": 0.428
+        },
+        {
+          "stratum_name": "Persian Gulf",
+          "sample_count": 115,
+          "industrial_count": 115,
+          "non_industrial_count": 0,
+          "status": "VALID",
+          "accuracy": 0.6609,
+          "macro_f1": 0.3979,
+          "balanced_accuracy": 0.3304
+        },
+        {
+          "stratum_name": "California WUI",
+          "sample_count": 12,
+          "industrial_count": 0,
+          "non_industrial_count": 12,
+          "status": "VALID",
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "balanced_accuracy": 1.0
+        },
+        {
+          "stratum_name": "Australia Southeast",
+          "sample_count": 17,
+          "industrial_count": 0,
+          "non_industrial_count": 17,
+          "status": "VALID",
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "balanced_accuracy": 1.0
+        },
+        {
+          "stratum_name": "Angul-Talcher",
+          "sample_count": 0,
+          "industrial_count": 0,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        },
+        {
+          "stratum_name": "Jamnagar-Kutch",
+          "sample_count": 2,
+          "industrial_count": 2,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        },
+        {
+          "stratum_name": "Singrauli-Sonbhadra",
+          "sample_count": 7,
+          "industrial_count": 7,
+          "non_industrial_count": 0,
+          "status": "VALID",
+          "accuracy": 0.0,
+          "macro_f1": 0.0,
+          "balanced_accuracy": 0.0
+        },
+        {
+          "stratum_name": "Punjab Agricultural",
+          "sample_count": 0,
+          "industrial_count": 0,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        }
+      ],
+      "sensor_stratification": [
+        {
+          "stratum_name": "VIIRS",
+          "sample_count": 269,
+          "industrial_count": 122,
+          "non_industrial_count": 147,
+          "status": "VALID",
+          "accuracy": 0.7695,
+          "macro_f1": 0.7602,
+          "balanced_accuracy": 0.7578
+        },
+        {
+          "stratum_name": "MODIS",
+          "sample_count": 0,
+          "industrial_count": 0,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        },
+        {
+          "stratum_name": "HYBRID",
+          "sample_count": 2,
+          "industrial_count": 2,
+          "non_industrial_count": 0,
+          "status": "INSUFFICIENT_SAMPLE",
+          "accuracy": null,
+          "macro_f1": null,
+          "balanced_accuracy": null
+        }
+      ],
+      "temporal_stratification": [
+        {
+          "stratum_name": "Early Period (March - April)",
+          "sample_count": 90,
+          "industrial_count": 42,
+          "non_industrial_count": 48,
+          "status": "VALID",
+          "accuracy": 0.7778,
+          "macro_f1": 0.775,
+          "balanced_accuracy": 0.7738
+        },
+        {
+          "stratum_name": "Middle Period (May - June)",
+          "sample_count": 90,
+          "industrial_count": 41,
+          "non_industrial_count": 49,
+          "status": "VALID",
+          "accuracy": 0.7444,
+          "macro_f1": 0.7266,
+          "balanced_accuracy": 0.7275
+        },
+        {
+          "stratum_name": "Late Period (July - August)",
+          "sample_count": 91,
+          "industrial_count": 41,
+          "non_industrial_count": 50,
+          "status": "VALID",
+          "accuracy": 0.7802,
+          "macro_f1": 0.7702,
+          "balanced_accuracy": 0.7671
+        }
+      ],
+      "confidence_intervals": {
+        "macro_f1": [
+          0.7102,
+          0.8093
+        ],
+        "balanced_accuracy": [
+          0.7094,
+          0.8064
+        ],
+        "accuracy": [
+          0.7196,
+          0.8155
+        ],
+        "precision": [
+          0.7396,
+          0.8936
+        ],
+        "recall": [
+          0.5424,
+          0.72
+        ],
+        "roc_auc": [
+          0.8143,
+          0.9038
+        ]
+      }
+    }
+  ],
+  "feature_ablation_matrix": [
+    {
+      "feature_group": "THERMAL_CORE",
+      "features_removed": [
+        "brightness_mean_kelvin",
+        "brightness_max_kelvin",
+        "frp_mean_mw",
+        "frp_max_mw",
+        "frp_min_mw",
+        "frp_sum_mw",
+        "frp_std_mw"
+      ],
+      "remaining_feature_count": 23,
+      "macro_f1": 0.7205,
+      "balanced_accuracy": 0.7193,
+      "macro_f1_delta": -0.0138,
+      "balanced_accuracy_delta": -0.0136
+    },
+    {
+      "feature_group": "TEMPORAL_HISTORY",
+      "features_removed": [
+        "detection_count",
+        "duration_hours",
+        "temporal_density",
+        "time_since_previous_event_hours",
+        "prior_event_count_24h",
+        "prior_event_count_7d",
+        "prior_event_count_30d"
+      ],
+      "remaining_feature_count": 23,
+      "macro_f1": 0.7583,
+      "balanced_accuracy": 0.7564,
+      "macro_f1_delta": 0.0239,
+      "balanced_accuracy_delta": 0.0236
+    },
+    {
+      "feature_group": "PERSISTENCE_SOURCE",
+      "features_removed": [
+        "is_persistent_source",
+        "persistence_state",
+        "persistence_active_days",
+        "persistence_total_events",
+        "persistence_recurrence_ratio"
+      ],
+      "remaining_feature_count": 25,
+      "macro_f1": 0.7013,
+      "balanced_accuracy": 0.7036,
+      "macro_f1_delta": -0.0331,
+      "balanced_accuracy_delta": -0.0292
+    },
+    {
+      "feature_group": "SPATIAL_CONTEXT",
+      "features_removed": [
+        "spatial_extent_radius_meters",
+        "facility_distance_meters",
+        "facility_context_type",
+        "is_near_industrial_facility",
+        "power_plant_distance_meters",
+        "water_distance_meters"
+      ],
+      "remaining_feature_count": 24,
+      "macro_f1": 0.7501,
+      "balanced_accuracy": 0.7494,
+      "macro_f1_delta": 0.0157,
+      "balanced_accuracy_delta": 0.0165
+    },
+    {
+      "feature_group": "LAND_COVER_ENVIRONMENTAL",
+      "features_removed": [
+        "is_protected_area",
+        "landcover_class",
+        "daynight_ratio",
+        "satellite_platform_diversity",
+        "sensor_instrument"
+      ],
+      "remaining_feature_count": 25,
+      "macro_f1": 0.724,
+      "balanced_accuracy": 0.7227,
+      "macro_f1_delta": -0.0104,
+      "balanced_accuracy_delta": -0.0102
+    }
+  ],
+  "model_comparison_table": [
+    {
+      "model_type": "MajorityClassClassifier",
+      "role": "B0 Baseline (Majority Class)",
+      "accuracy": 0.5424,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "macro_f1": 0.3517,
+      "roc_auc": 0.5049,
+      "pr_auc": 0.4549,
+      "brier_score": 0.4965,
+      "ece": 0.0074,
+      "ci_95_macro_f1": "[0.326, 0.376]"
+    },
+    {
+      "model_type": "DeterministicContextualClassifier",
+      "role": "B2 Reference (Deterministic)",
+      "accuracy": 0.5424,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "macro_f1": 0.3517,
+      "roc_auc": 0.5049,
+      "pr_auc": 0.4549,
+      "brier_score": 0.6856,
+      "ece": 0.3076,
+      "ci_95_macro_f1": "[0.326, 0.376]"
+    },
+    {
+      "model_type": "LogisticRegressionClassifier",
+      "role": "B3 Candidate (Softmax Linear)",
+      "accuracy": 0.7638,
+      "balanced_accuracy": 0.7665,
+      "precision": 0.7174,
+      "recall": 0.7984,
+      "macro_f1": 0.7636,
+      "roc_auc": 0.8443,
+      "pr_auc": 0.7808,
+      "brier_score": 0.3135,
+      "ece": 0.0935,
+      "ci_95_macro_f1": "[0.711, 0.811]"
+    },
+    {
+      "model_type": "DecisionTreeClassifier",
+      "role": "B4-DT Candidate (CART Decision Tree)",
+      "accuracy": 0.8303,
+      "balanced_accuracy": 0.8145,
+      "precision": 1.0,
+      "recall": 0.629,
+      "macro_f1": 0.8185,
+      "roc_auc": 0.9741,
+      "pr_auc": 0.9687,
+      "brier_score": 0.1706,
+      "ece": 0.1098,
+      "ci_95_macro_f1": "[0.769, 0.868]"
+    },
+    {
+      "model_type": "RandomForestClassifier",
+      "role": "B4-RF Candidate (Random Forest)",
+      "accuracy": 0.7675,
+      "balanced_accuracy": 0.7567,
+      "precision": 0.8211,
+      "recall": 0.629,
+      "macro_f1": 0.7586,
+      "roc_auc": 0.8596,
+      "pr_auc": 0.8704,
+      "brier_score": 0.2868,
+      "ece": 0.1524,
+      "ci_95_macro_f1": "[0.710, 0.809]"
+    }
+  ],
+  "acceptance_gates": {
+    "MINIMUM_MACRO_F1": {
+      "threshold": ">= 0.75",
+      "observed": 0.7586411637474024,
+      "passed": true
+    },
+    "MINIMUM_MINORITY_RECALL": {
+      "threshold": ">= 0.70",
+      "observed": 0.6290322580645161,
+      "passed": false
+    },
+    "MINIMUM_BALANCED_ACCURACY": {
+      "threshold": ">= 0.75",
+      "observed": 0.7566929997805574,
+      "passed": true
+    },
+    "MAXIMUM_CALIBRATION_ERROR": {
+      "threshold": "<= 0.15",
+      "observed": 0.15238813699483778,
+      "passed": false
+    },
+    "BASELINE_SUPERIORITY": {
+      "threshold": "> B0 (0.3517)",
+      "observed": 0.7586411637474024,
+      "passed": true
+    }
+  },
+  "all_gates_passed": false,
+  "recommended_production_model": "real_randomforestclassifier_target_industrial_segregation_v1.0.0",
+  "executive_verdict": "FAILED"
+}

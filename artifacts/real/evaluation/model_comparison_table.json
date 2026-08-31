@@ -1,0 +1,72 @@
+[
+  {
+    "model_type": "MajorityClassClassifier",
+    "role": "B0 Baseline (Majority Class)",
+    "accuracy": 0.5424,
+    "balanced_accuracy": 0.5,
+    "precision": 0.0,
+    "recall": 0.0,
+    "macro_f1": 0.3517,
+    "roc_auc": 0.5049,
+    "pr_auc": 0.4549,
+    "brier_score": 0.4965,
+    "ece": 0.0074,
+    "ci_95_macro_f1": "[0.326, 0.376]"
+  },
+  {
+    "model_type": "DeterministicContextualClassifier",
+    "role": "B2 Reference (Deterministic)",
+    "accuracy": 0.5424,
+    "balanced_accuracy": 0.5,
+    "precision": 0.0,
+    "recall": 0.0,
+    "macro_f1": 0.3517,
+    "roc_auc": 0.5049,
+    "pr_auc": 0.4549,
+    "brier_score": 0.6856,
+    "ece": 0.3076,
+    "ci_95_macro_f1": "[0.326, 0.376]"
+  },
+  {
+    "model_type": "LogisticRegressionClassifier",
+    "role": "B3 Candidate (Softmax Linear)",
+    "accuracy": 0.7638,
+    "balanced_accuracy": 0.7665,
+    "precision": 0.7174,
+    "recall": 0.7984,
+    "macro_f1": 0.7636,
+    "roc_auc": 0.8443,
+    "pr_auc": 0.7808,
+    "brier_score": 0.3135,
+    "ece": 0.0935,
+    "ci_95_macro_f1": "[0.711, 0.811]"
+  },
+  {
+    "model_type": "DecisionTreeClassifier",
+    "role": "B4-DT Candidate (CART Decision Tree)",
+    "accuracy": 0.8303,
+    "balanced_accuracy": 0.8145,
+    "precision": 1.0,
+    "recall": 0.629,
+    "macro_f1": 0.8185,
+    "roc_auc": 0.9741,
+    "pr_auc": 0.9687,
+    "brier_score": 0.1706,
+    "ece": 0.1098,
+    "ci_95_macro_f1": "[0.769, 0.868]"
+  },
+  {
+    "model_type": "RandomForestClassifier",
+    "role": "B4-RF Candidate (Random Forest)",
+    "accuracy": 0.7675,
+    "balanced_accuracy": 0.7567,
+    "precision": 0.8211,
+    "recall": 0.629,
+    "macro_f1": 0.7586,
+    "roc_auc": 0.8596,
+    "pr_auc": 0.8704,
+    "brier_score": 0.2868,
+    "ece": 0.1524,
+    "ci_95_macro_f1": "[0.710, 0.809]"
+  }
+]

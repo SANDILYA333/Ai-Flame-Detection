@@ -1,0 +1,206 @@
+{
+  "task_id": "NEXT-008",
+  "decision_version": "v1.0.0",
+  "created_at": "2026-08-31T01:22:48.698157+00:00",
+  "dataset_hash": "b511e3dee5f05594567ca4460f2a7bc64e65c9dab82d2969f70bd8d041ff7256",
+  "evaluation_artifact_hash": "668683a3ca906d5b4fbd376159d7a69050f0b55ef890407e6cdc646e72da8a38",
+  "feature_schema_version": "feat_v1.0.0",
+  "authorization_status": "AUTHORIZED",
+  "hard_constraints_evaluated": {
+    "MINIMUM_MACRO_F1": ">= 0.75",
+    "MINIMUM_BALANCED_ACCURACY": ">= 0.75",
+    "MAXIMUM_CALIBRATION_ERROR": "<= 0.15",
+    "MINIMUM_BASELINE_IMPROVEMENT": ">= 0.3517"
+  },
+  "candidate_assessments": [
+    {
+      "model_id": "real_majorityclassclassifier_target_industrial_segregation_v1.0.0",
+      "model_type": "MajorityClassClassifier",
+      "model_role": "B0 Baseline (Majority Class)",
+      "model_version": "v1.0.0-production",
+      "artifact_path": "artifacts/real/production/real_majorityclassclassifier_target_industrial_segregation_v1.0.0.json",
+      "artifact_hash": "9e947c61173c136ba813956e458903137c5c4181a5ec6d9667c277ceea2465ea",
+      "eligibility_status": "MODEL_REJECTED",
+      "macro_f1": 0.35167464114832536,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "roc_auc": 0.5048825982005706,
+      "brier_score": 0.49650797647080513,
+      "expected_calibration_error": 0.007399559144106338,
+      "passed_hard_constraints": false,
+      "failed_criteria": [
+        "Macro-F1 (0.3517 < 0.75)",
+        "Balanced Accuracy (0.5000 < 0.75)",
+        "Failed baseline improvement over B0"
+      ],
+      "selection_notes": "Baseline reference model; does not learn non-trivial distributions."
+    },
+    {
+      "model_id": "real_deterministiccontextualclassifier_target_industrial_segregation_v1.0.0",
+      "model_type": "DeterministicContextualClassifier",
+      "model_role": "B2 Reference (Deterministic)",
+      "model_version": "v1.0.0-production",
+      "artifact_path": "artifacts/real/production/real_deterministiccontextualclassifier_target_industrial_segregation_v1.0.0.json",
+      "artifact_hash": "6e02ca18b7cbf46cbcb1f19bd0d2e3a7438937373a246f288c87fdf54e72d2a5",
+      "eligibility_status": "MODEL_REJECTED",
+      "macro_f1": 0.35167464114832536,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "roc_auc": 0.5048825982005706,
+      "brier_score": 0.6855904059040573,
+      "expected_calibration_error": 0.30756457564575646,
+      "passed_hard_constraints": false,
+      "failed_criteria": [
+        "Macro-F1 (0.3517 < 0.75)",
+        "Balanced Accuracy (0.5000 < 0.75)",
+        "ECE (0.3076 > 0.15)",
+        "Failed baseline improvement over B0"
+      ],
+      "selection_notes": "Baseline reference model; does not learn non-trivial distributions."
+    },
+    {
+      "model_id": "real_logisticregressionclassifier_target_industrial_segregation_v1.0.0",
+      "model_type": "LogisticRegressionClassifier",
+      "model_role": "B3 Candidate (Softmax Linear)",
+      "model_version": "v1.0.0-production",
+      "artifact_path": "artifacts/real/production/real_logisticregressionclassifier_target_industrial_segregation_v1.0.0.json",
+      "artifact_hash": "7826c75998cf3197b1cff44b0dfeaadec116797b89b79651c69ce5cbfb742f53",
+      "eligibility_status": "MODEL_RECOMMENDED",
+      "macro_f1": 0.7635768811341329,
+      "balanced_accuracy": 0.7665404871626069,
+      "precision": 0.717391304347826,
+      "recall": 0.7983870967741935,
+      "roc_auc": 0.8442506034671934,
+      "brier_score": 0.3134635828349119,
+      "expected_calibration_error": 0.09351028393559159,
+      "passed_hard_constraints": true,
+      "failed_criteria": [],
+      "selection_notes": "Selected for HIGH_RECALL mode: Highest minority recall (79.84%), well-calibrated (ECE=0.0935), Macro-F1=0.7636."
+    },
+    {
+      "model_id": "real_decisiontreeclassifier_target_industrial_segregation_v1.0.0",
+      "model_type": "DecisionTreeClassifier",
+      "model_role": "B4-DT Candidate (CART Decision Tree)",
+      "model_version": "v1.0.0-production",
+      "artifact_path": "artifacts/real/production/real_decisiontreeclassifier_target_industrial_segregation_v1.0.0.json",
+      "artifact_hash": "c64196a38fd4b4ee14adbbfeea8dd7f1bb2842eedd218ab3d1017be63fbdd7a2",
+      "eligibility_status": "MODEL_RECOMMENDED",
+      "macro_f1": 0.8184915550378568,
+      "balanced_accuracy": 0.814516129032258,
+      "precision": 1.0,
+      "recall": 0.6290322580645161,
+      "roc_auc": 0.9740509106868553,
+      "brier_score": 0.17064167481909978,
+      "expected_calibration_error": 0.10978423184821817,
+      "passed_hard_constraints": true,
+      "failed_criteria": [],
+      "selection_notes": "Selected for HIGH_PRECISION and SELECTIVE modes: 100% precision, ROC-AUC=0.9741, ECE=0.1098, and 97.6% Macro-F1 at tau=0.80."
+    },
+    {
+      "model_id": "real_randomforestclassifier_target_industrial_segregation_v1.0.0",
+      "model_type": "RandomForestClassifier",
+      "model_role": "B4-RF Candidate (Random Forest)",
+      "model_version": "v1.0.0-production",
+      "artifact_path": "artifacts/real/production/real_randomforestclassifier_target_industrial_segregation_v1.0.0.json",
+      "artifact_hash": "42e5f2ef690cf1b3a532e93eebce572e155a58fcba29ee3478c2dc72f3e12559",
+      "eligibility_status": "MODEL_ELIGIBLE",
+      "macro_f1": 0.7586411637474024,
+      "balanced_accuracy": 0.7566929997805574,
+      "precision": 0.8210526315789474,
+      "recall": 0.6290322580645161,
+      "roc_auc": 0.8595567259161729,
+      "brier_score": 0.2868476104126254,
+      "expected_calibration_error": 0.15238813699483778,
+      "passed_hard_constraints": false,
+      "failed_criteria": [
+        "ECE (0.1524 > 0.15)"
+      ],
+      "selection_notes": "Eligible ensemble candidate; exhibits higher ECE (0.1524) and lower coverage (45%) at selective threshold compared to DT."
+    }
+  ],
+  "operating_modes": {
+    "HIGH_PRECISION": {
+      "mode": "HIGH_PRECISION",
+      "assigned_model_id": "real_decisiontreeclassifier_target_industrial_segregation_v1.0.0",
+      "assigned_model_type": "DecisionTreeClassifier",
+      "model_version": "v1.0.0-production",
+      "artifact_path": "artifacts/real/production/real_decisiontreeclassifier_target_industrial_segregation_v1.0.0.json",
+      "artifact_hash": "c64196a38fd4b4ee14adbbfeea8dd7f1bb2842eedd218ab3d1017be63fbdd7a2",
+      "feature_schema_version": "feat_v1.0.0",
+      "confidence_threshold": 0.7,
+      "abstention_action": "ABSTAIN_TO_UNKNOWN_AND_FLAG_REVIEW",
+      "expected_metrics": {
+        "precision": 1.0,
+        "accuracy": 0.8303,
+        "balanced_accuracy": 0.8145,
+        "macro_f1": 0.8185,
+        "roc_auc": 0.9741,
+        "ece": 0.1098
+      },
+      "coverage_estimate": 1.0,
+      "policy_description": "Optimized for zero-false-positive industrial segregation. Rejects uncertain predictions with confidence < 0.70."
+    },
+    "HIGH_RECALL": {
+      "mode": "HIGH_RECALL",
+      "assigned_model_id": "real_logisticregressionclassifier_target_industrial_segregation_v1.0.0",
+      "assigned_model_type": "LogisticRegressionClassifier",
+      "model_version": "v1.0.0-production",
+      "artifact_path": "artifacts/real/production/real_logisticregressionclassifier_target_industrial_segregation_v1.0.0.json",
+      "artifact_hash": "7826c75998cf3197b1cff44b0dfeaadec116797b89b79651c69ce5cbfb742f53",
+      "feature_schema_version": "feat_v1.0.0",
+      "confidence_threshold": 0.5,
+      "abstention_action": "ABSTAIN_TO_UNKNOWN_AND_FLAG_REVIEW",
+      "expected_metrics": {
+        "recall": 0.7984,
+        "precision": 0.7174,
+        "accuracy": 0.7638,
+        "balanced_accuracy": 0.7665,
+        "macro_f1": 0.7636,
+        "roc_auc": 0.8443,
+        "ece": 0.0935
+      },
+      "coverage_estimate": 1.0,
+      "policy_description": "Optimized for high-sensitivity detection of industrial flaring. Captures 79.84% of true industrial events."
+    },
+    "SELECTIVE": {
+      "mode": "SELECTIVE",
+      "assigned_model_id": "real_decisiontreeclassifier_target_industrial_segregation_v1.0.0",
+      "assigned_model_type": "DecisionTreeClassifier",
+      "model_version": "v1.0.0-production",
+      "artifact_path": "artifacts/real/production/real_decisiontreeclassifier_target_industrial_segregation_v1.0.0.json",
+      "artifact_hash": "c64196a38fd4b4ee14adbbfeea8dd7f1bb2842eedd218ab3d1017be63fbdd7a2",
+      "feature_schema_version": "feat_v1.0.0",
+      "confidence_threshold": 0.8,
+      "abstention_action": "ABSTAIN_TO_UNKNOWN_AND_FLAG_REVIEW",
+      "expected_metrics": {
+        "selective_accuracy": 0.9764,
+        "selective_precision": 1.0,
+        "selective_recall": 0.9512,
+        "selective_macro_f1": 0.9761
+      },
+      "coverage_estimate": 0.782,
+      "policy_description": "High-reliability selective operation: classifies high-confidence subset (78.2% coverage) with 97.6% accuracy and 100% precision; abstains on ambiguous 21.8%."
+    }
+  },
+  "abstention_policy": {
+    "allow_abstention": true,
+    "rule": "If max(probabilities) < threshold, set is_abstained=True and assigned_class='unknown'",
+    "human_review_required": true,
+    "prohibited_inversions": [
+      "unknown -> non_industrial",
+      "abstain -> negative"
+    ]
+  },
+  "scientific_warnings": [
+    "Selective Mode Caveat: 97.6% accuracy applies strictly to the 78.2% accepted subset. Unselected 21.8% must be audited by humans.",
+    "UNKNOWN Invariant: Abstained predictions and unadjudicated events are assigned class 'UNKNOWN' and must NEVER be relabeled as 'NON_INDUSTRIAL'.",
+    "Non-Causal Feature Usage: Spatial proximity and persistence features reflect empirical correlations, not combustion chemistry."
+  ],
+  "provenance": {
+    "evaluation_report_path": "artifacts/real/evaluation/real_model_evaluation_report.json",
+    "production_artifact_dir": "artifacts/real/production",
+    "generated_at": "2026-08-31T01:22:48.698174+00:00"
+  }
+}

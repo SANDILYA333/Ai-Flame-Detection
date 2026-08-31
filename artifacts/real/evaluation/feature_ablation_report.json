@@ -1,0 +1,82 @@
+[
+  {
+    "feature_group": "THERMAL_CORE",
+    "features_removed": [
+      "brightness_mean_kelvin",
+      "brightness_max_kelvin",
+      "frp_mean_mw",
+      "frp_max_mw",
+      "frp_min_mw",
+      "frp_sum_mw",
+      "frp_std_mw"
+    ],
+    "remaining_feature_count": 23,
+    "macro_f1": 0.7205,
+    "balanced_accuracy": 0.7193,
+    "macro_f1_delta": -0.0138,
+    "balanced_accuracy_delta": -0.0136
+  },
+  {
+    "feature_group": "TEMPORAL_HISTORY",
+    "features_removed": [
+      "detection_count",
+      "duration_hours",
+      "temporal_density",
+      "time_since_previous_event_hours",
+      "prior_event_count_24h",
+      "prior_event_count_7d",
+      "prior_event_count_30d"
+    ],
+    "remaining_feature_count": 23,
+    "macro_f1": 0.7583,
+    "balanced_accuracy": 0.7564,
+    "macro_f1_delta": 0.0239,
+    "balanced_accuracy_delta": 0.0236
+  },
+  {
+    "feature_group": "PERSISTENCE_SOURCE",
+    "features_removed": [
+      "is_persistent_source",
+      "persistence_state",
+      "persistence_active_days",
+      "persistence_total_events",
+      "persistence_recurrence_ratio"
+    ],
+    "remaining_feature_count": 25,
+    "macro_f1": 0.7013,
+    "balanced_accuracy": 0.7036,
+    "macro_f1_delta": -0.0331,
+    "balanced_accuracy_delta": -0.0292
+  },
+  {
+    "feature_group": "SPATIAL_CONTEXT",
+    "features_removed": [
+      "spatial_extent_radius_meters",
+      "facility_distance_meters",
+      "facility_context_type",
+      "is_near_industrial_facility",
+      "power_plant_distance_meters",
+      "water_distance_meters"
+    ],
+    "remaining_feature_count": 24,
+    "macro_f1": 0.7501,
+    "balanced_accuracy": 0.7494,
+    "macro_f1_delta": 0.0157,
+    "balanced_accuracy_delta": 0.0165
+  },
+  {
+    "feature_group": "LAND_COVER_ENVIRONMENTAL",
+    "features_removed": [
+      "is_protected_area",
+      "landcover_class",
+      "daynight_ratio",
+      "satellite_platform_diversity",
+      "sensor_instrument"
+    ],
+    "remaining_feature_count": 25,
+    "macro_f1": 0.724,
+    "balanced_accuracy": 0.7227,
+    "macro_f1_delta": -0.0104,
+    "balanced_accuracy_delta": -0.0102
+  }
+]
