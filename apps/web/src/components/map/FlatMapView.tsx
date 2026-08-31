@@ -9,12 +9,22 @@ import { createFireMarkerElement } from "./FireMarkerElement";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Configure MapLibre Web Worker URL explicitly to avoid localhost HTML fallback
+if (typeof window !== "undefined" && typeof (maplibregl as any).setWorkerUrl === "function") {
+  try {
+    (maplibregl as any).setWorkerUrl("/maplibre-gl-worker.mjs");
+  } catch (err) {
+    console.warn("MapLibre setWorkerUrl fallback:", err);
+  }
+}
+
 export interface FlatMapViewProps {
   initialLat?: number;
   initialLng?: number;
   initialZoom?: number;
   events?: ThermalEvent[];
   selectedEvent?: ThermalEvent | null;
+  isVisible?: boolean;
   onSelectEvent?: (event: ThermalEvent) => void;
   onCameraChange?: (lat: number, lng: number, zoom: number) => void;
   className?: string;
@@ -24,6 +34,7 @@ export interface FlatMapViewHandle {
   zoomIn: () => void;
   zoomOut: () => void;
   resetView: () => void;
+  resize: () => void;
   getMapInstance: () => maplibregl.Map | null;
 }
 
@@ -35,6 +46,7 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       initialZoom = MAPLIBRE_CONFIG.initialZoom,
       events = [],
       selectedEvent,
+      isVisible = true,
       onSelectEvent,
       onCameraChange,
       className,
@@ -84,6 +96,11 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
             });
           }
         },
+        resize: () => {
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.resize();
+          }
+        },
         getMapInstance: () => mapInstanceRef.current,
       }),
       []
@@ -94,6 +111,12 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       if (!containerRef.current || mapInstanceRef.current) return;
 
       try {
+        if (typeof window !== "undefined" && typeof (maplibregl as any).setWorkerUrl === "function") {
+          try {
+            (maplibregl as any).setWorkerUrl("/maplibre-gl-worker.mjs");
+          } catch {}
+        }
+
         const map = new maplibregl.Map({
           container: containerRef.current,
           style: MAPLIBRE_CONFIG.style,
@@ -119,11 +142,11 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
           map.once("styledata", markLoaded);
         }
 
-        // Fallback safety: ensure loading screen clears within 500ms
+        // Fallback safety: ensure loading screen clears within 400ms
         const fallbackTimer = setTimeout(() => {
           setIsLoaded(true);
           map.resize();
-        }, 500);
+        }, 400);
 
         // Handle style load failures with fallback to ESRI Dark Canvas
         map.on("error", (e) => {
@@ -170,7 +193,20 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       }
     }, []);
 
-    // 2. Render & Update Thermal Fire Markers on 2D Map
+    // 2. Trigger MapLibre resize whenever 2D view becomes active
+    useEffect(() => {
+      if (isVisible && mapInstanceRef.current) {
+        mapInstanceRef.current.resize();
+        const t1 = setTimeout(() => mapInstanceRef.current?.resize(), 50);
+        const t2 = setTimeout(() => mapInstanceRef.current?.resize(), 200);
+        return () => {
+          clearTimeout(t1);
+          clearTimeout(t2);
+        };
+      }
+    }, [isVisible]);
+
+    // 3. Render & Update Thermal Fire Markers on 2D Map
     useEffect(() => {
       if (!mapInstanceRef.current || !isLoaded) return;
       const map = mapInstanceRef.current;
@@ -196,7 +232,7 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       });
     }, [events, selectedEvent, isLoaded]);
 
-    // 3. Smooth Camera Fly-To on Event Selection
+    // 4. Smooth Camera Fly-To on Event Selection
     useEffect(() => {
       if (!mapInstanceRef.current || !selectedEvent) return;
       const map = mapInstanceRef.current;
@@ -209,8 +245,8 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
     }, [selectedEvent]);
 
     return (
-      <div className={cn("relative w-full h-full overflow-hidden select-none", className)}>
-        <div ref={containerRef} className="w-full h-full" />
+      <div className={cn("relative w-full h-full min-h-full overflow-hidden select-none bg-background", className)}>
+        <div ref={containerRef} className="w-full h-full min-h-full" />
 
         {!isLoaded && !hasError && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/90 backdrop-blur-sm z-10 font-mono text-xs text-foreground-muted">
@@ -247,7 +283,7 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
 
         {/* Subtle bottom-right basemap attribution */}
         <div className="absolute bottom-1 right-2 z-10 text-[9px] font-mono text-foreground-muted/60 pointer-events-none select-none">
-          © OpenFreeMap © OpenStreetMap
+          © CARTO © OpenStreetMap contributors
         </div>
       </div>
     );
