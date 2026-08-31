@@ -95,14 +95,14 @@ class TestFirmsRequestValidation:
             )
 
     def test_day_range_out_of_bounds_raises_validation_error(self) -> None:
-        """day_range must be between 1 and 10."""
+        """day_range must be between 1 and 5 for Area API."""
         with pytest.raises(ValidationError):
             FirmsAreaRequest(
                 min_longitude=68.0,
                 min_latitude=20.0,
                 max_longitude=72.0,
                 max_latitude=24.0,
-                day_range=11,
+                day_range=6,
             )
 
     def test_invalid_date_format_raises_validation_error(self) -> None:
