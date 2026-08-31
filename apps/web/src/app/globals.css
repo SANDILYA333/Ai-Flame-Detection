@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Surfaces & Backgrounds */
+  --bg-base: #07090d;
+  --bg-surface: #0d1117;
+  --bg-surface-raised: #121821;
+  --bg-surface-hover: #171f29;
+  --bg-surface-active: #1b2632;
+
+  /* Typography Colors */
+  --text-primary: #f2f5f7;
+  --text-secondary: #b5bec8;
+  --text-muted: #737e89;
+  --text-disabled: #4b545e;
+
+  /* Brand & Status Accents */
+  --accent-primary: #39ff88;
+  --accent-primary-soft: rgba(57, 255, 136, 0.16);
+  --accent-cyan: #00d9ff;
+  --accent-blue: #4da3ff;
+
+  --state-success: #39ff88;
+  --state-warning: #ffbf24;
+  --state-error: #ff4d5a;
+  --state-info: #49b9ff;
+
+  /* Borders & Overlays */
+  --border-default: #252c35;
+  --border-strong: #3a434e;
+  --border-active: #39ff88;
+  --overlay-backdrop: rgba(7, 9, 13, 0.82);
+
+  /* Thermal Signals */
+  --thermal-primary: #ff6a00;
+  --thermal-hot: #ff3d2e;
+  --thermal-glow: rgba(255, 106, 0, 0.38);
+
+  /* Fonts */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "Geist Mono", "Fira Code", monospace;
+}
+
+/* Base resets & standard dark intelligence styles */
+* {
+  box-sizing: border-box;
+  border-color: var(--border-default);
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom technical scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* Operational grid background utility */
+.bg-spatial-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(37, 44, 53, 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(37, 44, 53, 0.35) 1px, transparent 1px);
+}
+
+.bg-radial-vignette {
+  background: radial-gradient(circle at 50% 50%, rgba(13, 17, 23, 0.4) 0%, rgba(7, 9, 13, 0.95) 100%);
+}
+
+.glow-thermal {
+  filter: drop-shadow(0 0 8px rgba(255, 106, 0, 0.45));
+}
+
+.glow-active {
+  filter: drop-shadow(0 0 8px rgba(57, 255, 136, 0.45));
+}
+
+/* Thermal Fire Marker Keyframes & Micro-Animations */
+@keyframes flameBreathe {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+    filter: drop-shadow(0 0 3px rgba(255, 106, 0, 0.35));
+  }
+  50% {
+    transform: scale(1.08) translateY(-1px);
+    filter: drop-shadow(0 0 8px rgba(255, 61, 46, 0.6));
+  }
+}
+
+@keyframes thermalWave {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.75;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@keyframes selectionPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px #39ff88, 0 0 12px 2px rgba(57, 255, 136, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 3px #39ff88, 0 0 20px 3px rgba(57, 255, 136, 0.7);
+  }
+}
+
+.animate-flame {
+  animation: flameBreathe 2s ease-in-out infinite;
+}
+
+.animate-thermal-wave {
+  animation: thermalWave 2.4s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+}
+
+.animate-selection-pulse {
+  animation: selectionPulse 1.6s ease-in-out infinite;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-flame,
+  .animate-thermal-wave,
+  .animate-selection-pulse,
+  .animate-spin,
+  .animate-pulse {
+    animation: none !important;
+    transition: none !important;
+  }
+}
