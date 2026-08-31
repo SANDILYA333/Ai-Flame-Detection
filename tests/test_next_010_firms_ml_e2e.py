@@ -1,37 +1,32 @@
 """Comprehensive Test Suite for NEXT-010: NASA FIRMS -> Production ML End-to-End.
 
 Verifies:
-1. Pipeline Integration: Real FIRMS detections / CSV -> Event -> feat_v1.0.0 (30 features)
-   -> ProductionMLRuntimeService -> Calibrated Policy -> Structured Result.
+1. Pipeline Integration: Real FIRMS detections / CSV -> Event ->
+   feat_v1.0.0 (30 features) -> ProductionMLRuntimeService ->
+   Calibrated Policy -> Structured Result.
 2. Operating Mode Routing: HIGH_PRECISION, HIGH_RECALL, SELECTIVE.
-3. Point-in-Time Temporal Integrity: Zero future-event or future-detection leakage.
-4. Scientific Invariant Preservation: UNKNOWN != NON_INDUSTRIAL under all abstention/rejection scenarios.
-5. Error & Failure Safety: Malformed events, missing coordinates, schema violations fail cleanly.
-6. Batch Processing: High-throughput multi-event clustering and inference with identity preservation.
-7. Security & Information Leakage: No pilot artifacts, no filesystem paths or tokens in responses.
-8. Determinism: Identical inputs yield bitwise identical feature records and model outputs.
+3. Point-in-Time Temporal Integrity: Zero future-event / detection leakage.
+4. Scientific Invariant: UNKNOWN != NON_INDUSTRIAL under all conditions.
+5. Error & Failure Safety: Malformed events, missing coordinates fail cleanly.
+6. Batch Processing: High-throughput multi-event clustering and inference.
+7. Security & Leakage: No pilot artifacts, no filesystem paths in responses.
+8. Determinism: Identical inputs yield identical feature records and outputs.
 """
 
 from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
 
 import pytest
 from fastapi.testclient import TestClient
 
 from packages.schemas.common import Coordinate
-from packages.schemas.context import ContextEvidence
 from packages.schemas.detection import Detection
 from packages.schemas.enums import (
-    ContextType,
     DayNight,
-    EvidenceAvailabilityState,
-    PersistenceState,
 )
 from packages.schemas.event import Event
-from packages.schemas.source import PersistentSource
 from services.api.app import create_app
 from services.ml.deployment.policy import ProductionOperatingMode
 from services.ml.features.standard_set import APPROVED_FEATURES
@@ -42,9 +37,6 @@ from services.ml.integration.firms_pipeline import (
     FirmsMLPredictionResult,
     FirmsProductionMLIntegrationService,
 )
-
-if TYPE_CHECKING:
-    pass
 
 
 def make_test_detection(
@@ -184,7 +176,7 @@ class TestNext010FirmsMLIntegration:
     # --------------------------------------------------------------------------
 
     def test_future_detection_leakage_prevention(self) -> None:
-        """Verify detections occurring AFTER cutoff timestamp are strictly ignored."""
+        """Verify detections occurring AFTER cutoff timestamp are ignored."""
         t_past = datetime(2026, 8, 15, 12, 0, 0, tzinfo=UTC)
         t_cutoff = datetime(2026, 8, 15, 14, 0, 0, tzinfo=UTC)
         t_future = datetime(2026, 8, 15, 16, 0, 0, tzinfo=UTC)
@@ -201,7 +193,6 @@ class TestNext010FirmsMLIntegration:
             as_of_time=t_cutoff,
             mode=ProductionOperatingMode.HIGH_PRECISION,
         )
-        # Should succeed because d_past <= t_cutoff
         assert res.event_id == "evt_leak_test"
 
     def test_future_event_preceding_leakage_prevention(self) -> None:
@@ -270,7 +261,6 @@ class TestNext010FirmsMLIntegration:
             mode=ProductionOperatingMode.HIGH_RECALL,
         )
         assert len(results) == 2
-        # Verify both events have valid predictions
         for r in results:
             assert r.feature_count == 30
             assert r.assigned_class in ("industrial", "non_industrial", "unknown")
@@ -295,7 +285,7 @@ class TestNext010FirmsMLIntegration:
             FirmsProductionMLIntegrationService.evaluate_event(
                 event=event,
                 member_detections=dets,
-                mode="UNAUTHORIZED_MODE",  # type: ignore[arg-type]
+                mode="UNAUTHORIZED_MODE",
             )
 
     # --------------------------------------------------------------------------
@@ -326,7 +316,9 @@ class TestNext010FirmsMLIntegration:
     # 7. FastAPI Endpoint Integration
     # --------------------------------------------------------------------------
 
-    def test_api_evaluate_firms_csv_endpoint(self, api_client: TestClient) -> None:
+    def test_api_evaluate_firms_csv_endpoint(
+        self, api_client: TestClient
+    ) -> None:
         """Verify /inference/evaluate-firms-csv HTTP endpoint."""
         csv_data = (
             "latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_t31,frp,daynight\n"
@@ -346,6 +338,5 @@ class TestNext010FirmsMLIntegration:
         assert res_item["feature_count"] == 30
         assert res_item["feature_schema_version"] == "feat_v1.0.0"
         assert res_item["model_version"] == "v1.0.0-production"
-        # Verify no filesystem paths or private keys are exposed
         assert "/home/" not in json.dumps(data)
         assert "artifacts/real" not in json.dumps(data)
