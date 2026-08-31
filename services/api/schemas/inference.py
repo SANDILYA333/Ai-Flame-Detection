@@ -148,3 +148,138 @@ class FirmsCsvPredictionResponseBody(BaseModel):
     total_events: int = Field(..., ge=0, description="Total events derived.")
     abstained_events: int = Field(..., ge=0, description="Total abstained events.")
     operating_mode: str = Field(..., description="Operating mode applied.")
+
+
+class ContextAssessmentResponseBody(BaseModel):
+    """Structured response for contextual evidence assessment."""
+
+    context_label: str = Field(
+        ...,
+        description="Adjudicated label ('industrial', 'non_industrial', 'unknown').",
+    )
+    context_confidence: float = Field(
+        ..., ge=0.0, le=1.0, description="Context evidence confidence score."
+    )
+    evidence_count: int = Field(
+        ..., ge=0, description="Number of matched context evidence items."
+    )
+    primary_facility_name: str | None = Field(
+        None, description="Name of nearest matched industrial/environmental facility."
+    )
+    primary_context_type: str | None = Field(
+        None, description="Contextual type of closest matched facility."
+    )
+    primary_distance_meters: float | None = Field(
+        None, ge=0.0, description="Distance to nearest facility in meters."
+    )
+    has_conflicting_context: bool = Field(
+        ..., description="True if contradictory context features were matched."
+    )
+    evidence_summary: list[dict[str, Any]] = Field(
+        default_factory=list, description="Summary list of matched context evidence."
+    )
+
+
+class EventIntelligenceResponseBody(BaseModel):
+    """Structured response for unified Event Intelligence (ML + Context)."""
+
+    intelligence_id: str = Field(..., description="Canonical intelligence identifier.")
+    event_id: str = Field(..., description="Canonical event identifier.")
+    event_timestamp: datetime = Field(..., description="Observation timestamp in UTC.")
+    centroid_latitude: float = Field(
+        ..., description="Centroid latitude in EPSG:4326."
+    )
+    centroid_longitude: float = Field(
+        ..., description="Centroid longitude in EPSG:4326."
+    )
+    detection_count: int = Field(..., ge=1, description="Number of member detections.")
+    max_frp_mw: float | None = Field(None, description="Maximum FRP in MW.")
+    operating_mode: str = Field(..., description="Operating mode applied.")
+
+    # ML Assessment
+    model_name: str = Field(..., description="Production model architecture.")
+    model_version: str = Field(..., description="Production model version.")
+    ml_predicted_class: str = Field(..., description="Raw model predicted class.")
+    ml_assigned_class: str = Field(
+        ..., description="Policy-authorized ML assigned class."
+    )
+    ml_confidence: float = Field(
+        ..., ge=0.0, le=1.0, description="ML confidence score."
+    )
+    ml_threshold: float = Field(
+        ..., ge=0.0, le=1.0, description="ML abstention threshold."
+    )
+    ml_class_probabilities: dict[str, float] = Field(
+        default_factory=dict, description="Class probabilities."
+    )
+    ml_is_abstained: bool = Field(
+        ..., description="True if ML prediction was abstained."
+    )
+    ml_abstention_reason: str | None = Field(None, description="ML abstention reason.")
+
+    # Context Assessment
+    context_assessment: ContextAssessmentResponseBody = Field(
+        ..., description="Contextual evidence evaluation."
+    )
+
+    # Intelligence Decision
+    agreement_status: str = Field(
+        ...,
+        description="Status: AGREE, CONFLICT, ML_ONLY, CONTEXT_ONLY, UNCERTAIN.",
+    )
+    final_classification: str = Field(
+        ..., description="Final unified intelligence classification."
+    )
+    confidence_score: float = Field(
+        ..., ge=0.0, le=1.0, description="Composite intelligence confidence score."
+    )
+    review_required: bool = Field(
+        ..., description="True if human operator verification is required."
+    )
+    review_reasons: list[str] = Field(
+        default_factory=list,
+        description="List of reasons triggering review requirement.",
+    )
+
+    # Provenance & Latency
+    feature_schema_version: str = Field(..., description="Feature schema version.")
+    feature_count: int = Field(..., ge=0, description="Feature count.")
+    event_schema_version: str = Field(..., description="Event schema version.")
+    context_schema_version: str = Field(..., description="Context schema version.")
+    context_enrichment_latency_ms: float = Field(
+        ..., ge=0.0, description="Context latency in ms."
+    )
+    feature_extraction_latency_ms: float = Field(
+        ..., ge=0.0, description="Feature latency in ms."
+    )
+    inference_latency_ms: float = Field(
+        ..., ge=0.0, description="Inference latency in ms."
+    )
+    total_latency_ms: float = Field(
+        ..., ge=0.0, description="Total pipeline latency in ms."
+    )
+
+
+class FirmsIntelligenceCsvRequestBody(BaseModel):
+    """Payload for evaluating raw NASA FIRMS CSV through intelligence pipeline."""
+
+    csv_content: str = Field(
+        ..., description="Raw NASA FIRMS CSV payload."
+    )
+    operating_mode: str = Field(
+        default="HIGH_PRECISION",
+        description="Target operating mode (HIGH_PRECISION, HIGH_RECALL, SELECTIVE).",
+    )
+
+
+class FirmsIntelligenceCsvResponseBody(BaseModel):
+    """Response container for FIRMS CSV intelligence evaluation."""
+
+    results: list[EventIntelligenceResponseBody] = Field(
+        ..., description="List of event intelligence results."
+    )
+    total_events: int = Field(..., ge=0, description="Total evaluated events.")
+    review_required_events: int = Field(
+        ..., ge=0, description="Count of events requiring review."
+    )
+    operating_mode: str = Field(..., description="Operating mode used.")
