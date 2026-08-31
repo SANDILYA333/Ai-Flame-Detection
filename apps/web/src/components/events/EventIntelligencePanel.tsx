@@ -4,6 +4,9 @@ import React, { useMemo } from "react";
 import { ThermalEvent } from "@/types/event";
 import { useEventDetail } from "@/hooks/useEventDetail";
 import { Badge } from "@/components/ui/Badge";
+import { ExplainableAiSection } from "./ExplainableAiSection";
+import { IndustrialAssetSection } from "./IndustrialAssetSection";
+import { calculateOperationalRisk, getRiskLevelStyles } from "@/lib/risk/scoring";
 import { formatCoordinate } from "@/lib/format/coordinates";
 import { formatFrp, formatPercent } from "@/lib/format/numbers";
 import { formatUtcDateTime } from "@/lib/format/dates";
@@ -26,6 +29,8 @@ import {
   Satellite,
   Building2,
   CheckCircle2,
+  ShieldAlert,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -54,32 +59,18 @@ export function EventIntelligencePanel({
     event?.event_id
   );
 
-  // Unconditional React Hook call to satisfy rules-of-hooks
-  const probabilities = useMemo(() => {
-    if (!event) {
-      return { industrial: 0, nonIndustrial: 0, unknown: 0 };
-    }
-    const isIndustrial = event.classification === "INDUSTRIAL";
-    const isUnknown = event.classification === "UNKNOWN";
-
-    if (isIndustrial) {
-      const ind = Math.round(event.confidence * 100);
-      const rem = 100 - ind;
-      const non = Math.round(rem * 0.6);
-      const unk = rem - non;
-      return { industrial: ind, nonIndustrial: non, unknown: unk };
-    } else if (isUnknown) {
-      return { industrial: 35, nonIndustrial: 25, unknown: 40 };
-    } else {
-      const non = Math.round(event.confidence * 100);
-      const rem = 100 - non;
-      const ind = Math.round(rem * 0.4);
-      const unk = rem - ind;
-      return { industrial: ind, nonIndustrial: non, unknown: unk };
-    }
+  // Compute operational risk assessment
+  const risk = useMemo(() => {
+    if (!event) return null;
+    return calculateOperationalRisk(event);
   }, [event]);
 
-  if (!event) {
+  const riskStyles = useMemo(() => {
+    if (!risk) return null;
+    return getRiskLevelStyles(risk.level);
+  }, [risk]);
+
+  if (!event || !risk || !riskStyles) {
     return (
       <div
         className={cn(
@@ -105,7 +96,7 @@ export function EventIntelligencePanel({
   return (
     <div
       className={cn(
-        "w-full sm:w-96 max-h-[50vh] sm:max-h-[85vh] overflow-y-auto bg-surface-raised/95 backdrop-blur-md border border-border rounded-t-panel sm:rounded-panel p-3.5 sm:p-4 shadow-panel pointer-events-auto flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-3 duration-200 select-none",
+        "w-full sm:w-96 max-h-[58vh] sm:max-h-[85vh] overflow-y-auto bg-surface-raised/95 backdrop-blur-md border border-border rounded-t-panel sm:rounded-panel p-3.5 sm:p-4 shadow-panel pointer-events-auto flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-3 duration-200 select-none scrollbar-thin",
         className
       )}
     >
@@ -243,7 +234,77 @@ export function EventIntelligencePanel({
         )}
       </div>
 
-      {/* 3. Primary Key Metrics Grid */}
+      {/* 3. Industrial Infrastructure & Nearby Asset Intelligence */}
+      <IndustrialAssetSection event={event} evidence={evidence} />
+
+      {/* 4. Explainable AI (XAI) Grounded Reasoning Section */}
+      <ExplainableAiSection
+        event={event}
+        evidence={evidence}
+        intelligence={intelligence}
+      />
+
+      {/* 5. Operational Risk & Severity Assessment Card */}
+      <div className="p-2.5 rounded-control bg-surface/90 border border-border/80 font-mono space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] text-foreground-muted uppercase tracking-wider flex items-center gap-1">
+            <ShieldAlert className="w-3 h-3 text-accent" />
+            Operational Risk Assessment
+          </span>
+          <span
+            className={cn(
+              "text-[10px] px-2 py-0.5 rounded border font-bold",
+              riskStyles.bg,
+              riskStyles.text,
+              riskStyles.border
+            )}
+          >
+            {risk.level} {risk.isIndeterminate ? "" : `(${risk.score}/100)`}
+          </span>
+        </div>
+
+        {/* Score Progress Bar */}
+        {!risk.isIndeterminate && (
+          <div className="w-full h-1.5 bg-background rounded-full overflow-hidden border border-border/40">
+            <div
+              className={cn(
+                "h-full transition-all duration-300",
+                risk.level === "CRITICAL"
+                  ? "bg-state-error"
+                  : risk.level === "HIGH"
+                  ? "bg-accent"
+                  : risk.level === "MEDIUM"
+                  ? "bg-state-warning"
+                  : "bg-state-success"
+              )}
+              style={{ width: `${risk.score}%` }}
+            />
+          </div>
+        )}
+
+        {/* Risk Drivers Breakdown (WHY?) */}
+        <div className="space-y-1 pt-1 border-t border-border/40 text-[10px]">
+          <div className="text-[9px] uppercase tracking-wider text-foreground-muted font-semibold">
+            Contributing Drivers (Why?)
+          </div>
+          {risk.factors.map((f, i) => (
+            <div key={i} className="flex items-center justify-between text-foreground-secondary">
+              <span className="truncate max-w-[200px]">{f.description}</span>
+              <span className="font-semibold text-foreground shrink-0 ml-1">
+                +{f.points} pts
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Derived Heuristic Disclaimer */}
+        <div className="flex items-start gap-1 text-[8.5px] text-foreground-muted/80 leading-tight pt-1">
+          <Info className="w-2.5 h-2.5 text-accent-cyan shrink-0 mt-0.5" />
+          <span>{risk.disclaimer}</span>
+        </div>
+      </div>
+
+      {/* 6. Primary Key Metrics Grid (FRP, ML Conf, Detections) */}
       <div className="grid grid-cols-3 gap-2 bg-surface/70 rounded-control p-2.5 border border-border/70 text-xs font-mono">
         <div>
           <div className="text-[10px] text-foreground-muted uppercase tracking-wider flex items-center gap-1">
@@ -258,7 +319,7 @@ export function EventIntelligencePanel({
         <div>
           <div className="text-[10px] text-foreground-muted uppercase tracking-wider flex items-center gap-1">
             <Radio className="w-3 h-3 text-accent" />
-            Confidence
+            ML Conf.
           </div>
           <div className="text-sm font-bold text-foreground mt-0.5">
             {formatPercent(event.confidence, 1)}
@@ -276,49 +337,7 @@ export function EventIntelligencePanel({
         </div>
       </div>
 
-      {/* 4. Model Probability & Class Distribution Breakdown */}
-      <div className="space-y-1.5 bg-surface/40 p-2 rounded-control border border-border/50 font-mono text-[11px]">
-        <div className="flex items-center justify-between text-foreground-muted text-[10px]">
-          <span>CALIBRATED CLASS DISTRIBUTION</span>
-          <span className="text-accent font-semibold">{APP_CONFIG.modelName}</span>
-        </div>
-
-        {/* Multi-segment distribution bar */}
-        <div className="w-full h-1.5 bg-border rounded-full overflow-hidden flex">
-          <div
-            className="bg-accent transition-all duration-300"
-            style={{ width: `${probabilities.industrial}%` }}
-            title={`Industrial: ${probabilities.industrial}%`}
-          />
-          <div
-            className="bg-state-warning transition-all duration-300"
-            style={{ width: `${probabilities.nonIndustrial}%` }}
-            title={`Non-Industrial: ${probabilities.nonIndustrial}%`}
-          />
-          <div
-            className="bg-accent-cyan transition-all duration-300"
-            style={{ width: `${probabilities.unknown}%` }}
-            title={`Unknown / Review: ${probabilities.unknown}%`}
-          />
-        </div>
-
-        <div className="grid grid-cols-3 gap-1 text-[10px] pt-0.5">
-          <div className="flex items-center gap-1 text-foreground-muted">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-            <span>Ind: {probabilities.industrial}%</span>
-          </div>
-          <div className="flex items-center gap-1 text-foreground-muted">
-            <span className="w-1.5 h-1.5 rounded-full bg-state-warning" />
-            <span>Non-Ind: {probabilities.nonIndustrial}%</span>
-          </div>
-          <div className="flex items-center gap-1 text-foreground-muted">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan" />
-            <span>Unk: {probabilities.unknown}%</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 5. Geographic & Contextual Infrastructure Evidence */}
+      {/* 7. Geographic & Contextual Infrastructure Evidence */}
       <div className="space-y-2 text-[11px] font-mono border-t border-border/70 pt-2">
         <div className="flex items-start gap-2 text-foreground-secondary">
           <MapPin className="w-3.5 h-3.5 text-accent-cyan shrink-0 mt-0.5" />
@@ -354,7 +373,7 @@ export function EventIntelligencePanel({
         </div>
       </div>
 
-      {/* 6. Provenance & Scientific Lineage Footer */}
+      {/* 8. Provenance & Scientific Lineage Footer */}
       <div className="mt-auto pt-2 border-t border-border/50 flex items-center justify-between text-[10px] font-mono text-foreground-muted">
         <div className="flex items-center gap-1">
           <Cpu className="w-3 h-3 text-accent" />
