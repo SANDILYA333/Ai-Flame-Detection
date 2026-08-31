@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from services.api.routes.detections import router as detections_router
 from services.api.routes.events import router as events_router
 from services.api.routes.health import router as health_router
+from services.api.routes.inference import router as inference_router
 from services.api.routes.layers import router as layers_router
 from services.api.routes.readiness import router as readiness_router
 from services.api.routes.sources import router as sources_router
@@ -18,12 +19,14 @@ api_router.include_router(sources_router)
 api_router.include_router(detections_router)
 api_router.include_router(events_router)
 api_router.include_router(layers_router)
+api_router.include_router(inference_router)
 
 __all__ = [
     "api_router",
     "detections_router",
     "events_router",
     "health_router",
+    "inference_router",
     "layers_router",
     "readiness_router",
     "sources_router",
