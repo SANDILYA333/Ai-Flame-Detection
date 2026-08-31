@@ -8,14 +8,18 @@ Guarantees:
 5. Direct serialization adapters for domain entities (Event, Detection, Source, etc.).
 """
 
-from typing import Any
+from __future__ import annotations
 
-from packages.context.models import ContextFeature
+from typing import TYPE_CHECKING, Any
+
 from packages.geospatial.coordinates import validate_wgs84_coordinates
-from packages.schemas.common import BoundingBox, Coordinate
-from packages.schemas.detection import Detection
-from packages.schemas.event import Event
-from packages.schemas.source import PersistentSource
+
+if TYPE_CHECKING:
+    from packages.context.models import ContextFeature
+    from packages.schemas.common import BoundingBox, Coordinate
+    from packages.schemas.detection import Detection
+    from packages.schemas.event import Event
+    from packages.schemas.source import PersistentSource
 
 
 def to_geojson_point(
