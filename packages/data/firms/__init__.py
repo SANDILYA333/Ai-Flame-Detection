@@ -3,6 +3,7 @@
 from packages.data.firms.activation import FirmsDataActivationService
 from packages.data.firms.bulk import (
     CANONICAL_STUDY_AREAS,
+    GLOBAL_VALIDATION_AREAS,
     STUDY_AREA_REGISTRY,
     AcquisitionChunkPlan,
     BulkAcquisitionSummary,
@@ -53,6 +54,7 @@ __all__ = [
     "BulkAcquisitionSummary",
     "BulkDataAcquisitionService",
     "CANONICAL_STUDY_AREAS",
+    "GLOBAL_VALIDATION_AREAS",
     "FirmsApiError",
     "FirmsAreaRequest",
     "FirmsAuthenticationError",
