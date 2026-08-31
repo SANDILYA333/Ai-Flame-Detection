@@ -7,7 +7,7 @@ Guarantees:
 1. Strict point-in-time feature extraction without future-data leakage.
 2. Canonical feat_v1.0.0 schema enforcement (exactly 30 features).
 3. Delegation to ProductionMLRuntimeService (HIGH_PRECISION, HIGH_RECALL, SELECTIVE).
-4. UNKNOWN != NON_INDUSTRIAL invariant preservation across all execution and failure paths.
+4. UNKNOWN != NON_INDUSTRIAL invariant preservation across all paths.
 5. Zero leakage of filesystem paths, API keys, or private tokens.
 """
 
@@ -18,18 +18,15 @@ import io
 import logging
 import time
 from dataclasses import dataclass
-from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from packages.config.scientific import ScientificConfig
 from packages.data.firms.normalizer import normalize_raw_row_to_detection
-from packages.data.firms.schemas import RawFirmsCsvRow
+from packages.data.firms.schemas import (
+    FirmsCountryRequest,
+    RawFirmsCsvRow,
+)
 from packages.events.service import derive_thermal_events
-from packages.schemas.common import UtcDatetime
-from packages.schemas.context import ContextEvidence
-from packages.schemas.detection import Detection
-from packages.schemas.event import Event
-from packages.schemas.source import PersistentSource
 from services.ml.deployment.policy import ProductionOperatingMode
 from services.ml.features.extractor import FeatureExtractor
 from services.ml.features.standard_set import APPROVED_FEATURES
@@ -39,9 +36,15 @@ from services.ml.inference.production_runtime import (
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from datetime import datetime
 
     from packages.data.firms.client import FirmsClient
-    from packages.data.firms.schemas import FirmsAreaRequest, FirmsCountryRequest
+    from packages.data.firms.schemas import FirmsAreaRequest
+    from packages.schemas.common import UtcDatetime
+    from packages.schemas.context import ContextEvidence
+    from packages.schemas.detection import Detection
+    from packages.schemas.event import Event
+    from packages.schemas.source import PersistentSource
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +96,7 @@ def get_default_scientific_config() -> ScientificConfig:
 
 
 class FirmsProductionMLIntegrationService:
-    """Orchestrates NASA FIRMS data ingestion -> Feature Extraction -> Production ML Runtime."""
+    """Orchestrates NASA FIRMS data ingestion -> Features -> Production ML Runtime."""
 
     @classmethod
     def evaluate_event(
@@ -106,7 +109,7 @@ class FirmsProductionMLIntegrationService:
         source: PersistentSource | None = None,
         context_evidence: Sequence[ContextEvidence] | None = None,
     ) -> FirmsMLPredictionResult:
-        """Evaluate a canonical physical thermal event through point-in-time ML inference.
+        """Evaluate a canonical physical thermal event through point-in-time inference.
 
         Args:
             event: Canonical thermal event.
@@ -139,10 +142,11 @@ class FirmsProductionMLIntegrationService:
         # 2. Canonical feature contract verification
         features = feature_record.features
         if len(features) != len(APPROVED_FEATURES):
-            raise ValueError(
+            msg = (
                 f"Feature count mismatch: Expected {len(APPROVED_FEATURES)} "
                 f"features, got {len(features)}."
             )
+            raise ValueError(msg)
 
         # 3. Delegate to Production ML Runtime Service
         t_inf_0 = time.perf_counter()
@@ -156,12 +160,11 @@ class FirmsProductionMLIntegrationService:
         t_total_ms = (time.perf_counter() - t_start) * 1000.0
 
         logger.info(
-            "FIRMS ML prediction completed for event %s: class=%s (conf=%.4f, mode=%s, abstained=%s)",
+            "FIRMS ML prediction completed for event %s: class=%s (conf=%.4f, mode=%s)",
             event.event_id,
             pred_res.assigned_class,
             pred_res.confidence,
             pred_res.operating_mode,
-            pred_res.is_abstained,
         )
 
         return FirmsMLPredictionResult(
@@ -236,7 +239,8 @@ class FirmsProductionMLIntegrationService:
             if sources:
                 for s in sources:
                     if (
-                        s.centroid_geometry.latitude == event.centroid_geometry.latitude
+                        s.centroid_geometry.latitude
+                        == event.centroid_geometry.latitude
                         and s.centroid_geometry.longitude
                         == event.centroid_geometry.longitude
                     ):
@@ -354,9 +358,14 @@ class FirmsProductionMLIntegrationService:
         Returns:
             List of FirmsMLPredictionResult objects.
         """
-        csv_content = client.fetch_csv(request)
+        if isinstance(request, FirmsCountryRequest):
+            real_url, safe_url = client.build_country_url(request)
+        else:
+            real_url, safe_url = client.build_area_url(request)
+
+        _, _, csv_bytes = client.execute_request(real_url, safe_url)
         return cls.evaluate_firms_csv(
-            csv_content=csv_content,
+            csv_content=csv_bytes,
             mode=mode,
             config=config,
         )
