@@ -1,12 +1,18 @@
-"""FastAPI route handlers for production ML runtime inference and FIRMS integration."""
+"""FastAPI route handlers for production ML runtime and intelligence."""
+
+from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, status
 
 from services.api.schemas.inference import (
     BatchPredictionRequestBody,
     BatchPredictionResponseBody,
+    ContextAssessmentResponseBody,
+    EventIntelligenceResponseBody,
     FirmsCsvPredictionRequestBody,
     FirmsCsvPredictionResponseBody,
+    FirmsIntelligenceCsvRequestBody,
+    FirmsIntelligenceCsvResponseBody,
     FirmsMLPredictionResponseBody,
     PredictionRequestBody,
     PredictionResponseBody,
@@ -16,6 +22,9 @@ from services.ml.inference.production_runtime import (
 )
 from services.ml.integration.firms_pipeline import (
     FirmsProductionMLIntegrationService,
+)
+from services.ml.integration.intelligence_pipeline import (
+    EventIntelligencePipelineService,
 )
 
 router = APIRouter(prefix="/inference", tags=["inference"])
@@ -184,6 +193,90 @@ def evaluate_firms_csv(
             results=response_items,
             total_events=len(response_items),
             abstained_events=abstained_count,
+            operating_mode=request.operating_mode,
+        )
+    except ValueError as err:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(err),
+        ) from err
+    except FileNotFoundError as err:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Production model artifact is unavailable.",
+        ) from err
+
+
+@router.post(
+    "/evaluate-intelligence",
+    response_model=FirmsIntelligenceCsvResponseBody,
+    operation_id="evaluate_firms_intelligence",
+    summary="Evaluate raw NASA FIRMS CSV through ML + Context Intelligence",
+    description=(
+        "Parses NASA FIRMS detections, forms spatiotemporal events, "
+        "enriches with context, extracts 30 canonical feat_v1.0.0 features, "
+        "and executes Production ML inference under authorized operating policy."
+    ),
+)
+def evaluate_firms_intelligence(
+    request: FirmsIntelligenceCsvRequestBody,
+) -> FirmsIntelligenceCsvResponseBody:
+    """Evaluate raw NASA FIRMS CSV through Event + Context + ML intelligence."""
+    try:
+        results = EventIntelligencePipelineService.evaluate_firms_csv_intelligence(
+            csv_content=request.csv_content,
+            mode=request.operating_mode,
+        )
+        response_items = [
+            EventIntelligenceResponseBody(
+                intelligence_id=r.intelligence_id,
+                event_id=r.event_id,
+                event_timestamp=r.event_timestamp,
+                centroid_latitude=r.centroid_latitude,
+                centroid_longitude=r.centroid_longitude,
+                detection_count=r.detection_count,
+                max_frp_mw=r.max_frp_mw,
+                operating_mode=r.operating_mode,
+                model_name=r.model_name,
+                model_version=r.model_version,
+                ml_predicted_class=r.ml_predicted_class,
+                ml_assigned_class=r.ml_assigned_class,
+                ml_confidence=r.ml_confidence,
+                ml_threshold=r.ml_threshold,
+                ml_class_probabilities=r.ml_class_probabilities,
+                ml_is_abstained=r.ml_is_abstained,
+                ml_abstention_reason=r.ml_abstention_reason,
+                context_assessment=ContextAssessmentResponseBody(
+                    context_label=r.context_assessment.context_label,
+                    context_confidence=r.context_assessment.context_confidence,
+                    evidence_count=r.context_assessment.evidence_count,
+                    primary_facility_name=r.context_assessment.primary_facility_name,
+                    primary_context_type=r.context_assessment.primary_context_type,
+                    primary_distance_meters=r.context_assessment.primary_distance_meters,
+                    has_conflicting_context=r.context_assessment.has_conflicting_context,
+                    evidence_summary=r.context_assessment.evidence_summary,
+                ),
+                agreement_status=r.agreement_status,
+                final_classification=r.final_classification,
+                confidence_score=r.confidence_score,
+                review_required=r.review_required,
+                review_reasons=r.review_reasons,
+                feature_schema_version=r.feature_schema_version,
+                feature_count=r.feature_count,
+                event_schema_version=r.event_schema_version,
+                context_schema_version=r.context_schema_version,
+                context_enrichment_latency_ms=r.context_enrichment_latency_ms,
+                feature_extraction_latency_ms=r.feature_extraction_latency_ms,
+                inference_latency_ms=r.inference_latency_ms,
+                total_latency_ms=r.total_latency_ms,
+            )
+            for r in results
+        ]
+        review_count = sum(1 for r in response_items if r.review_required)
+        return FirmsIntelligenceCsvResponseBody(
+            results=response_items,
+            total_events=len(response_items),
+            review_required_events=review_count,
             operating_mode=request.operating_mode,
         )
     except ValueError as err:
