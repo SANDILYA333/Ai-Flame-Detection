@@ -18,6 +18,9 @@ from services.api.schemas.health import HealthResponse
 from services.api.schemas.inference import (
     BatchPredictionRequestBody,
     BatchPredictionResponseBody,
+    FirmsCsvPredictionRequestBody,
+    FirmsCsvPredictionResponseBody,
+    FirmsMLPredictionResponseBody,
     PredictionRequestBody,
     PredictionResponseBody,
 )
@@ -55,6 +58,9 @@ __all__ = [
     "EventResponse",
     "EventTimelineResponse",
     "EventsResponse",
+    "FirmsCsvPredictionRequestBody",
+    "FirmsCsvPredictionResponseBody",
+    "FirmsMLPredictionResponseBody",
     "GeoJsonFeature",
     "GeoJsonFeatureCollection",
     "GeoJsonGeometry",

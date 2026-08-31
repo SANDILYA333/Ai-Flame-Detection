@@ -1,15 +1,21 @@
-"""FastAPI route handlers for production ML runtime inference."""
+"""FastAPI route handlers for production ML runtime inference and FIRMS integration."""
 
 from fastapi import APIRouter, HTTPException, status
 
 from services.api.schemas.inference import (
     BatchPredictionRequestBody,
     BatchPredictionResponseBody,
+    FirmsCsvPredictionRequestBody,
+    FirmsCsvPredictionResponseBody,
+    FirmsMLPredictionResponseBody,
     PredictionRequestBody,
     PredictionResponseBody,
 )
 from services.ml.inference.production_runtime import (
     ProductionMLRuntimeService,
+)
+from services.ml.integration.firms_pipeline import (
+    FirmsProductionMLIntegrationService,
 )
 
 router = APIRouter(prefix="/inference", tags=["inference"])
@@ -111,6 +117,73 @@ def predict_batch_features(
             predictions=predictions,
             total_count=len(predictions),
             abstained_count=abstained_count,
+            operating_mode=request.operating_mode,
+        )
+    except ValueError as err:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(err),
+        ) from err
+    except FileNotFoundError as err:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Production model artifact is unavailable.",
+        ) from err
+
+
+@router.post(
+    "/evaluate-firms-csv",
+    response_model=FirmsCsvPredictionResponseBody,
+    operation_id="evaluate_firms_csv",
+    summary="Evaluate raw NASA FIRMS CSV end-to-end",
+    description=(
+        "Ingests raw NASA FIRMS CSV rows, derives physical thermal events, "
+        "extracts 30 canonical feat_v1.0.0 features point-in-time, and "
+        "executes policy-governed production ML inference."
+    ),
+)
+def evaluate_firms_csv(
+    request: FirmsCsvPredictionRequestBody,
+) -> FirmsCsvPredictionResponseBody:
+    """Execute end-to-end evaluation of raw NASA FIRMS CSV data."""
+    try:
+        results = FirmsProductionMLIntegrationService.evaluate_firms_csv(
+            csv_content=request.csv_content,
+            mode=request.operating_mode,
+        )
+        response_items = [
+            FirmsMLPredictionResponseBody(
+                event_id=r.event_id,
+                source=r.source,
+                event_timestamp=r.event_timestamp,
+                centroid_latitude=r.centroid_latitude,
+                centroid_longitude=r.centroid_longitude,
+                detection_count=r.detection_count,
+                max_frp_mw=r.max_frp_mw,
+                operating_mode=r.operating_mode,
+                feature_schema_version=r.feature_schema_version,
+                feature_count=r.feature_count,
+                model_name=r.model_name,
+                model_version=r.model_version,
+                predicted_class=r.predicted_class,
+                assigned_class=r.assigned_class,
+                confidence=r.confidence,
+                threshold=r.threshold,
+                class_probabilities=r.class_probabilities,
+                is_abstained=r.is_abstained,
+                review_required=r.review_required,
+                abstention_reason=r.abstention_reason,
+                feature_extraction_latency_ms=r.feature_extraction_latency_ms,
+                inference_latency_ms=r.inference_latency_ms,
+                total_latency_ms=r.total_latency_ms,
+            )
+            for r in results
+        ]
+        abstained_count = sum(1 for r in response_items if r.is_abstained)
+        return FirmsCsvPredictionResponseBody(
+            results=response_items,
+            total_events=len(response_items),
+            abstained_events=abstained_count,
             operating_mode=request.operating_mode,
         )
     except ValueError as err:
