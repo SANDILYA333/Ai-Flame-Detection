@@ -13,6 +13,7 @@ export interface GlobeViewProps {
   initialLng?: number;
   events?: ThermalEvent[];
   selectedEvent?: ThermalEvent | null;
+  isVisible?: boolean;
   onSelectEvent?: (event: ThermalEvent) => void;
   onCameraChange?: (lat: number, lng: number, altitude: number) => void;
   onSwitchTo2D?: () => void;
@@ -33,6 +34,7 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
       initialLng = GLOBE_CONFIG.initialCamera.lng,
       events = [],
       selectedEvent,
+      isVisible = true,
       onSelectEvent,
       onCameraChange,
       onSwitchTo2D,
@@ -45,6 +47,7 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
     const [hasWebGL, setHasWebGL] = useState<boolean | null>(null);
     const [isLoaded, setIsLoaded] = useState(false);
     const autoRotateTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const isInteractingRef = useRef<boolean>(false);
 
     const initialCameraRef = useRef({
       lat: initialLat,
@@ -149,20 +152,35 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
           controls.minDistance = 120;
           controls.maxDistance = 480;
 
-          const handleUserInteraction = () => {
+          const handleUserInteractionStart = () => {
+            isInteractingRef.current = true;
             controls.autoRotate = false;
             if (autoRotateTimerRef.current) clearTimeout(autoRotateTimerRef.current);
             autoRotateTimerRef.current = setTimeout(() => {
+              isInteractingRef.current = false;
               controls.autoRotate = true;
             }, GLOBE_CONFIG.controls.autoRotateResumeDelay);
           };
 
-          container.addEventListener("pointerdown", handleUserInteraction);
-          container.addEventListener("wheel", handleUserInteraction, { passive: true });
-          container.addEventListener("touchstart", handleUserInteraction, { passive: true });
-
-          controls.addEventListener("change", () => {
+          const handleUserInteractionEnd = () => {
             if (onCameraChangeRef.current && globeInstanceRef.current) {
+              const pov = globeInstanceRef.current.pointOfView();
+              onCameraChangeRef.current(pov.lat, pov.lng, pov.altitude);
+            }
+          };
+
+          container.addEventListener("pointerdown", handleUserInteractionStart);
+          container.addEventListener("pointerup", handleUserInteractionEnd);
+          container.addEventListener("wheel", () => {
+            handleUserInteractionStart();
+            handleUserInteractionEnd();
+          }, { passive: true });
+          container.addEventListener("touchstart", handleUserInteractionStart, { passive: true });
+          container.addEventListener("touchend", handleUserInteractionEnd, { passive: true });
+
+          // Only propagate camera change when user is actively moving the camera
+          controls.addEventListener("change", () => {
+            if (isInteractingRef.current && onCameraChangeRef.current && globeInstanceRef.current) {
               const pov = globeInstanceRef.current.pointOfView();
               onCameraChangeRef.current(pov.lat, pov.lng, pov.altitude);
             }
