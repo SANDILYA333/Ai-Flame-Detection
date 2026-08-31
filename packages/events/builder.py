@@ -60,27 +60,34 @@ def build_event_from_cluster(
     Raises:
         ValueError: If cluster is empty.
     """
-    if not cluster:
+    # Deduplicate member detections by detection_id
+    unique_members: dict[str, Detection] = {}
+    for d in cluster:
+        if d.detection_id not in unique_members:
+            unique_members[d.detection_id] = d
+    unique_cluster = list(unique_members.values())
+
+    if not unique_cluster:
         raise ValueError("Cannot construct an Event from an empty cluster.")
 
     # Sort member detection IDs deterministically
-    detection_ids = sorted(d.detection_id for d in cluster)
+    detection_ids = sorted(unique_members.keys())
     detection_count = len(detection_ids)
 
     # 1. Temporal extent
-    timestamps = [d.acquired_at for d in cluster]
+    timestamps = [d.acquired_at for d in unique_cluster]
     started_at = min(timestamps)
     ended_at = max(timestamps)
     duration_seconds = (ended_at - started_at).total_seconds()
 
     # 2. Spatial extent & centroid
-    points = [(d.geometry.latitude, d.geometry.longitude) for d in cluster]
+    points = [(d.geometry.latitude, d.geometry.longitude) for d in unique_cluster]
     centroid_lat, centroid_lon = calculate_spatial_centroid(points)
     centroid_geom = points_to_coordinate(centroid_lat, centroid_lon)
     bounding_box = calculate_bounding_box(points)
 
     # 3. Physical FRP aggregations (instantaneous statistics)
-    frp_values = [d.frp_mw for d in cluster if d.frp_mw is not None]
+    frp_values = [d.frp_mw for d in unique_cluster if d.frp_mw is not None]
     mean_frp_mw: float | None = None
     max_frp_mw: float | None = None
     if frp_values:
