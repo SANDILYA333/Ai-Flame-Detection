@@ -1,0 +1,96 @@
+{
+  "source_metadata": {
+    "source_id": "global_multi_regime_ground_truth_2026",
+    "source_name": "Global Multi-Regime Fire & Thermal Observation Ground Truth Registry",
+    "source_type": "AUTHORITATIVE_REGISTRY",
+    "tier": "TIER_A_AUTHORITATIVE",
+    "version": "v1.0.0",
+    "description": "Multi-continental ground-verified thermal fire observation registry across agricultural, forest, industrial, and natural fire regimes."
+  },
+  "records": [
+    {
+      "source_record_id": "PAU_LUD_2026_001",
+      "observed_at": "2026-08-01T08:30:00Z",
+      "country": "India",
+      "region": "Punjab",
+      "latitude": 30.8500,
+      "longitude": 75.8000,
+      "classification": "crop_residue",
+      "confidence": 1.0,
+      "tier": "TIER_A_AUTHORITATIVE",
+      "metadata": {
+        "crop_type": "paddy_straw",
+        "district": "Ludhiana",
+        "verified_by": "PAU_FIELD_SURVEY",
+        "fire_regime": "agricultural"
+      }
+    },
+    {
+      "source_record_id": "CALFIRE_2026_014",
+      "observed_at": "2026-08-02T16:00:00Z",
+      "country": "United States",
+      "region": "California",
+      "latitude": 37.5400,
+      "longitude": -119.8200,
+      "classification": "wildfire",
+      "confidence": 1.0,
+      "tier": "TIER_A_AUTHORITATIVE",
+      "metadata": {
+        "incident_name": "Sierra Foothills Fire",
+        "fuel_model": "timber_litter_and_understory",
+        "verified_by": "CALFIRE_INCIDENT_COMMAND",
+        "fire_regime": "forest_natural"
+      }
+    },
+    {
+      "source_record_id": "INPE_AMAZON_2026_092",
+      "observed_at": "2026-08-03T18:45:00Z",
+      "country": "Brazil",
+      "region": "Mato Grosso",
+      "latitude": -11.8500,
+      "longitude": -55.5100,
+      "classification": "wildfire",
+      "confidence": 1.0,
+      "tier": "TIER_A_AUTHORITATIVE",
+      "metadata": {
+        "biome": "Amazonia",
+        "burn_type": "pasture_clearing",
+        "verified_by": "INPE_QUEIMADAS_FIELD_STATION",
+        "fire_regime": "agricultural"
+      }
+    },
+    {
+      "source_record_id": "NSW_RFS_2026_055",
+      "observed_at": "2026-08-04T04:20:00Z",
+      "country": "Australia",
+      "region": "New South Wales",
+      "latitude": -34.8800,
+      "longitude": 150.6000,
+      "classification": "bushfire",
+      "confidence": 1.0,
+      "tier": "TIER_A_AUTHORITATIVE",
+      "metadata": {
+        "vegetation": "dry_sclerophyll_eucalypt",
+        "verified_by": "NSW_RFS_AERIAL_SURVEY",
+        "fire_regime": "forest_natural"
+      }
+    },
+    {
+      "source_record_id": "ARAMCO_GULF_2026_007",
+      "observed_at": "2026-08-01T12:00:00Z",
+      "country": "Saudi Arabia",
+      "region": "Eastern Province",
+      "latitude": 25.9300,
+      "longitude": 50.1200,
+      "classification": "industrial",
+      "confidence": 1.0,
+      "tier": "TIER_A_AUTHORITATIVE",
+      "metadata": {
+        "facility_type": "gas_oil_separation_plant",
+        "flare_type": "elevated_continuous_flare",
+        "verified_by": "ARAMCO_ENVIRONMENTAL_COMPLIANCE",
+        "fire_regime": "industrial"
+      }
+    }
+  ]
+}
