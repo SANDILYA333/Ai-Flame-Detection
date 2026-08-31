@@ -64,8 +64,8 @@ class FirmsAreaRequest(BaseModel):
     day_range: int = Field(
         default=1,
         ge=1,
-        le=10,
-        description="Temporal acquisition window in days (1-10 allowed by NASA).",
+        le=5,
+        description="Temporal acquisition window in days (1-5 for NASA FIRMS Area API).",
     )
     date: str | None = Field(
         default=None,
