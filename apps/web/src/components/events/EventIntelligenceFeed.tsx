@@ -39,6 +39,8 @@ export function EventIntelligenceFeed({
     filteredEvents: contextEvents,
     selectedEvent: contextSelectedEvent,
     setSelectedEvent,
+    selectedPriority,
+    setSelectedPriority,
     stats,
     isLiveBackend,
     isLoading,
@@ -52,7 +54,7 @@ export function EventIntelligenceFeed({
   const events = propEvents || contextEvents;
   const selectedEvent = propSelectedEvent !== undefined ? propSelectedEvent : contextSelectedEvent;
 
-  const [sortOption, setSortOption] = useState<EventSortOption>("newest");
+  const [sortOption, setSortOption] = useState<EventSortOption>("risk");
   const listContainerRef = useRef<HTMLDivElement>(null);
 
   // Sort events based on selected sort option
@@ -138,24 +140,72 @@ export function EventIntelligenceFeed({
         </div>
       </div>
 
-      {/* 2. Aggregate KPI Quick Counters */}
-      <div className="grid grid-cols-4 gap-1.5 mb-2.5 text-[10px]">
-        <div className="p-1.5 rounded bg-surface/80 border border-border text-center">
-          <div className="text-foreground-muted text-[9px]">TOTAL</div>
-          <div className="font-bold text-foreground">{stats.total}</div>
-        </div>
-        <div className="p-1.5 rounded bg-surface/80 border border-border text-center">
-          <div className="text-accent text-[9px]">IND</div>
-          <div className="font-bold text-accent">{stats.industrial}</div>
-        </div>
-        <div className="p-1.5 rounded bg-surface/80 border border-border text-center">
-          <div className="text-state-warning text-[9px]">REVIEW</div>
-          <div className="font-bold text-state-warning">{stats.reviewRequired}</div>
-        </div>
-        <div className="p-1.5 rounded bg-surface/80 border border-border text-center">
-          <div className="text-accent-cyan text-[9px]">UNK</div>
-          <div className="font-bold text-accent-cyan">{stats.unknown}</div>
-        </div>
+      {/* 2. Operational Priority Quick Filter Buttons */}
+      <div className="grid grid-cols-5 gap-1 mb-2.5 text-[9.5px]">
+        <button
+          onClick={() => setSelectedPriority("ALL")}
+          className={cn(
+            "p-1.5 rounded border text-center transition-all",
+            selectedPriority === "ALL"
+              ? "bg-foreground/15 border-foreground/40 text-foreground font-bold shadow-sm"
+              : "bg-surface/70 border-border text-foreground-muted hover:text-foreground hover:bg-surface-hover"
+          )}
+        >
+          <div className="text-[8.5px]">ALL</div>
+          <div>{stats.total}</div>
+        </button>
+
+        <button
+          onClick={() => setSelectedPriority(selectedPriority === "CRITICAL" ? "ALL" : "CRITICAL")}
+          className={cn(
+            "p-1.5 rounded border text-center transition-all",
+            selectedPriority === "CRITICAL"
+              ? "bg-state-error/25 border-state-error text-state-error font-bold shadow-sm ring-1 ring-state-error/50"
+              : "bg-surface/70 border-border text-state-error hover:bg-state-error/15"
+          )}
+        >
+          <div className="text-[8.5px]">CRIT</div>
+          <div>{stats.critical}</div>
+        </button>
+
+        <button
+          onClick={() => setSelectedPriority(selectedPriority === "HIGH" ? "ALL" : "HIGH")}
+          className={cn(
+            "p-1.5 rounded border text-center transition-all",
+            selectedPriority === "HIGH"
+              ? "bg-accent/25 border-accent text-accent font-bold shadow-sm ring-1 ring-accent/50"
+              : "bg-surface/70 border-border text-accent hover:bg-accent/15"
+          )}
+        >
+          <div className="text-[8.5px]">HIGH</div>
+          <div>{stats.high}</div>
+        </button>
+
+        <button
+          onClick={() => setSelectedPriority(selectedPriority === "MEDIUM" ? "ALL" : "MEDIUM")}
+          className={cn(
+            "p-1.5 rounded border text-center transition-all",
+            selectedPriority === "MEDIUM"
+              ? "bg-state-warning/25 border-state-warning text-state-warning font-bold shadow-sm ring-1 ring-state-warning/50"
+              : "bg-surface/70 border-border text-state-warning hover:bg-state-warning/15"
+          )}
+        >
+          <div className="text-[8.5px]">MED</div>
+          <div>{stats.medium}</div>
+        </button>
+
+        <button
+          onClick={() => setSelectedPriority(selectedPriority === "REVIEW_REQUIRED" ? "ALL" : "REVIEW_REQUIRED")}
+          className={cn(
+            "p-1.5 rounded border text-center transition-all",
+            selectedPriority === "REVIEW_REQUIRED"
+              ? "bg-accent-cyan/25 border-accent-cyan text-accent-cyan font-bold shadow-sm ring-1 ring-accent-cyan/50"
+              : "bg-surface/70 border-border text-accent-cyan hover:bg-accent-cyan/15"
+          )}
+        >
+          <div className="text-[8.5px]">REV</div>
+          <div>{stats.reviewRequired}</div>
+        </button>
       </div>
 
       {/* 3. Search & Sort Controls Strip */}
