@@ -179,9 +179,10 @@ export function EventIntelligencePanel({
             </button>
           )}
           <button
+            type="button"
             onClick={onClose}
-            title="Close Panel (Esc)"
-            aria-label="Close Panel"
+            title="Minimize / Close Panel (Esc)"
+            aria-label="Close event intelligence panel"
             className="p-1 text-foreground-muted hover:text-state-error rounded-control hover:bg-surface-hover active:scale-95 transition-all"
           >
             <X className="w-4 h-4" />

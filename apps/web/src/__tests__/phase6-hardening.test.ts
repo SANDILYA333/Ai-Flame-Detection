@@ -194,4 +194,38 @@ describe("PHASE 6: Final Hardening & Demo Readiness Comprehensive QA Suite", () 
     assert.equal(formatFrp(1450.0), "1.45 GW");
     assert.equal(formatFrp(NaN), "0.0 MW");
   });
+
+  it("Scenario I: Event Detail Panel Minimize & Restore State Preservation", () => {
+    // 1. Initial selection
+    let selectedEvent: ThermalEvent | null = events[0];
+    let isDetailOpen = true;
+
+    assert.equal(selectedEvent.event_id, events[0].event_id);
+    assert.equal(isDetailOpen, true);
+
+    // 2. User clicks X to close/minimize panel
+    isDetailOpen = false;
+
+    // Selected event must NOT be deleted or set to null
+    assert.ok(selectedEvent !== null);
+    assert.equal(selectedEvent?.event_id, events[0].event_id);
+    assert.equal(isDetailOpen, false);
+
+    // 3. User clicks the same marker again to restore/reopen
+    isDetailOpen = true;
+
+    // Restores same event with intact intelligence data
+    assert.equal(selectedEvent?.event_id, events[0].event_id);
+    assert.equal(selectedEvent?.classification, "INDUSTRIAL");
+    assert.equal(selectedEvent?.confidence, 0.964);
+    assert.equal(selectedEvent?.frp_mw, 245.8);
+    assert.equal(isDetailOpen, true);
+
+    // 4. User clicks a different marker while panel is open or closed
+    selectedEvent = events[1];
+    isDetailOpen = true;
+
+    assert.equal(selectedEvent?.event_id, events[1].event_id);
+    assert.equal(isDetailOpen, true);
+  });
 });

@@ -54,6 +54,8 @@ export interface EventContextType {
   setSelectedPriority: (priority: string) => void;
   selectedEvent: ThermalEvent | null;
   setSelectedEvent: (event: ThermalEvent | null) => void;
+  isDetailOpen: boolean;
+  setIsDetailOpen: (isOpen: boolean) => void;
   activeLayers: Record<string, boolean>;
   toggleLayer: (layerId: string) => void;
   timeRange: string;
@@ -94,6 +96,7 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
   const [selectedClassification, setSelectedClassification] = useState<string>("ALL");
   const [selectedPriority, setSelectedPriority] = useState<string>("ALL");
   const [selectedEvent, setSelectedEvent] = useState<ThermalEvent | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState<boolean>(true);
   const [timeRange, setTimeRangeState] = useState<string>("ALL");
 
   // Temporal Playback Engine State
@@ -441,6 +444,8 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       setSelectedPriority,
       selectedEvent,
       setSelectedEvent,
+      isDetailOpen,
+      setIsDetailOpen,
       activeLayers,
       toggleLayer,
       timeRange,
@@ -479,6 +484,7 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       selectedClassification,
       selectedPriority,
       selectedEvent,
+      isDetailOpen,
       activeLayers,
       toggleLayer,
       timeRange,

@@ -59,6 +59,8 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
     rawEvents,
     selectedEvent,
     setSelectedEvent,
+    isDetailOpen,
+    setIsDetailOpen,
     isLiveBackend,
     resetFilters,
   } = useEventContext();
@@ -73,8 +75,9 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
   useEffect(() => {
     if (!selectedEvent && filteredEvents.length > 0) {
       setSelectedEvent(filteredEvents[0]);
+      setIsDetailOpen(true);
     }
-  }, [filteredEvents, selectedEvent, setSelectedEvent]);
+  }, [filteredEvents, selectedEvent, setSelectedEvent, setIsDetailOpen]);
 
   const globeRef = useRef<GlobeViewHandle>(null);
   const flatRef = useRef<FlatMapViewHandle>(null);
@@ -92,13 +95,14 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
   const handleSelectEvent = useCallback(
     (event: ThermalEvent) => {
       setSelectedEvent(event);
+      setIsDetailOpen(true);
       setCameraState({
         lat: event.latitude,
         lng: event.longitude,
         zoom: 8.5,
       });
     },
-    [setSelectedEvent]
+    [setSelectedEvent, setIsDetailOpen]
   );
 
   const handlePrevEvent = useCallback(() => {
@@ -140,8 +144,8 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
         e.preventDefault();
         handleNextEvent();
       } else if (e.key === "Escape") {
-        if (selectedEvent) {
-          setSelectedEvent(null);
+        if (isDetailOpen) {
+          setIsDetailOpen(false);
         } else if (showIntel) {
           setShowIntel(false);
         } else if (showLayers) {
@@ -152,7 +156,14 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handlePrevEvent, handleNextEvent, selectedEvent, setSelectedEvent, showIntel, showLayers]);
+  }, [
+    handlePrevEvent,
+    handleNextEvent,
+    isDetailOpen,
+    setIsDetailOpen,
+    showIntel,
+    showLayers,
+  ]);
 
   const handleZoomIn = useCallback(() => {
     if (viewMode === "3D") {
@@ -285,6 +296,21 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
                 <Wifi className="w-3 h-3 text-accent" />
                 {isLiveBackend ? "LIVE FASTAPI" : "MULTI-SOURCE READY"}
               </span>
+
+              {/* Restore Button if event selected but panel is minimized */}
+              {selectedEvent && !isDetailOpen && (
+                <>
+                  <span className="text-border-strong">|</span>
+                  <button
+                    onClick={() => setIsDetailOpen(true)}
+                    title="Restore Event Intelligence Detail Panel"
+                    aria-label="Restore Event Intelligence Detail Panel"
+                    className="flex items-center gap-1 px-2 py-0.5 rounded bg-accent/20 border border-accent/40 text-accent hover:bg-accent/30 font-bold transition-all text-[10px]"
+                  >
+                    <span>SHOW INTEL</span>
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Center: 2D / 3D Mode Toggle */}
@@ -325,7 +351,7 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
           ) : null
         }
         selectedEventCard={
-          selectedEvent ? (
+          selectedEvent && isDetailOpen ? (
             <EventIntelligencePanel
               event={selectedEvent}
               currentIndex={selectedIndex >= 0 ? selectedIndex : 0}
@@ -333,7 +359,7 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
               onPrevEvent={handlePrevEvent}
               onNextEvent={handleNextEvent}
               onCenterMap={handleCenterSelected}
-              onClose={() => setSelectedEvent(null)}
+              onClose={() => setIsDetailOpen(false)}
             />
           ) : null
         }

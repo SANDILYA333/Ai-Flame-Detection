@@ -39,6 +39,7 @@ export function EventIntelligenceFeed({
     filteredEvents: contextEvents,
     selectedEvent: contextSelectedEvent,
     setSelectedEvent,
+    setIsDetailOpen,
     selectedPriority,
     setSelectedPriority,
     stats,
@@ -89,6 +90,7 @@ export function EventIntelligenceFeed({
       onSelectEvent(event);
     } else {
       setSelectedEvent(event);
+      setIsDetailOpen(true);
     }
   };
 
