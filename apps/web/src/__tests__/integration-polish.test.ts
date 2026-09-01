@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { DEMO_THERMAL_EVENTS } from "../features/events/mock/demo-events.ts";
+import { calculateOperationalRisk } from "../lib/risk/scoring.ts";
 import type { ThermalEvent } from "../types/event.ts";
 
 describe("NEXT-FE-013 Frontend Stabilization & Multi-Source QA Suite", () => {
@@ -119,4 +120,28 @@ describe("NEXT-FE-013 Frontend Stabilization & Multi-Source QA Suite", () => {
     assert.equal(industrial + nonIndustrial + unknown, events.length);
     assert.equal(maxFrp, 380.5);
   });
+
+  it("filters events by operational priority levels and composes with classification", () => {
+    const events: ThermalEvent[] = DEMO_THERMAL_EVENTS;
+
+    // Critical priority events
+    const criticalEvents = events.filter((e) => calculateOperationalRisk(e).level === "CRITICAL");
+    assert.ok(criticalEvents.length > 0);
+    criticalEvents.forEach((e) => {
+      assert.equal(calculateOperationalRisk(e).level, "CRITICAL");
+    });
+
+    // Composed Filter: Industrial + High/Critical Priority
+    const industrialHighPriority = events.filter((e) => {
+      const risk = calculateOperationalRisk(e);
+      return e.classification === "INDUSTRIAL" && (risk.level === "HIGH" || risk.level === "CRITICAL");
+    });
+    assert.ok(industrialHighPriority.length > 0);
+    industrialHighPriority.forEach((e) => {
+      assert.equal(e.classification, "INDUSTRIAL");
+      const r = calculateOperationalRisk(e);
+      assert.ok(["HIGH", "CRITICAL"].includes(r.level));
+    });
+  });
 });
+
