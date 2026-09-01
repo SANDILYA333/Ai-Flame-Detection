@@ -3,34 +3,27 @@
 import React, { useMemo } from "react";
 import { ThermalEvent } from "@/types/event";
 import { useEventDetail } from "@/hooks/useEventDetail";
-import { Badge } from "@/components/ui/Badge";
-import { ExplainableAiSection } from "./ExplainableAiSection";
+import { EventClassificationHeader } from "./EventClassificationHeader";
+import { ClassProbabilityBreakdown } from "./ClassProbabilityBreakdown";
+import { EventOverviewGrid } from "./EventOverviewGrid";
 import { IndustrialAssetSection } from "./IndustrialAssetSection";
+import { ExplainableAiSection } from "./ExplainableAiSection";
+import { ModelProvenanceCollapsible } from "./ModelProvenanceCollapsible";
+import { EventDetailSkeleton } from "./EventDetailSkeleton";
+import { EventDetailError } from "./EventDetailError";
+import { generateXaiExplanation } from "@/lib/xai/explainer";
 import { calculateOperationalRisk, getRiskLevelStyles } from "@/lib/risk/scoring";
-import { formatCoordinate } from "@/lib/format/coordinates";
-import { formatFrp, formatPercent } from "@/lib/format/numbers";
-import { formatUtcDateTime } from "@/lib/format/dates";
 import { APP_CONFIG } from "@/config/ui";
 import {
   Flame,
-  Activity,
-  Radio,
-  MapPin,
-  Clock,
-  ShieldCheck,
-  AlertTriangle,
-  HelpCircle,
   X,
-  Layers,
   ChevronLeft,
   ChevronRight,
   Crosshair,
-  Cpu,
-  Satellite,
-  Building2,
-  CheckCircle2,
   ShieldAlert,
   Info,
+  CheckCircle2,
+  Cpu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -55,9 +48,14 @@ export function EventIntelligencePanel({
   onClose,
   className,
 }: EventIntelligencePanelProps) {
-  const { detail, timeline, evidence, intelligence, isLoading } = useEventDetail(
-    event?.event_id
-  );
+  const {
+    evidence,
+    intelligence,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useEventDetail(event?.event_id);
 
   // Compute operational risk assessment
   const risk = useMemo(() => {
@@ -70,7 +68,13 @@ export function EventIntelligencePanel({
     return getRiskLevelStyles(risk.level);
   }, [risk]);
 
-  if (!event || !risk || !riskStyles) {
+  // Compute grounded XAI explanation
+  const xai = useMemo(() => {
+    if (!event) return null;
+    return generateXaiExplanation(event, evidence, intelligence);
+  }, [event, evidence, intelligence]);
+
+  if (!event || !risk || !riskStyles || !xai) {
     return (
       <div
         className={cn(
@@ -89,18 +93,28 @@ export function EventIntelligencePanel({
     );
   }
 
+  if (isError && !evidence) {
+    return (
+      <EventDetailError
+        message={error?.message || "Failed to load event intelligence"}
+        onRetry={refetch}
+        onClose={onClose}
+        className={className}
+      />
+    );
+  }
+
   const isIndustrial = event.classification === "INDUSTRIAL";
   const isUnknown = event.classification === "UNKNOWN";
-  const isReviewRequired = event.uncertainty_state === "REVIEW_REQUIRED";
 
   return (
     <div
       className={cn(
-        "w-full sm:w-96 max-h-[58vh] sm:max-h-[85vh] overflow-y-auto bg-surface-raised/95 backdrop-blur-md border border-border rounded-t-panel sm:rounded-panel p-3.5 sm:p-4 shadow-panel pointer-events-auto flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-3 duration-200 select-none scrollbar-thin",
+        "w-full sm:w-96 max-h-[60vh] sm:max-h-[86vh] overflow-y-auto bg-surface-raised/95 backdrop-blur-md border border-border rounded-t-panel sm:rounded-panel p-3.5 sm:p-4 shadow-panel pointer-events-auto flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-3 duration-200 select-none scrollbar-thin",
         className
       )}
     >
-      {/* 1. Header with Event ID, Navigation & Controls */}
+      {/* 1. Header with Event ID, Pagination Navigation & Controls */}
       <div className="flex items-start justify-between gap-2 border-b border-border pb-2.5">
         <div className="flex items-center gap-2 min-w-0">
           <div
@@ -132,7 +146,7 @@ export function EventIntelligencePanel({
           </div>
         </div>
 
-        {/* Quick Actions */}
+        {/* Action Controls */}
         <div className="flex items-center gap-1 shrink-0">
           {onPrevEvent && (
             <button
@@ -175,215 +189,106 @@ export function EventIntelligencePanel({
         </div>
       </div>
 
-      {/* 2. Scientific Classification & Uncertainty Taxonomy */}
-      <div className="space-y-1.5">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Badge
-            variant={
-              isIndustrial
-                ? "industrial"
-                : isUnknown
-                ? "neutral"
-                : "warning"
-            }
-            className="font-bold tracking-wide"
-          >
-            {event.classification}
-          </Badge>
+      {isLoading && !evidence ? (
+        <EventDetailSkeleton />
+      ) : (
+        <>
+          {/* Level 1 & 2: Classification, Confidence & Operating Policy */}
+          <EventClassificationHeader
+            event={event}
+            operatingMode={xai.provenance.operatingMode}
+          />
 
-          <Badge variant="thermal" className="font-mono">
-            {event.phenomenon}
-          </Badge>
+          {/* Level 2: Calibrated Class Probabilities */}
+          <ClassProbabilityBreakdown probabilities={xai.probabilities} />
 
-          {isReviewRequired ? (
-            <Badge variant="warning" className="animate-pulse-subtle font-mono">
-              <AlertTriangle className="w-2.5 h-2.5 mr-1 text-state-warning" />
-              REVIEW REQUIRED
-            </Badge>
-          ) : (
-            <Badge variant="success" className="font-mono">
-              <ShieldCheck className="w-2.5 h-2.5 mr-1 text-accent" />
-              CONFIDENT
-            </Badge>
-          )}
-        </div>
+          {/* Level 3: Geographic Centroid, FRP, Detections, Satellite */}
+          <EventOverviewGrid event={event} />
 
-        {/* Dedicated Abstention / Uncertainty Banner */}
-        {isUnknown && (
-          <div className="flex items-start gap-2 p-2 bg-accent-cyan/10 border border-accent-cyan/30 rounded-control text-[11px] font-mono text-accent-cyan leading-tight">
-            <HelpCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-            <div>
-              <div className="font-bold">UNRESOLVED ORTHOGONAL CLASSIFICATION</div>
-              <div className="text-[10px] text-foreground-muted mt-0.5">
-                Model confidence is below operational threshold (0.70). Multi-source evidence review recommended.
-              </div>
-            </div>
-          </div>
-        )}
+          {/* Level 4: Nearby Industrial Assets & Proximity Intelligence */}
+          <IndustrialAssetSection event={event} evidence={evidence} />
 
-        {isReviewRequired && !isUnknown && (
-          <div className="flex items-start gap-2 p-2 bg-state-warning/10 border border-state-warning/30 rounded-control text-[11px] font-mono text-state-warning leading-tight">
-            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-            <div>
-              <div className="font-bold">INTERMITTENT TEMPORAL PROFILE</div>
-              <div className="text-[10px] text-foreground-muted mt-0.5">
-                Insufficient longitudinal observation history to confirm persistent facility attribution.
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+          {/* Level 4: Grounded Explainable AI Evidence Signals */}
+          <ExplainableAiSection
+            event={event}
+            evidence={evidence}
+            intelligence={intelligence}
+          />
 
-      {/* 3. Industrial Infrastructure & Nearby Asset Intelligence */}
-      <IndustrialAssetSection event={event} evidence={evidence} />
-
-      {/* 4. Explainable AI (XAI) Grounded Reasoning Section */}
-      <ExplainableAiSection
-        event={event}
-        evidence={evidence}
-        intelligence={intelligence}
-      />
-
-      {/* 5. Operational Risk & Severity Assessment Card */}
-      <div className="p-2.5 rounded-control bg-surface/90 border border-border/80 font-mono space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] text-foreground-muted uppercase tracking-wider flex items-center gap-1">
-            <ShieldAlert className="w-3 h-3 text-accent" />
-            Operational Risk Assessment
-          </span>
-          <span
-            className={cn(
-              "text-[10px] px-2 py-0.5 rounded border font-bold",
-              riskStyles.bg,
-              riskStyles.text,
-              riskStyles.border
-            )}
-          >
-            {risk.level} {risk.isIndeterminate ? "" : `(${risk.score}/100)`}
-          </span>
-        </div>
-
-        {/* Score Progress Bar */}
-        {!risk.isIndeterminate && (
-          <div className="w-full h-1.5 bg-background rounded-full overflow-hidden border border-border/40">
-            <div
-              className={cn(
-                "h-full transition-all duration-300",
-                risk.level === "CRITICAL"
-                  ? "bg-state-error"
-                  : risk.level === "HIGH"
-                  ? "bg-accent"
-                  : risk.level === "MEDIUM"
-                  ? "bg-state-warning"
-                  : "bg-state-success"
-              )}
-              style={{ width: `${risk.score}%` }}
-            />
-          </div>
-        )}
-
-        {/* Risk Drivers Breakdown (WHY?) */}
-        <div className="space-y-1 pt-1 border-t border-border/40 text-[10px]">
-          <div className="text-[9px] uppercase tracking-wider text-foreground-muted font-semibold">
-            Contributing Drivers (Why?)
-          </div>
-          {risk.factors.map((f, i) => (
-            <div key={i} className="flex items-center justify-between text-foreground-secondary">
-              <span className="truncate max-w-[200px]">{f.description}</span>
-              <span className="font-semibold text-foreground shrink-0 ml-1">
-                +{f.points} pts
+          {/* Level 4: Operational Risk & Hazard Evaluation */}
+          <div className="p-2.5 rounded-control bg-surface/90 border border-border/80 font-mono space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-foreground-muted uppercase tracking-wider flex items-center gap-1">
+                <ShieldAlert className="w-3 h-3 text-accent" />
+                Operational Attention Level
+              </span>
+              <span
+                className={cn(
+                  "text-[10px] px-2 py-0.5 rounded border font-bold",
+                  riskStyles.bg,
+                  riskStyles.text,
+                  riskStyles.border
+                )}
+              >
+                {risk.level} {risk.isIndeterminate ? "" : `(${risk.score}/100)`}
               </span>
             </div>
-          ))}
-        </div>
 
-        {/* Derived Heuristic Disclaimer */}
-        <div className="flex items-start gap-1 text-[8.5px] text-foreground-muted/80 leading-tight pt-1">
-          <Info className="w-2.5 h-2.5 text-accent-cyan shrink-0 mt-0.5" />
-          <span>{risk.disclaimer}</span>
-        </div>
-      </div>
+            {!risk.isIndeterminate && (
+              <div className="w-full h-1.5 bg-background rounded-full overflow-hidden border border-border/40">
+                <div
+                  className={cn(
+                    "h-full transition-all duration-300",
+                    risk.level === "CRITICAL"
+                      ? "bg-state-error"
+                      : risk.level === "HIGH"
+                      ? "bg-accent"
+                      : risk.level === "MEDIUM"
+                      ? "bg-state-warning"
+                      : "bg-state-success"
+                  )}
+                  style={{ width: `${risk.score}%` }}
+                />
+              </div>
+            )}
 
-      {/* 6. Primary Key Metrics Grid (FRP, ML Conf, Detections) */}
-      <div className="grid grid-cols-3 gap-2 bg-surface/70 rounded-control p-2.5 border border-border/70 text-xs font-mono">
-        <div>
-          <div className="text-[10px] text-foreground-muted uppercase tracking-wider flex items-center gap-1">
-            <Activity className="w-3 h-3 text-thermal-primary" />
-            FRP Peak
-          </div>
-          <div className="text-sm font-bold text-thermal-primary mt-0.5">
-            {formatFrp(event.frp_mw)}
-          </div>
-        </div>
-
-        <div>
-          <div className="text-[10px] text-foreground-muted uppercase tracking-wider flex items-center gap-1">
-            <Radio className="w-3 h-3 text-accent" />
-            ML Conf.
-          </div>
-          <div className="text-sm font-bold text-foreground mt-0.5">
-            {formatPercent(event.confidence, 1)}
-          </div>
-        </div>
-
-        <div>
-          <div className="text-[10px] text-foreground-muted uppercase tracking-wider flex items-center gap-1">
-            <Layers className="w-3 h-3 text-accent-cyan" />
-            Detections
-          </div>
-          <div className="text-sm font-bold text-accent-cyan mt-0.5">
-            {event.detection_count} pts
-          </div>
-        </div>
-      </div>
-
-      {/* 7. Geographic & Contextual Infrastructure Evidence */}
-      <div className="space-y-2 text-[11px] font-mono border-t border-border/70 pt-2">
-        <div className="flex items-start gap-2 text-foreground-secondary">
-          <MapPin className="w-3.5 h-3.5 text-accent-cyan shrink-0 mt-0.5" />
-          <div className="leading-tight">
-            <div className="font-semibold text-foreground">
-              {formatCoordinate(event.latitude, event.longitude)}
+            <div className="space-y-1 pt-1 border-t border-border/40 text-[10px]">
+              <div className="text-[9px] uppercase tracking-wider text-foreground-muted font-semibold">
+                Contributing Drivers (Why?)
+              </div>
+              {risk.factors.map((f, i) => (
+                <div key={i} className="flex items-center justify-between text-foreground-secondary">
+                  <span className="truncate max-w-[200px]">{f.description}</span>
+                  <span className="font-semibold text-foreground shrink-0 ml-1">
+                    +{f.points} pts
+                  </span>
+                </div>
+              ))}
             </div>
-            <div className="text-[10px] text-foreground-muted">
-              Centroid: WGS-84 Datum (EPSG:4326)
+
+            <div className="flex items-start gap-1 text-[8.5px] text-foreground-muted/80 leading-tight pt-1">
+              <Info className="w-2.5 h-2.5 text-accent-cyan shrink-0 mt-0.5" />
+              <span>{risk.disclaimer}</span>
             </div>
           </div>
-        </div>
 
-        {event.context_summary && (
-          <div className="flex items-start gap-2 text-foreground-muted text-[10px] bg-surface/50 p-2 rounded-control border border-border/50 leading-relaxed">
-            <Building2 className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
-            <div>
-              <span className="text-foreground-secondary font-semibold">Evidence: </span>
-              <span>{event.context_summary}</span>
+          {/* Level 5: Model Provenance & Verification Lineage */}
+          <ModelProvenanceCollapsible provenance={xai.provenance} />
+
+          {/* Footer Provenance Stamp */}
+          <div className="mt-auto pt-2 border-t border-border/50 flex items-center justify-between text-[10px] font-mono text-foreground-muted">
+            <div className="flex items-center gap-1">
+              <Cpu className="w-3 h-3 text-accent" />
+              <span>Lineage: {APP_CONFIG.featureSchema}</span>
+            </div>
+            <div className="flex items-center gap-1 text-accent">
+              <CheckCircle2 className="w-3 h-3" />
+              <span>NASA FIRMS Calibrated</span>
             </div>
           </div>
-        )}
-
-        <div className="flex items-center justify-between text-[10px] text-foreground-muted">
-          <span className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            {formatUtcDateTime(event.start_time)}
-          </span>
-          <span className="flex items-center gap-1 text-accent-cyan">
-            <Satellite className="w-3 h-3" />
-            {event.satellite_instrument || "VIIRS NOAA-20/21"}
-          </span>
-        </div>
-      </div>
-
-      {/* 8. Provenance & Scientific Lineage Footer */}
-      <div className="mt-auto pt-2 border-t border-border/50 flex items-center justify-between text-[10px] font-mono text-foreground-muted">
-        <div className="flex items-center gap-1">
-          <Cpu className="w-3 h-3 text-accent" />
-          <span>Lineage: {APP_CONFIG.featureSchema}</span>
-        </div>
-        <div className="flex items-center gap-1 text-accent">
-          <CheckCircle2 className="w-3 h-3" />
-          <span>NASA FIRMS Calibrated</span>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }
+
