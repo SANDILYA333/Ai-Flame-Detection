@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } f
 import Globe, { GlobeInstance } from "globe.gl";
 import { GLOBE_CONFIG } from "@/lib/map/globe-config";
 import { ThermalEvent } from "@/types/event";
-import { createFireMarkerElement } from "./FireMarkerElement";
+import { createFireMarkerElement, updateFireMarkerSelection } from "./FireMarkerElement";
 import { WebGLFallback } from "./WebGLFallback";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +44,7 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
   ) {
     const containerRef = useRef<HTMLDivElement>(null);
     const globeInstanceRef = useRef<GlobeInstance | null>(null);
+    const globeElementCacheRef = useRef<Map<string, HTMLElement>>(new Map());
     const [hasWebGL, setHasWebGL] = useState<boolean | null>(null);
     const [isLoaded, setIsLoaded] = useState(false);
     const autoRotateTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -104,7 +105,10 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
     useEffect(() => {
       try {
         const canvas = document.createElement("canvas");
-        const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+        const gl =
+          canvas.getContext("webgl2") ||
+          canvas.getContext("webgl") ||
+          canvas.getContext("experimental-webgl");
         if (!gl) {
           setHasWebGL(false);
           return;
@@ -158,7 +162,7 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
             if (autoRotateTimerRef.current) clearTimeout(autoRotateTimerRef.current);
             autoRotateTimerRef.current = setTimeout(() => {
               isInteractingRef.current = false;
-              controls.autoRotate = true;
+              if (controls) controls.autoRotate = true;
             }, GLOBE_CONFIG.controls.autoRotateResumeDelay);
           };
 
@@ -171,10 +175,14 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
 
           container.addEventListener("pointerdown", handleUserInteractionStart);
           container.addEventListener("pointerup", handleUserInteractionEnd);
-          container.addEventListener("wheel", () => {
-            handleUserInteractionStart();
-            handleUserInteractionEnd();
-          }, { passive: true });
+          container.addEventListener(
+            "wheel",
+            () => {
+              handleUserInteractionStart();
+              handleUserInteractionEnd();
+            },
+            { passive: true }
+          );
           container.addEventListener("touchstart", handleUserInteractionStart, { passive: true });
           container.addEventListener("touchend", handleUserInteractionEnd, { passive: true });
 
@@ -200,14 +208,28 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
 
         resizeObserver.observe(container);
 
+        const elementCache = globeElementCacheRef.current;
+
         return () => {
           resizeObserver.disconnect();
           if (autoRotateTimerRef.current) clearTimeout(autoRotateTimerRef.current);
+          elementCache.clear();
           if (globeInstanceRef.current) {
-            const renderer = globeInstanceRef.current.renderer?.();
-            if (renderer) {
-              renderer.dispose();
-              renderer.forceContextLoss();
+            try {
+              const g = globeInstanceRef.current as any;
+              if (typeof g._destructor === "function") {
+                g._destructor();
+              }
+              if (typeof g.pauseAnimation === "function") {
+                g.pauseAnimation();
+              }
+              const renderer = g.renderer?.();
+              if (renderer) {
+                renderer.dispose();
+                // NOTE: Do not call forceContextLoss() during React cleanup as it breaks WebGL across remounts
+              }
+            } catch (cleanupErr) {
+              console.warn("Globe cleanup warning:", cleanupErr);
             }
             if (container) {
               container.innerHTML = "";
@@ -221,22 +243,55 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
       }
     }, []);
 
-    // 2. Render Thermal Fire Markers & Radiating Rings
+    // 2. Pause / Resume Auto-Rotation and Resize based on Visibility
+    useEffect(() => {
+      if (!globeInstanceRef.current) return;
+      const controls = globeInstanceRef.current.controls();
+      if (controls) {
+        controls.autoRotate = isVisible;
+      }
+      if (isVisible && containerRef.current) {
+        const w = containerRef.current.clientWidth;
+        const h = containerRef.current.clientHeight;
+        if (w > 0 && h > 0) {
+          globeInstanceRef.current.width(w).height(h);
+        }
+      }
+    }, [isVisible]);
+
+    // 3. Render Thermal Fire Markers & Radiating Rings with In-Place Element Caching
     useEffect(() => {
       if (!globeInstanceRef.current || !isLoaded) return;
       const globe = globeInstanceRef.current as any;
+      const cache = globeElementCacheRef.current;
+      const activeIds = new Set(events.map((e) => e.event_id));
+
+      // Clean up cached elements that are no longer active
+      for (const id of cache.keys()) {
+        if (!activeIds.has(id)) {
+          cache.delete(id);
+        }
+      }
 
       globe
         .htmlElementsData(events)
         .htmlLat((d: any) => d.latitude)
         .htmlLng((d: any) => d.longitude)
-        .htmlElement((d: any) =>
-          createFireMarkerElement({
+        .htmlElement((d: any) => {
+          const isSelected = selectedEvent?.event_id === d.event_id;
+          const cached = cache.get(d.event_id);
+          if (cached) {
+            updateFireMarkerSelection(cached, isSelected, d as ThermalEvent);
+            return cached;
+          }
+          const el = createFireMarkerElement({
             event: d as ThermalEvent,
-            isSelected: selectedEvent?.event_id === d.event_id,
+            isSelected,
             onSelect: (evt) => onSelectEventRef.current?.(evt),
-          })
-        );
+          });
+          cache.set(d.event_id, el);
+          return el;
+        });
 
       const severeEvents = events.filter((e) => e.frp_mw > 100);
       globe
@@ -255,7 +310,7 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
         .ringRepeatPeriod(2400);
     }, [events, selectedEvent, isLoaded]);
 
-    // 3. Smooth Camera Fly-To on Event Selection
+    // 4. Smooth Camera Fly-To on Event Selection
     useEffect(() => {
       if (!globeInstanceRef.current || !selectedEvent) return;
       const globe = globeInstanceRef.current;
@@ -265,7 +320,7 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
           lng: selectedEvent.longitude,
           altitude: 1.4,
         },
-        1200
+        1000
       );
     }, [selectedEvent]);
 
