@@ -15,8 +15,11 @@ import { DEMO_THERMAL_EVENTS } from "@/features/events/mock/demo-events";
 import { INITIAL_LAYERS } from "@/config/ui";
 import {
   calculateWindowRange,
+  deriveTimeWindowQuery,
   filterEventsByTemporalState,
 } from "@/lib/playback/temporal";
+import { calculateOperationalRisk } from "@/lib/risk/scoring";
+import type { EventsQueryParams } from "@/types/event";
 import type {
   PlaybackMode,
   PlaybackRange,
@@ -30,6 +33,10 @@ export interface EventStats {
   nonIndustrial: number;
   unknown: number;
   reviewRequired: number;
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
   maxFrp: number;
 }
 
@@ -43,6 +50,8 @@ export interface EventContextType {
   setSearchQuery: (query: string) => void;
   selectedClassification: string;
   setSelectedClassification: (classification: string) => void;
+  selectedPriority: string;
+  setSelectedPriority: (priority: string) => void;
   selectedEvent: ThermalEvent | null;
   setSelectedEvent: (event: ThermalEvent | null) => void;
   activeLayers: Record<string, boolean>;
@@ -83,6 +92,7 @@ const EventContext = createContext<EventContextType | undefined>(undefined);
 export function EventProvider({ children }: { children: React.ReactNode }) {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedClassification, setSelectedClassification] = useState<string>("ALL");
+  const [selectedPriority, setSelectedPriority] = useState<string>("ALL");
   const [selectedEvent, setSelectedEvent] = useState<ThermalEvent | null>(null);
   const [timeRange, setTimeRangeState] = useState<string>("ALL");
 
@@ -108,14 +118,24 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
-  // Fetch live canonical thermal events from FastAPI backend
+  // Derive temporal API query parameters from selected time window
+  const eventQueryParams = useMemo<EventsQueryParams>(() => {
+    const query = deriveTimeWindowQuery(timeRange);
+    return {
+      start_time: query.start_time,
+      end_time: query.end_time,
+      limit: 100,
+    };
+  }, [timeRange]);
+
+  // Fetch live canonical thermal events from FastAPI backend matching active time window
   const {
     events: backendEvents,
     isLoading,
     isFetching,
     isError,
     refetch: rawRefetch,
-  } = useEvents({ limit: 100 });
+  } = useEvents(eventQueryParams);
 
   // Map backend events to ThermalEvent and combine with comprehensive multi-source catalog
   const rawEvents = useMemo(() => {
@@ -149,113 +169,118 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     if (playbackMode === "LIVE" || customPlaybackTime === null) {
       return playbackRange.end;
     }
-    return Math.min(playbackRange.end, Math.max(playbackRange.start, customPlaybackTime));
+    return Math.min(Math.max(customPlaybackTime, playbackRange.start), playbackRange.end);
   }, [playbackMode, customPlaybackTime, playbackRange]);
 
-  // Progress relative to active range (0.0 to 1.0)
+  // Fractional progress 0.0 to 1.0
   const playbackProgress = useMemo<number>(() => {
     if (playbackRange.durationMs <= 0) return 1.0;
-    const prog = (playbackTime - playbackRange.start) / playbackRange.durationMs;
-    return Math.min(1.0, Math.max(0.0, prog));
+    return Math.min(
+      1.0,
+      Math.max(0.0, (playbackTime - playbackRange.start) / playbackRange.durationMs)
+    );
   }, [playbackTime, playbackRange]);
 
-  // 2. Playback Animation Ticker (Advances playhead when isPlaying === true)
-  useEffect(() => {
-    if (!isPlaying || playbackMode !== "PLAYBACK") return;
-
-    const intervalMs = 80;
-    // Base sweep time for full window at 1x = 24 seconds (300 ticks of 80ms)
-    const totalTicks = 300 / playbackSpeed;
-    const timeDeltaMs = playbackRange.durationMs / totalTicks;
-
-    const timer = setInterval(() => {
-      setCustomPlaybackTime((prev) => {
-        const current = prev !== null ? prev : playbackRange.start;
-        const nextTime = current + timeDeltaMs;
-        if (nextTime >= playbackRange.end) {
-          setIsPlaying(false);
-          return playbackRange.end;
-        }
-        return nextTime;
-      });
-    }, intervalMs);
-
-    return () => clearInterval(timer);
-  }, [isPlaying, playbackMode, playbackSpeed, playbackRange]);
-
-  // Playback Control Handlers
-  const setTimeRange = useCallback((range: string) => {
-    setTimeRangeState(range);
-    // When switching time window in playback, clamp or align playhead
-    setCustomPlaybackTime(null);
-  }, []);
-
-  const setPlaybackTime = useCallback((timeMs: number) => {
-    setPlaybackMode("PLAYBACK");
-    setCustomPlaybackTime(timeMs);
-  }, []);
-
+  // 2. Playback Transport Actions
   const setPlaybackProgress = useCallback(
-    (prog: number) => {
-      setPlaybackMode("PLAYBACK");
-      const clamped = Math.min(1.0, Math.max(0.0, prog));
+    (progress: number) => {
+      const clamped = Math.min(1.0, Math.max(0.0, progress));
       const targetTime = playbackRange.start + clamped * playbackRange.durationMs;
+      setPlaybackMode("PLAYBACK");
       setCustomPlaybackTime(targetTime);
     },
     [playbackRange]
   );
 
+  const setPlaybackTime = useCallback(
+    (timeMs: number) => {
+      setPlaybackMode("PLAYBACK");
+      setCustomPlaybackTime(
+        Math.min(Math.max(timeMs, playbackRange.start), playbackRange.end)
+      );
+    },
+    [playbackRange]
+  );
+
+  const setTimeRange = useCallback((newRange: string) => {
+    setTimeRangeState(newRange);
+    // Reset playhead to live when switching time range
+    setPlaybackMode("LIVE");
+    setIsPlaying(false);
+    setCustomPlaybackTime(null);
+  }, []);
+
   const togglePlayPause = useCallback(() => {
     if (playbackMode === "LIVE") {
       setPlaybackMode("PLAYBACK");
-      setCustomPlaybackTime(playbackRange.start);
       setIsPlaying(true);
+      // Start from beginning of range if at live end
+      setCustomPlaybackTime(playbackRange.start);
     } else {
-      if (!isPlaying && playbackTime >= playbackRange.end) {
-        // If at the end, restart from beginning
-        setCustomPlaybackTime(playbackRange.start);
-      }
       setIsPlaying((prev) => !prev);
     }
-  }, [playbackMode, isPlaying, playbackTime, playbackRange]);
+  }, [playbackMode, playbackRange]);
+
+  const startPlayback = useCallback(() => {
+    setPlaybackMode("PLAYBACK");
+    setIsPlaying(true);
+    setCustomPlaybackTime(playbackRange.start);
+  }, [playbackRange]);
+
+  const resetToLive = useCallback(() => {
+    setPlaybackMode("LIVE");
+    setIsPlaying(false);
+    setCustomPlaybackTime(null);
+  }, []);
 
   const stepForward = useCallback(
-    (fraction: number = 0.05) => {
+    (fraction = 0.05) => {
       setPlaybackMode("PLAYBACK");
-      setIsPlaying(false);
-      const stepMs = playbackRange.durationMs * fraction;
       setCustomPlaybackTime((prev) => {
-        const current = prev !== null ? prev : playbackRange.start;
-        return Math.min(playbackRange.end, current + stepMs);
+        const curr = prev === null ? playbackRange.end : prev;
+        const next = curr + playbackRange.durationMs * fraction;
+        return Math.min(next, playbackRange.end);
       });
     },
     [playbackRange]
   );
 
   const stepBackward = useCallback(
-    (fraction: number = 0.05) => {
+    (fraction = 0.05) => {
       setPlaybackMode("PLAYBACK");
-      setIsPlaying(false);
-      const stepMs = playbackRange.durationMs * fraction;
       setCustomPlaybackTime((prev) => {
-        const current = prev !== null ? prev : playbackRange.end;
-        return Math.max(playbackRange.start, current - stepMs);
+        const curr = prev === null ? playbackRange.end : prev;
+        const next = curr - playbackRange.durationMs * fraction;
+        return Math.max(next, playbackRange.start);
       });
     },
     [playbackRange]
   );
 
-  const resetToLive = useCallback(() => {
-    setIsPlaying(false);
-    setPlaybackMode("LIVE");
-    setCustomPlaybackTime(null);
-  }, []);
+  // Playback Tick Interval loop
+  useEffect(() => {
+    if (!isPlaying || playbackMode !== "PLAYBACK") {
+      return;
+    }
 
-  const startPlayback = useCallback(() => {
-    setPlaybackMode("PLAYBACK");
-    setCustomPlaybackTime(playbackRange.start);
-    setIsPlaying(true);
-  }, [playbackRange]);
+    const stepIntervalMs = 50; // 20 FPS ticker
+    const timer = setInterval(() => {
+      setCustomPlaybackTime((prev) => {
+        const curr = prev === null ? playbackRange.start : prev;
+        // Advance time: 1 sec of real time advances (duration / 30s) * speed
+        const baseSpeedMs = (playbackRange.durationMs / 30) * (stepIntervalMs / 1000);
+        const next = curr + baseSpeedMs * playbackSpeed;
+
+        if (next >= playbackRange.end) {
+          setIsPlaying(false);
+          return playbackRange.end;
+        }
+        return next;
+      });
+    }, stepIntervalMs);
+
+    return () => clearInterval(timer);
+  }, [isPlaying, playbackMode, playbackSpeed, playbackRange]);
 
   // Refetch wrapper: ignore backend refresh if actively playing back historical frames
   const refetch = useCallback(async () => {
@@ -265,7 +290,7 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     await rawRefetch();
   }, [playbackMode, isPlaying, rawRefetch]);
 
-  // 3. Centralized Event Filtering (Temporal Playback + Layers + Classification + Search)
+  // 3. Centralized Event Filtering (Temporal Playback + Layers + Classification + Priority + Search)
   const filteredEvents = useMemo(() => {
     // A. Filter by Temporal State & Playhead
     const temporallyFiltered = filterEventsByTemporalState(
@@ -275,7 +300,7 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       playbackMode === "PLAYBACK"
     );
 
-    // B. Filter by Layers, Classification Chips, and Search
+    // B. Filter by Layers, Classification Chips, Priority, and Search
     return temporallyFiltered.filter((evt) => {
       // Layer visibility
       if (activeLayers.all_thermal === false) return false;
@@ -289,6 +314,23 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
         if (selectedClassification === "REVIEW_REQUIRED") {
           if (evt.uncertainty_state !== "REVIEW_REQUIRED") return false;
         } else if (evt.classification !== selectedClassification) {
+          return false;
+        }
+      }
+
+      // Operational Priority filtering
+      if (selectedPriority !== "ALL") {
+        const risk = calculateOperationalRisk(evt);
+        if (selectedPriority === "CRITICAL" && risk.level !== "CRITICAL") return false;
+        if (selectedPriority === "HIGH" && risk.level !== "HIGH") return false;
+        if (selectedPriority === "MEDIUM" && risk.level !== "MEDIUM") return false;
+        if (selectedPriority === "LOW" && risk.level !== "LOW") return false;
+        if (
+          selectedPriority === "REVIEW_REQUIRED" &&
+          !risk.isIndeterminate &&
+          evt.uncertainty_state !== "REVIEW_REQUIRED" &&
+          evt.classification !== "UNKNOWN"
+        ) {
           return false;
         }
       }
@@ -316,15 +358,16 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     playbackMode,
     activeLayers,
     selectedClassification,
+    selectedPriority,
     searchQuery,
   ]);
 
-  // Selected event grace check: if selected event is filtered out by temporal playhead, gracefully deselect
+  // Selected event grace check: if selected event is filtered out by temporal window or playhead, gracefully deselect
   useEffect(() => {
     if (selectedEvent) {
       const stillExists = filteredEvents.some((e) => e.event_id === selectedEvent.event_id);
-      if (!stillExists && filteredEvents.length > 0) {
-        // Keep selection stable or deselect gracefully
+      if (!stillExists) {
+        setSelectedEvent(null);
       }
     }
   }, [filteredEvents, selectedEvent]);
@@ -336,6 +379,10 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     let nonIndustrial = 0;
     let unknown = 0;
     let reviewRequired = 0;
+    let critical = 0;
+    let high = 0;
+    let medium = 0;
+    let low = 0;
     let maxFrp = 0;
 
     filteredEvents.forEach((evt) => {
@@ -345,14 +392,32 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
 
       if (evt.uncertainty_state === "REVIEW_REQUIRED") reviewRequired++;
       if (evt.frp_mw > maxFrp) maxFrp = evt.frp_mw;
+
+      const risk = calculateOperationalRisk(evt);
+      if (risk.level === "CRITICAL") critical++;
+      else if (risk.level === "HIGH") high++;
+      else if (risk.level === "MEDIUM") medium++;
+      else if (risk.level === "LOW") low++;
     });
 
-    return { total, industrial, nonIndustrial, unknown, reviewRequired, maxFrp };
+    return {
+      total,
+      industrial,
+      nonIndustrial,
+      unknown,
+      reviewRequired,
+      critical,
+      high,
+      medium,
+      low,
+      maxFrp,
+    };
   }, [filteredEvents]);
 
   const resetFilters = useCallback(() => {
     setSearchQuery("");
     setSelectedClassification("ALL");
+    setSelectedPriority("ALL");
     setTimeRangeState("ALL");
     setPlaybackMode("LIVE");
     setIsPlaying(false);
@@ -372,6 +437,8 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       setSearchQuery,
       selectedClassification,
       setSelectedClassification,
+      selectedPriority,
+      setSelectedPriority,
       selectedEvent,
       setSelectedEvent,
       activeLayers,
@@ -410,6 +477,7 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       filteredEvents,
       searchQuery,
       selectedClassification,
+      selectedPriority,
       selectedEvent,
       activeLayers,
       toggleLayer,
