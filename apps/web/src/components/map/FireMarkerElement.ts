@@ -10,6 +10,52 @@ export interface CreateMarkerOptions {
   onSelect?: (event: ThermalEvent) => void;
 }
 
+export function updateFireMarkerSelection(
+  el: HTMLElement,
+  isSelected: boolean,
+  event: ThermalEvent
+): void {
+  const core = el.querySelector<HTMLElement>("[data-marker-core]");
+  if (!core) return;
+
+  const isIndustrial = event.classification === "INDUSTRIAL";
+  const isUnknown = event.classification === "UNKNOWN";
+
+  const borderColor = isIndustrial
+    ? "rgba(57, 255, 136, 0.85)"
+    : isUnknown
+    ? "rgba(0, 217, 255, 0.85)"
+    : "rgba(255, 191, 36, 0.85)";
+
+  const glowColor = isIndustrial
+    ? "rgba(57, 255, 136, 0.5)"
+    : isUnknown
+    ? "rgba(0, 217, 255, 0.35)"
+    : "rgba(255, 191, 36, 0.45)";
+
+  if (isSelected) {
+    core.classList.add(
+      "animate-selection-pulse",
+      "ring-2",
+      "ring-accent",
+      "ring-offset-2",
+      "ring-offset-background"
+    );
+    core.style.border = "2px solid #39ff88";
+    core.style.boxShadow = "0 0 14px rgba(57, 255, 136, 0.85)";
+  } else {
+    core.classList.remove(
+      "animate-selection-pulse",
+      "ring-2",
+      "ring-accent",
+      "ring-offset-2",
+      "ring-offset-background"
+    );
+    core.style.border = `2px solid ${borderColor}`;
+    core.style.boxShadow = `0 0 8px ${glowColor}`;
+  }
+}
+
 export function createFireMarkerElement({
   event,
   isSelected = false,
@@ -22,9 +68,10 @@ export function createFireMarkerElement({
   el.style.transform = "translate(-50%, -50%) translateZ(0)";
   el.setAttribute("role", "button");
   el.setAttribute("tabindex", "0");
+  el.setAttribute("data-marker-id", event.event_id);
   el.setAttribute(
     "aria-label",
-    `Thermal Event ${event.event_id}, ${event.classification}, ${event.frp_mw.toFixed(1)} MW, Risk ${risk.level}`
+    `Thermal Event ${event.event_id}, ${event.classification}, ${event.frp_mw.toFixed(1)} MW, Priority ${risk.level}`
   );
 
   // Size calculation based on FRP (MW)
@@ -58,18 +105,19 @@ export function createFireMarkerElement({
     ? "rgba(0, 217, 255, 0.35)"
     : "rgba(255, 191, 36, 0.45)";
 
-  // Outer Radiating Wave (for high intensity events)
-  if (event.frp_mw > 80) {
+  // Outer Radiating Wave (for critical priority or high intensity events)
+  if (event.frp_mw > 80 || risk.level === "CRITICAL") {
     const wave = document.createElement("div");
     wave.className = "absolute rounded-full pointer-events-none animate-thermal-wave";
     wave.style.width = `${markerSize}px`;
     wave.style.height = `${markerSize}px`;
-    wave.style.border = `1.5px solid ${glowColor}`;
+    wave.style.border = `1.5px solid ${risk.level === "CRITICAL" ? "rgba(255, 77, 90, 0.6)" : glowColor}`;
     el.appendChild(wave);
   }
 
   // Core Marker Container
   const core = document.createElement("div");
+  core.setAttribute("data-marker-core", "true");
   core.className = `relative flex items-center justify-center rounded-full transition-transform duration-150 group-hover:scale-115 active:scale-95 ${
     isSelected ? "animate-selection-pulse ring-2 ring-accent ring-offset-2 ring-offset-background" : ""
   }`;
@@ -98,11 +146,11 @@ export function createFireMarkerElement({
 
   el.appendChild(core);
 
-  // Hover Tooltip Popup with full metadata and risk score
+  // Hover Tooltip Popup with full metadata and priority badge
   const coordText = formatCoordinate(event.latitude, event.longitude);
   const timeText = event.start_time ? formatUtcTime(event.start_time) : "LIVE";
 
-  const riskLabel = risk.isIndeterminate ? "RISK: UNK" : `RISK: ${risk.level} ${risk.score}`;
+  const priorityLabel = risk.isIndeterminate ? "PRIORITY: UNK" : `PRIORITY: ${risk.level}`;
 
   const tooltip = document.createElement("div");
   tooltip.className =
@@ -119,7 +167,7 @@ export function createFireMarkerElement({
             ? "bg-accent-cyan/15 text-accent-cyan border border-accent-cyan/30"
             : "bg-state-warning/15 text-state-warning border border-state-warning/30"
         }">${event.classification}</span>
-        <span class="text-[9px] px-1 py-0.5 rounded bg-surface border border-border text-foreground font-semibold">${riskLabel}</span>
+        <span class="text-[9px] px-1 py-0.5 rounded bg-surface border border-border text-foreground font-semibold">${priorityLabel}</span>
       </div>
       <div class="text-[10px] text-foreground-muted mt-1 flex items-center justify-between gap-3 font-mono">
         <span class="text-foreground font-semibold">${formatFrp(event.frp_mw)}</span>

@@ -5,7 +5,7 @@ import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MAPLIBRE_CONFIG } from "@/lib/map/maplibre-config";
 import { ThermalEvent } from "@/types/event";
-import { createFireMarkerElement } from "./FireMarkerElement";
+import { createFireMarkerElement, updateFireMarkerSelection } from "./FireMarkerElement";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -55,9 +55,22 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
   ) {
     const containerRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<maplibregl.Map | null>(null);
-    const markersRef = useRef<maplibregl.Marker[]>([]);
+    const markerMapRef = useRef<
+      Map<
+        string,
+        {
+          marker: maplibregl.Marker;
+          element: HTMLElement;
+          event: ThermalEvent;
+          isSelected: boolean;
+        }
+      >
+    >(new Map());
     const [isLoaded, setIsLoaded] = useState(false);
     const [hasError, setHasError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [initCount, setInitCount] = useState(0);
+    const fallbackAttemptedRef = useRef(false);
 
     const initialCameraRef = useRef({
       lat: initialLat,
@@ -106,9 +119,24 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       []
     );
 
-    // 1. Initialize MapLibre GL Map Once on Mount
-    useEffect(() => {
-      if (!containerRef.current || mapInstanceRef.current) return;
+    // Initialize MapLibre GL Map
+    const initializeMap = () => {
+      if (!containerRef.current) return;
+
+      // Clean up any existing instance
+      if (mapInstanceRef.current) {
+        try {
+          markerMapRef.current.forEach((rec) => rec.marker.remove());
+          markerMapRef.current.clear();
+          mapInstanceRef.current.remove();
+        } catch {}
+        mapInstanceRef.current = null;
+      }
+
+      setIsLoaded(false);
+      setHasError(false);
+      setErrorMessage(null);
+      fallbackAttemptedRef.current = false;
 
       try {
         if (typeof window !== "undefined" && typeof (maplibregl as any).setWorkerUrl === "function") {
@@ -142,23 +170,44 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
           map.once("styledata", markLoaded);
         }
 
-        // Fallback safety: ensure loading screen clears within 400ms
-        const fallbackTimer = setTimeout(() => {
-          setIsLoaded(true);
-          map.resize();
-        }, 400);
-
-        // Handle style load failures with fallback to ESRI Dark Canvas
+        // Resilient style error handler: automatic seamless fallback to ESRI Dark Canvas
         map.on("error", (e) => {
-          if (e && (e as any).status === 404) {
+          const isStyleOrTileError =
+            !fallbackAttemptedRef.current &&
+            (e.error?.message?.toLowerCase().includes("style") ||
+              e.error?.message?.toLowerCase().includes("tile") ||
+              e.error?.message?.toLowerCase().includes("fetch") ||
+              (e as any).status === 404 ||
+              (e as any).status === 0);
+
+          if (isStyleOrTileError) {
+            fallbackAttemptedRef.current = true;
+            console.warn("MapLibre primary vector style error, applying resilient ESRI raster fallback:", e);
             try {
               map.setStyle(MAPLIBRE_CONFIG.fallbackStyle as any);
+              markLoaded();
             } catch (fallbackErr) {
-              console.warn("Failed to set fallback style:", fallbackErr);
+              console.error("MapLibre fallback style also failed:", fallbackErr);
               setHasError(true);
+              setErrorMessage("Unable to initialize cartography raster or vector tiles.");
             }
           }
         });
+
+        // Timeout safety: if primary style has not resolved after 2500ms, auto-apply fallback
+        const safetyTimer = setTimeout(() => {
+          if (!map.loaded() && !fallbackAttemptedRef.current) {
+            fallbackAttemptedRef.current = true;
+            console.warn("MapLibre primary style timeout, switching to resilient ESRI fallback");
+            try {
+              map.setStyle(MAPLIBRE_CONFIG.fallbackStyle as any);
+              markLoaded();
+            } catch (fallbackErr) {
+              console.error("MapLibre fallback on timeout failed:", fallbackErr);
+              setHasError(true);
+            }
+          }
+        }, 2500);
 
         map.on("moveend", () => {
           if (onCameraChangeRef.current) {
@@ -177,10 +226,10 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
         resizeObserver.observe(containerRef.current);
 
         return () => {
-          clearTimeout(fallbackTimer);
+          clearTimeout(safetyTimer);
           resizeObserver.disconnect();
-          markersRef.current.forEach((m) => m.remove());
-          markersRef.current = [];
+          markerMapRef.current.forEach((rec) => rec.marker.remove());
+          markerMapRef.current.clear();
           if (mapInstanceRef.current) {
             mapInstanceRef.current.remove();
             mapInstanceRef.current = null;
@@ -188,17 +237,25 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
         };
       } catch (err) {
         console.error("Failed to initialize MapLibre GL:", err);
-        setIsLoaded(true);
         setHasError(true);
+        setErrorMessage(err instanceof Error ? err.message : "Map initialization error");
       }
-    }, []);
+    };
+
+    // 1. Initialize once on mount or when retried
+    useEffect(() => {
+      const cleanup = initializeMap();
+      return () => {
+        cleanup?.();
+      };
+    }, [initCount]);
 
     // 2. Trigger MapLibre resize whenever 2D view becomes active
     useEffect(() => {
       if (isVisible && mapInstanceRef.current) {
         mapInstanceRef.current.resize();
-        const t1 = setTimeout(() => mapInstanceRef.current?.resize(), 50);
-        const t2 = setTimeout(() => mapInstanceRef.current?.resize(), 200);
+        const t1 = setTimeout(() => mapInstanceRef.current?.resize(), 40);
+        const t2 = setTimeout(() => mapInstanceRef.current?.resize(), 160);
         return () => {
           clearTimeout(t1);
           clearTimeout(t2);
@@ -206,29 +263,59 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       }
     }, [isVisible]);
 
-    // 3. Render & Update Thermal Fire Markers on 2D Map
+    // 3. Render & In-Place Reconcile Thermal Fire Markers on 2D Map (Zero DOM Thrashing)
     useEffect(() => {
       if (!mapInstanceRef.current || !isLoaded) return;
       const map = mapInstanceRef.current;
+      const currentMarkerMap = markerMapRef.current;
+      const incomingEventIds = new Set(events.map((e) => e.event_id));
 
-      // Clear existing markers
-      markersRef.current.forEach((m) => m.remove());
-      markersRef.current = [];
+      // A. Remove markers that no longer exist in filtered events
+      for (const [id, record] of currentMarkerMap.entries()) {
+        if (!incomingEventIds.has(id)) {
+          record.marker.remove();
+          currentMarkerMap.delete(id);
+        }
+      }
 
-      // Create fresh markers
+      // B. Reconcile existing markers in-place or create new ones
       events.forEach((event) => {
         const isSelected = selectedEvent?.event_id === event.event_id;
-        const markerEl = createFireMarkerElement({
-          event,
-          isSelected,
-          onSelect: (evt) => onSelectEventRef.current?.(evt),
-        });
+        const existing = currentMarkerMap.get(event.event_id);
 
-        const marker = new maplibregl.Marker({ element: markerEl })
-          .setLngLat([event.longitude, event.latitude])
-          .addTo(map);
+        if (existing) {
+          // In-place update selection without destroying DOM nodes
+          if (existing.isSelected !== isSelected) {
+            updateFireMarkerSelection(existing.element, isSelected, event);
+            existing.isSelected = isSelected;
+          }
+          // In-place update coordinates if changed
+          if (
+            existing.event.latitude !== event.latitude ||
+            existing.event.longitude !== event.longitude
+          ) {
+            existing.marker.setLngLat([event.longitude, event.latitude]);
+          }
+          existing.event = event;
+        } else {
+          // Instantiate new marker instance
+          const markerEl = createFireMarkerElement({
+            event,
+            isSelected,
+            onSelect: (evt) => onSelectEventRef.current?.(evt),
+          });
 
-        markersRef.current.push(marker);
+          const marker = new maplibregl.Marker({ element: markerEl })
+            .setLngLat([event.longitude, event.latitude])
+            .addTo(map);
+
+          currentMarkerMap.set(event.event_id, {
+            marker,
+            element: markerEl,
+            event,
+            isSelected,
+          });
+        }
       });
     }, [events, selectedEvent, isLoaded]);
 
@@ -239,10 +326,14 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       map.flyTo({
         center: [selectedEvent.longitude, selectedEvent.latitude],
         zoom: Math.max(map.getZoom(), 8.0),
-        duration: 1200,
+        duration: 1000,
         essential: true,
       });
     }, [selectedEvent]);
+
+    const handleRetry = () => {
+      setInitCount((c) => c + 1);
+    };
 
     return (
       <div className={cn("relative w-full h-full min-h-full overflow-hidden select-none bg-background", className)}>
@@ -264,26 +355,21 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
               GEOSPATIAL LAYER UNAVAILABLE
             </h3>
             <p className="text-xs text-foreground-muted max-w-sm mb-4">
-              Unable to load vector cartography tiles. Fire intelligence data remains active and accessible.
+              {errorMessage || "Unable to load cartography tiles. Fire intelligence data remains active and accessible."}
             </p>
             <button
-              onClick={() => {
-                if (mapInstanceRef.current) {
-                  mapInstanceRef.current.setStyle(MAPLIBRE_CONFIG.fallbackStyle as any);
-                  setHasError(false);
-                }
-              }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface border border-border hover:border-accent text-xs text-foreground-secondary hover:text-foreground rounded-control transition-colors"
+              onClick={handleRetry}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-surface-raised border border-border hover:border-accent text-xs font-semibold text-foreground hover:text-accent rounded-control transition-colors shadow-panel active:scale-95"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              <span>LOAD FALLBACK BASEMAP</span>
+              <span>RETRY / LOAD FALLBACK BASEMAP</span>
             </button>
           </div>
         )}
 
         {/* Subtle bottom-right basemap attribution */}
         <div className="absolute bottom-1 right-2 z-10 text-[9px] font-mono text-foreground-muted/60 pointer-events-none select-none">
-          © CARTO © OpenStreetMap contributors
+          © CARTO © Esri © OpenStreetMap contributors
         </div>
       </div>
     );
