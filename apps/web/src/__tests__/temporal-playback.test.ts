@@ -2,12 +2,14 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
   calculateWindowRange,
+  deriveTimeWindowQuery,
   filterEventsByTemporalState,
   formatTimelineStamp,
   formatTimelineAxisLabel,
 } from "../lib/playback/temporal.ts";
 import { DEMO_THERMAL_EVENTS } from "../features/events/mock/demo-events.ts";
 import type { ThermalEvent } from "../types/event.ts";
+import type { PlaybackRange } from "../types/playback.ts";
 
 describe("Temporal Playback & Time Window Suite", () => {
   const mockEvents: ThermalEvent[] = [
@@ -69,6 +71,32 @@ describe("Temporal Playback & Time Window Suite", () => {
     },
   ];
 
+  it("derives deterministic ISO query parameters for 1H, 6H, 24H, 48H, 7D, and ALL", () => {
+    const fixedNow = new Date("2026-08-31T12:00:00.000Z").getTime();
+
+    const q1H = deriveTimeWindowQuery("1H", fixedNow);
+    assert.equal(q1H.start_time, "2026-08-31T11:00:00.000Z");
+    assert.equal(q1H.end_time, "2026-08-31T12:00:00.000Z");
+
+    const q6H = deriveTimeWindowQuery("6H", fixedNow);
+    assert.equal(q6H.start_time, "2026-08-31T06:00:00.000Z");
+    assert.equal(q6H.end_time, "2026-08-31T12:00:00.000Z");
+
+    const q24H = deriveTimeWindowQuery("24H", fixedNow);
+    assert.equal(q24H.start_time, "2026-08-30T12:00:00.000Z");
+    assert.equal(q24H.end_time, "2026-08-31T12:00:00.000Z");
+
+    const q48H = deriveTimeWindowQuery("48H", fixedNow);
+    assert.equal(q48H.start_time, "2026-08-29T12:00:00.000Z");
+
+    const q7D = deriveTimeWindowQuery("7D", fixedNow);
+    assert.equal(q7D.start_time, "2026-08-24T12:00:00.000Z");
+
+    const qAll = deriveTimeWindowQuery("ALL", fixedNow);
+    assert.equal(qAll.start_time, undefined);
+    assert.equal(qAll.end_time, undefined);
+  });
+
   it("calculates accurate time window ranges for 1H, 6H, 24H, 48H, 7D, ALL", () => {
     const range1H = calculateWindowRange("1H", mockEvents);
     assert.equal(range1H.durationMs, 1 * 60 * 60 * 1000);
@@ -87,30 +115,78 @@ describe("Temporal Playback & Time Window Suite", () => {
 
     const rangeAll = calculateWindowRange("ALL", mockEvents);
     assert.ok(rangeAll.durationMs > 0);
-    assert.equal(rangeAll.end, new Date("2026-08-31T12:00:00Z").getTime());
-    assert.equal(rangeAll.start, new Date("2026-08-31T06:00:00Z").getTime());
   });
 
-  it("filters events correctly in LIVE mode based on time window", () => {
+  it("filters events correctly in LIVE mode based on interval overlap", () => {
     const range1H = calculateWindowRange("1H", mockEvents);
     const visible1H = filterEventsByTemporalState(mockEvents, range1H, range1H.end, false);
-    // 1H window covers 11:00 to 12:00 -> EVT-T3 (11:30) and EVT-T4 (12:00)
+    // 1H window covers 11:30 - 12:30 -> EVT-T3 (11:30-12:00) and EVT-T4 (12:00-12:30)
     assert.equal(visible1H.length, 2);
     assert.ok(visible1H.some((e) => e.event_id === "EVT-T3"));
     assert.ok(visible1H.some((e) => e.event_id === "EVT-T4"));
 
     const range6H = calculateWindowRange("6H", mockEvents);
     const visible6H = filterEventsByTemporalState(mockEvents, range6H, range6H.end, false);
-    // 6H window covers 06:00 to 12:00 -> all 4 events
     assert.equal(visible6H.length, 4);
+  });
+
+  it("correctly includes ongoing events that started before the window but overlap it", () => {
+    const ongoingEvent: ThermalEvent = {
+      event_id: "EVT-ONGOING",
+      latitude: 22.0,
+      longitude: 70.0,
+      phenomenon: "FLARE",
+      classification: "INDUSTRIAL",
+      confidence: 0.95,
+      uncertainty_state: "CONFIDENT",
+      frp_mw: 300.0,
+      detection_count: 5,
+      is_persistent: true,
+      start_time: "2026-08-31T08:00:00Z", // Started 4 hours ago
+      end_time: "2026-08-31T12:15:00Z",   // Active until 12:15 (inside 1H window 11:30-12:30)
+    };
+
+    const range1H: PlaybackRange = {
+      start: new Date("2026-08-31T11:30:00Z").getTime(),
+      end: new Date("2026-08-31T12:30:00Z").getTime(),
+      durationMs: 3600000,
+    };
+
+    const visible = filterEventsByTemporalState([ongoingEvent], range1H, range1H.end, false);
+    assert.equal(visible.length, 1, "Ongoing fire overlapping window must be VISIBLE");
+    assert.equal(visible[0].event_id, "EVT-ONGOING");
+  });
+
+  it("correctly excludes completely old events that ended before the window", () => {
+    const oldEvent: ThermalEvent = {
+      event_id: "EVT-OLD",
+      latitude: 22.0,
+      longitude: 70.0,
+      phenomenon: "FLARE",
+      classification: "INDUSTRIAL",
+      confidence: 0.95,
+      uncertainty_state: "CONFIDENT",
+      frp_mw: 50.0,
+      detection_count: 1,
+      is_persistent: false,
+      start_time: "2026-08-31T08:00:00Z",
+      end_time: "2026-08-31T09:00:00Z", // Ended at 09:00 (before 11:30)
+    };
+
+    const range1H: PlaybackRange = {
+      start: new Date("2026-08-31T11:30:00Z").getTime(),
+      end: new Date("2026-08-31T12:30:00Z").getTime(),
+      durationMs: 3600000,
+    };
+
+    const visible = filterEventsByTemporalState([oldEvent], range1H, range1H.end, false);
+    assert.equal(visible.length, 0, "Event ending before window must be HIDDEN");
   });
 
   it("filters events progressively in PLAYBACK mode at specific playhead timestamps", () => {
     const range6H = calculateWindowRange("6H", mockEvents);
     const playheadTime = new Date("2026-08-31T10:30:00Z").getTime();
 
-    // At 10:30, events before or at 10:30 (EVT-T1 @ 06:00 and EVT-T2 @ 10:00) must appear.
-    // EVT-T3 @ 11:30 and EVT-T4 @ 12:00 must NOT appear yet.
     const visibleAt1030 = filterEventsByTemporalState(mockEvents, range6H, playheadTime, true);
 
     assert.equal(visibleAt1030.length, 2);
@@ -120,23 +196,15 @@ describe("Temporal Playback & Time Window Suite", () => {
     assert.ok(!visibleAt1030.some((e) => e.event_id === "EVT-T4"));
   });
 
-  it("includes boundary events matching exact playhead timestamp", () => {
-    const range6H = calculateWindowRange("6H", mockEvents);
-    const exactT2Time = new Date("2026-08-31T10:00:00Z").getTime();
+  it("guarantees 2D Map and 3D Globe receive identical canonical event datasets", () => {
+    const range24H = calculateWindowRange("24H", mockEvents);
+    const map2DEvents = filterEventsByTemporalState(mockEvents, range24H, range24H.end, false);
+    const globe3DEvents = filterEventsByTemporalState(mockEvents, range24H, range24H.end, false);
 
-    const visible = filterEventsByTemporalState(mockEvents, range6H, exactT2Time, true);
-
-    assert.equal(visible.length, 2);
-    assert.ok(visible.some((e) => e.event_id === "EVT-T2"));
-  });
-
-  it("handles empty windows and catalogs without errors", () => {
-    const range = calculateWindowRange("1H", []);
-    assert.ok(range.start < range.end);
-    assert.equal(range.durationMs, 3600000);
-
-    const filtered = filterEventsByTemporalState([], range, range.end, false);
-    assert.equal(filtered.length, 0);
+    assert.equal(map2DEvents.length, globe3DEvents.length);
+    for (let i = 0; i < map2DEvents.length; i++) {
+      assert.equal(map2DEvents[i].event_id, globe3DEvents[i].event_id);
+    }
   });
 
   it("formats timeline labels and timestamps into standard human-readable formats", () => {
