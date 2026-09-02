@@ -13,6 +13,7 @@ import { EventDetailSkeleton } from "./EventDetailSkeleton";
 import { EventDetailError } from "./EventDetailError";
 import { generateXaiExplanation } from "@/lib/xai/explainer";
 import { calculateOperationalRisk, getRiskLevelStyles } from "@/lib/risk/scoring";
+import { EmergencyResponseSection } from "./EmergencyResponse/EmergencyResponseSection";
 import { APP_CONFIG } from "@/config/ui";
 import {
   Flame,
@@ -273,7 +274,10 @@ export function EventIntelligencePanel({
             </div>
           </div>
 
-          {/* Level 5: Model Provenance & Verification Lineage */}
+          {/* Level 5: Emergency Response & Analyst-Confirmed Notification */}
+          <EmergencyResponseSection event={event} evidence={evidence} />
+
+          {/* Level 6: Model Provenance & Verification Lineage */}
           <ModelProvenanceCollapsible provenance={xai.provenance} />
 
           {/* Footer Provenance Stamp */}
