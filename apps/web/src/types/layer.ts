@@ -1,8 +1,17 @@
 /**
- * Layer & GIS taxonomy contracts matching backend routes/layers.py
+ * Layer & GIS taxonomy contracts matching backend routes/layers.py and routes/gis_layers.py
  */
 
-export type LayerCategory = "thermal" | "classification" | "context" | "infrastructure";
+export type LayerCategory =
+  | "thermal"
+  | "classification"
+  | "context"
+  | "infrastructure"
+  | "hazard"
+  | "benchmark"
+  | "responders"
+  | "geospatial"
+  | "environment";
 
 export interface GisLayerItem {
   id: string;
