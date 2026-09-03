@@ -1,7 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Satellite, Bell, Settings, Flame, ShieldAlert, Search } from "lucide-react";
+import {
+  Bell,
+  Settings,
+  Flame,
+  Sliders,
+  ShieldAlert,
+} from "lucide-react";
 import { StatusDot } from "@/components/ui/StatusDot";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { IconButton } from "@/components/ui/IconButton";
@@ -10,6 +16,7 @@ import { Badge } from "@/components/ui/Badge";
 import { APP_CONFIG } from "@/config/ui";
 import { formatUtcDateTime } from "@/lib/format/dates";
 import { useEventContext } from "@/context/EventContext";
+import { AiSimulationLabModal } from "@/components/simulation/AiSimulationLabModal";
 import { cn } from "@/lib/utils";
 
 const CLASSIFICATION_FILTERS = [
@@ -22,6 +29,8 @@ const CLASSIFICATION_FILTERS = [
 
 export function TopBar() {
   const [currentTime, setCurrentTime] = useState<string>("");
+  const [isSimLabOpen, setIsSimLabOpen] = useState(false);
+
   const {
     searchQuery,
     setSearchQuery,
@@ -30,12 +39,12 @@ export function TopBar() {
     filteredEvents,
     rawEvents,
     isLiveBackend,
+    stats,
   } = useEventContext();
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Update live UTC clock every second
     const updateTime = () => setCurrentTime(formatUtcDateTime(new Date()));
     updateTime();
     const interval = setInterval(updateTime, 1000);
@@ -56,115 +65,137 @@ export function TopBar() {
   }, []);
 
   return (
-    <header className="h-12 w-full bg-surface border-b border-border flex items-center justify-between px-3 z-40 select-none shrink-0 shadow-panel gap-2">
-      {/* 1. Left: Brand Identity & Live Status */}
-      <div className="flex items-center gap-2.5 shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-control bg-thermal/15 border border-thermal/40 flex items-center justify-center text-thermal glow-thermal">
-            <Flame className="w-4 h-4 text-thermal-primary animate-flame" />
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5 leading-none">
-              <span className="text-xs font-bold font-sans tracking-wider uppercase text-foreground">
-                {APP_CONFIG.name}
-              </span>
-              <Badge variant="neutral" size="sm" className="hidden sm:inline-flex text-[9px] px-1 py-0">
-                {APP_CONFIG.shortName}
-              </Badge>
+    <>
+      <header className="h-12 w-full bg-surface border-b border-border flex items-center justify-between px-3 z-40 select-none shrink-0 shadow-panel gap-2">
+        {/* 1. Left: Brand Identity & Live Status */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-control bg-thermal/15 border border-thermal/40 flex items-center justify-center text-thermal glow-thermal">
+              <Flame className="w-4 h-4 text-thermal-primary animate-flame" />
             </div>
-            <div className="text-[9px] font-mono text-foreground-muted hidden md:block mt-0.5">
-              {APP_CONFIG.tagline}
+            <div>
+              <div className="flex items-center gap-1.5 leading-none">
+                <span className="text-xs font-bold font-sans tracking-wider uppercase text-foreground">
+                  {APP_CONFIG.name}
+                </span>
+                <Badge
+                  variant="neutral"
+                  size="sm"
+                  className="hidden sm:inline-flex text-[9px] px-1 py-0"
+                >
+                  {APP_CONFIG.shortName}
+                </Badge>
+              </div>
+              <div className="text-[9px] font-mono text-foreground-muted hidden md:block mt-0.5">
+                {APP_CONFIG.tagline}
+              </div>
             </div>
+          </div>
+
+          <div className="h-4 w-[1px] bg-border mx-1 hidden sm:block" />
+
+          {/* Live Status indicator */}
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-pill bg-accent/10 border border-accent/30 text-accent text-[10px] font-mono">
+            <StatusDot status="live" pulse size="sm" />
+            <span className="font-semibold tracking-wider">
+              {isLiveBackend ? "LIVE FASTAPI" : "DEMO READY"}
+            </span>
           </div>
         </div>
 
-        <div className="h-4 w-[1px] bg-border mx-1 hidden sm:block" />
+        {/* 2. Center: Search & Quick Classification Chips */}
+        <div className="flex items-center gap-2 flex-1 max-w-lg mx-2">
+          <div className="relative flex-1">
+            <SearchInput
+              ref={searchInputRef}
+              placeholder="Search event ID, cluster, refinery, power station..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onClear={() => setSearchQuery("")}
+              shortcut="⌘K"
+            />
+          </div>
 
-        {/* Live Status indicator */}
-        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-pill bg-accent/10 border border-accent/30 text-accent text-[10px] font-mono">
-          <StatusDot status="live" pulse size="sm" />
-          <span className="font-semibold tracking-wider">
-            {isLiveBackend ? "LIVE FASTAPI" : "DEMO READY"}
-          </span>
-        </div>
-      </div>
-
-      {/* 2. Center: Search & Quick Classification Chips */}
-      <div className="flex items-center gap-2 flex-1 max-w-lg mx-2">
-        <div className="relative flex-1">
-          <SearchInput
-            ref={searchInputRef}
-            placeholder="Search event ID, cluster, refinery, power station..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onClear={() => setSearchQuery("")}
-            shortcut="⌘K"
-          />
-        </div>
-
-        {/* Quick classification filter pills */}
-        <div className="hidden xl:flex items-center gap-1 bg-surface-raised p-0.5 rounded-control border border-border">
-          {CLASSIFICATION_FILTERS.map((filter) => {
-            const isSelected = selectedClassification === filter.id;
-            return (
-              <button
-                key={filter.id}
-                onClick={() => setSelectedClassification(filter.id)}
-                className={cn(
-                  "px-2 py-0.5 text-[10px] font-mono rounded-sm transition-all duration-150",
-                  isSelected
-                    ? filter.id === "INDUSTRIAL"
-                      ? "bg-accent text-bg-base font-bold shadow-sm"
-                      : filter.id === "NON_INDUSTRIAL"
-                      ? "bg-state-warning text-bg-base font-bold shadow-sm"
-                      : filter.id === "UNKNOWN"
-                      ? "bg-accent-cyan text-bg-base font-bold shadow-sm"
-                      : filter.id === "REVIEW_REQUIRED"
-                      ? "bg-state-error text-foreground font-bold shadow-sm"
-                      : "bg-surface-hover text-foreground font-bold"
-                    : "text-foreground-muted hover:text-foreground hover:bg-surface-hover/60"
-                )}
-              >
-                {filter.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 3. Right: System Health, Live UTC Clock & Telemetry */}
-      <div className="flex items-center gap-2.5 shrink-0">
-        {/* Filter matches badge */}
-        <div className="hidden md:flex items-center gap-1 text-[11px] font-mono text-foreground-secondary bg-surface-raised px-2 py-0.5 rounded-control border border-border">
-          <span className="text-foreground font-semibold">{filteredEvents.length}</span>
-          <span className="text-foreground-muted">/ {rawEvents.length} Evts</span>
+          {/* Quick classification filter pills */}
+          <div className="hidden xl:flex items-center gap-1 bg-surface-raised p-0.5 rounded-control border border-border">
+            {CLASSIFICATION_FILTERS.map((filter) => {
+              const isSelected = selectedClassification === filter.id;
+              return (
+                <button
+                  key={filter.id}
+                  onClick={() => setSelectedClassification(filter.id)}
+                  className={cn(
+                    "px-2 py-0.5 text-[10px] font-mono rounded-sm transition-all duration-150",
+                    isSelected
+                      ? filter.id === "INDUSTRIAL"
+                        ? "bg-accent text-bg-base font-bold shadow-sm"
+                        : filter.id === "NON_INDUSTRIAL"
+                        ? "bg-state-warning text-bg-base font-bold shadow-sm"
+                        : filter.id === "UNKNOWN"
+                        ? "bg-accent-cyan text-bg-base font-bold shadow-sm"
+                        : filter.id === "REVIEW_REQUIRED"
+                        ? "bg-state-error text-foreground font-bold shadow-sm"
+                        : "bg-surface-hover text-foreground font-bold"
+                      : "text-foreground-muted hover:text-foreground hover:bg-surface-hover/60"
+                  )}
+                >
+                  {filter.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Live UTC Clock */}
-        <div className="hidden lg:flex flex-col items-end text-right font-mono">
-          <span className="text-[11px] font-semibold text-foreground tracking-wider">
-            {currentTime || "UTC LIVE"}
-          </span>
-          <span className="text-[9px] text-foreground-muted">SYNCHRONIZED WGS84</span>
+        {/* 3. Right: AI Simulation Lab Trigger, Live Clock & Telemetry */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          {/* AI Simulation Lab Button */}
+          <button
+            onClick={() => setIsSimLabOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono font-bold rounded bg-accent/15 hover:bg-accent/25 border border-accent/40 text-accent transition-colors shadow-sm"
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">AI SIMULATION LAB</span>
+            <span className="sm:hidden">SIM LAB</span>
+          </button>
+
+          {/* Filter matches badge */}
+          <div className="hidden md:flex items-center gap-1 text-[11px] font-mono text-foreground-secondary bg-surface-raised px-2 py-0.5 rounded-control border border-border">
+            <span className="text-foreground font-semibold">{filteredEvents.length}</span>
+            <span className="text-foreground-muted">/ {rawEvents.length} Evts</span>
+          </div>
+
+          {/* Live UTC Clock */}
+          <div className="hidden lg:flex flex-col items-end text-right font-mono">
+            <span className="text-[11px] font-semibold text-foreground tracking-wider">
+              {currentTime || "UTC LIVE"}
+            </span>
+            <span className="text-[9px] text-foreground-muted">SYNCHRONIZED WGS84</span>
+          </div>
+
+          <div className="h-4 w-[1px] bg-border mx-1 hidden lg:block" />
+
+          {/* System Settings & Notifications */}
+          <div className="flex items-center gap-1">
+            <Tooltip content="Active Operational Alerts" position="bottom">
+              <IconButton ariaLabel="Notifications" size="sm">
+                <Bell className="w-3.5 h-3.5" />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip content="Platform Configuration" position="bottom">
+              <IconButton ariaLabel="Settings" size="sm">
+                <Settings className="w-3.5 h-3.5" />
+              </IconButton>
+            </Tooltip>
+          </div>
         </div>
+      </header>
 
-        <div className="h-4 w-[1px] bg-border mx-1 hidden lg:block" />
-
-        {/* System Settings & Notifications */}
-        <div className="flex items-center gap-1">
-          <Tooltip content="System Notifications" position="bottom">
-            <IconButton ariaLabel="Notifications" size="sm">
-              <Bell className="w-3.5 h-3.5" />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip content="Platform Configuration" position="bottom">
-            <IconButton ariaLabel="Settings" size="sm">
-              <Settings className="w-3.5 h-3.5" />
-            </IconButton>
-          </Tooltip>
-        </div>
-      </div>
-    </header>
+      {/* AI Simulation Lab Modal */}
+      <AiSimulationLabModal
+        isOpen={isSimLabOpen}
+        onClose={() => setIsSimLabOpen(false)}
+      />
+    </>
   );
 }
