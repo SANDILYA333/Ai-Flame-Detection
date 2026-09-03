@@ -186,9 +186,7 @@ class EventIntelligenceResponseBody(BaseModel):
     intelligence_id: str = Field(..., description="Canonical intelligence identifier.")
     event_id: str = Field(..., description="Canonical event identifier.")
     event_timestamp: datetime = Field(..., description="Observation timestamp in UTC.")
-    centroid_latitude: float = Field(
-        ..., description="Centroid latitude in EPSG:4326."
-    )
+    centroid_latitude: float = Field(..., description="Centroid latitude in EPSG:4326.")
     centroid_longitude: float = Field(
         ..., description="Centroid longitude in EPSG:4326."
     )
@@ -263,9 +261,7 @@ class EventIntelligenceResponseBody(BaseModel):
 class FirmsIntelligenceCsvRequestBody(BaseModel):
     """Payload for evaluating raw NASA FIRMS CSV through intelligence pipeline."""
 
-    csv_content: str = Field(
-        ..., description="Raw NASA FIRMS CSV payload."
-    )
+    csv_content: str = Field(..., description="Raw NASA FIRMS CSV payload.")
     operating_mode: str = Field(
         default="HIGH_PRECISION",
         description="Target operating mode (HIGH_PRECISION, HIGH_RECALL, SELECTIVE).",
