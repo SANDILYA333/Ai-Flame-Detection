@@ -17,7 +17,9 @@ export function HazmatRiskCard({
   className,
 }: HazmatRiskCardProps) {
   const isIndustrial = event.classification === "INDUSTRIAL";
-  const facilityName = evidence?.facility_name || "Petrochemical & Refining Complex";
+  const facilityName =
+    evidence?.context_evidence?.[0]?.facility_name ||
+    "Petrochemical & Refining Complex";
 
   // Derive CAMEO-NIOSH hazmat metrics based on classification
   const unCodes = isIndustrial ? ["UN1267", "UN1114", "UN1075"] : ["UN1361"];

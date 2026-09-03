@@ -136,7 +136,7 @@ export function TacticalDossierModal({
                 <div>
                   <span className="text-foreground-muted">Facility: </span>
                   <span className="text-foreground font-semibold">
-                    {evidence?.facility_name || "Industrial Facility"}
+                    {evidence?.context_evidence?.[0]?.facility_name || "Industrial Facility"}
                   </span>
                 </div>
                 <div>
