@@ -18,6 +18,72 @@ if (typeof window !== "undefined" && typeof (maplibregl as any).setWorkerUrl ===
   }
 }
 
+function computePlumeGeometries(lat: number, lon: number, frp: number, windDir = 235) {
+  const downwindDeg = (windDir + 180) % 360;
+  const effFrp = Math.max(5, frp);
+  const plumeLenKm = Math.min(18.0, Math.max(1.5, (Math.sqrt(effFrp) * 1.1) / 3.8));
+  const R = 6371;
+
+  const offsetPoint = (distanceKm: number, bearingDeg: number): [number, number] => {
+    const radLat = (lat * Math.PI) / 180;
+    const radLon = (lon * Math.PI) / 180;
+    const radBearing = (bearingDeg * Math.PI) / 180;
+    const angDist = distanceKm / R;
+
+    const lat2 = Math.asin(
+      Math.sin(radLat) * Math.cos(angDist) +
+        Math.cos(radLat) * Math.sin(angDist) * Math.cos(radBearing)
+    );
+    const lon2 =
+      radLon +
+      Math.atan2(
+        Math.sin(radBearing) * Math.sin(angDist) * Math.cos(radLat),
+        Math.cos(angDist) - Math.sin(radLat) * Math.sin(lat2)
+      );
+    return [Number(((lon2 * 180) / Math.PI).toFixed(6)), Number(((lat2 * 180) / Math.PI).toFixed(6))];
+  };
+
+  const pts: [number, number][] = [[lon, lat]];
+  const halfAngle = 18;
+  const steps = 6;
+  for (let i = 1; i <= steps; i++) {
+    const frac = i / steps;
+    const d = frac * plumeLenKm;
+    const b = (downwindDeg - halfAngle * (1.0 - 0.3 * frac)) % 360;
+    pts.push(offsetPoint(d, b));
+  }
+  for (let arc = -12; arc <= 12; arc += 6) {
+    const b = (downwindDeg + arc) % 360;
+    pts.push(offsetPoint(plumeLenKm, b));
+  }
+  for (let i = steps; i >= 1; i--) {
+    const frac = i / steps;
+    const d = frac * plumeLenKm;
+    const b = (downwindDeg + halfAngle * (1.0 - 0.3 * frac)) % 360;
+    pts.push(offsetPoint(d, b));
+  }
+  pts.push([lon, lat]);
+
+  const evacRadiusKm = Math.min(3.5, Math.max(0.4, 0.25 * Math.pow(effFrp, 0.35)));
+  const circlePts: [number, number][] = [];
+  for (let angle = 0; angle <= 360; angle += 10) {
+    circlePts.push(offsetPoint(evacRadiusKm, angle));
+  }
+
+  return {
+    plumeFeature: {
+      type: "Feature",
+      geometry: { type: "Polygon", coordinates: [pts] },
+      properties: { label: "MODELLED HAZARD / DISPERSION ESTIMATE" },
+    },
+    evacFeature: {
+      type: "Feature",
+      geometry: { type: "Polygon", coordinates: [circlePts] },
+      properties: { label: "ERG INITIAL ISOLATION BOUNDARY" },
+    },
+  };
+}
+
 export interface FlatMapViewProps {
   initialLat?: number;
   initialLng?: number;
@@ -78,14 +144,12 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       zoom: initialZoom,
     });
 
-    // Stable callback refs
     const onCameraChangeRef = useRef(onCameraChange);
     onCameraChangeRef.current = onCameraChange;
 
     const onSelectEventRef = useRef(onSelectEvent);
     onSelectEventRef.current = onSelectEvent;
 
-    // Expose imperative navigation handles
     useImperativeHandle(
       ref,
       () => ({
@@ -104,8 +168,7 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
             mapInstanceRef.current.flyTo({
               center: [initialCameraRef.current.lng, initialCameraRef.current.lat],
               zoom: initialCameraRef.current.zoom,
-              duration: 1000,
-              essential: true,
+              duration: 800,
             });
           }
         },
@@ -119,32 +182,20 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       []
     );
 
-    // Initialize MapLibre GL Map
     const initializeMap = () => {
       if (!containerRef.current) return;
 
-      // Clean up any existing instance
       if (mapInstanceRef.current) {
         try {
-          markerMapRef.current.forEach((rec) => rec.marker.remove());
-          markerMapRef.current.clear();
           mapInstanceRef.current.remove();
         } catch {}
         mapInstanceRef.current = null;
       }
 
-      setIsLoaded(false);
       setHasError(false);
-      setErrorMessage(null);
-      fallbackAttemptedRef.current = false;
+      setIsLoaded(false);
 
       try {
-        if (typeof window !== "undefined" && typeof (maplibregl as any).setWorkerUrl === "function") {
-          try {
-            (maplibregl as any).setWorkerUrl("/maplibre-gl-worker.mjs");
-          } catch {}
-        }
-
         const map = new maplibregl.Map({
           container: containerRef.current,
           style: MAPLIBRE_CONFIG.style,
@@ -170,7 +221,6 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
           map.once("styledata", markLoaded);
         }
 
-        // Resilient style error handler: automatic seamless fallback to ESRI Dark Canvas
         map.on("error", (e) => {
           const isStyleOrTileError =
             !fallbackAttemptedRef.current &&
@@ -182,28 +232,25 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
 
           if (isStyleOrTileError) {
             fallbackAttemptedRef.current = true;
-            console.warn("MapLibre primary vector style error, applying resilient ESRI raster fallback:", e);
+            console.warn("MapLibre style error, applying fallback:", e);
             try {
               map.setStyle(MAPLIBRE_CONFIG.fallbackStyle as any);
               markLoaded();
             } catch (fallbackErr) {
-              console.error("MapLibre fallback style also failed:", fallbackErr);
+              console.error("MapLibre fallback failed:", fallbackErr);
               setHasError(true);
               setErrorMessage("Unable to initialize cartography raster or vector tiles.");
             }
           }
         });
 
-        // Timeout safety: if primary style has not resolved after 2500ms, auto-apply fallback
         const safetyTimer = setTimeout(() => {
           if (!map.loaded() && !fallbackAttemptedRef.current) {
             fallbackAttemptedRef.current = true;
-            console.warn("MapLibre primary style timeout, switching to resilient ESRI fallback");
             try {
               map.setStyle(MAPLIBRE_CONFIG.fallbackStyle as any);
               markLoaded();
             } catch (fallbackErr) {
-              console.error("MapLibre fallback on timeout failed:", fallbackErr);
               setHasError(true);
             }
           }
@@ -242,7 +289,6 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       }
     };
 
-    // 1. Initialize once on mount or when retried
     useEffect(() => {
       const cleanup = initializeMap();
       return () => {
@@ -250,7 +296,6 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       };
     }, [initCount]);
 
-    // 2. Trigger MapLibre resize whenever 2D view becomes active
     useEffect(() => {
       if (isVisible && mapInstanceRef.current) {
         mapInstanceRef.current.resize();
@@ -263,14 +308,13 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       }
     }, [isVisible]);
 
-    // 3. Render & In-Place Reconcile Thermal Fire Markers on 2D Map (Zero DOM Thrashing)
+    // 3. Render & In-Place Reconcile Thermal Fire Markers on 2D Map
     useEffect(() => {
       if (!mapInstanceRef.current || !isLoaded) return;
       const map = mapInstanceRef.current;
       const currentMarkerMap = markerMapRef.current;
       const incomingEventIds = new Set(events.map((e) => e.event_id));
 
-      // A. Remove markers that no longer exist in filtered events
       for (const [id, record] of currentMarkerMap.entries()) {
         if (!incomingEventIds.has(id)) {
           record.marker.remove();
@@ -278,18 +322,15 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
         }
       }
 
-      // B. Reconcile existing markers in-place or create new ones
       events.forEach((event) => {
         const isSelected = selectedEvent?.event_id === event.event_id;
         const existing = currentMarkerMap.get(event.event_id);
 
         if (existing) {
-          // In-place update selection without destroying DOM nodes
           if (existing.isSelected !== isSelected) {
             updateFireMarkerSelection(existing.element, isSelected, event);
             existing.isSelected = isSelected;
           }
-          // In-place update coordinates if changed
           if (
             existing.event.latitude !== event.latitude ||
             existing.event.longitude !== event.longitude
@@ -298,7 +339,6 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
           }
           existing.event = event;
         } else {
-          // Instantiate new marker instance
           const markerEl = createFireMarkerElement({
             event,
             isSelected,
@@ -319,7 +359,93 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       });
     }, [events, selectedEvent, isLoaded]);
 
-    // 4. Smooth Camera Fly-To on Event Selection
+    // 4. Render Gaussian Plume & Evacuation Corridor on Event Selection
+    useEffect(() => {
+      if (!mapInstanceRef.current || !isLoaded) return;
+      const map = mapInstanceRef.current;
+
+      const plumeSourceId = "selected-incident-plume-source";
+      const evacSourceId = "selected-incident-evac-source";
+
+      if (!selectedEvent) {
+        if (map.getLayer("selected-incident-plume-fill")) map.removeLayer("selected-incident-plume-fill");
+        if (map.getLayer("selected-incident-plume-line")) map.removeLayer("selected-incident-plume-line");
+        if (map.getLayer("selected-incident-evac-fill")) map.removeLayer("selected-incident-evac-fill");
+        if (map.getLayer("selected-incident-evac-line")) map.removeLayer("selected-incident-evac-line");
+        if (map.getSource(plumeSourceId)) map.removeSource(plumeSourceId);
+        if (map.getSource(evacSourceId)) map.removeSource(evacSourceId);
+        return;
+      }
+
+      const { plumeFeature, evacFeature } = computePlumeGeometries(
+        selectedEvent.latitude,
+        selectedEvent.longitude,
+        selectedEvent.frp_mw
+      );
+
+      // Plume Source & Layers
+      if (map.getSource(plumeSourceId)) {
+        (map.getSource(plumeSourceId) as maplibregl.GeoJSONSource).setData(plumeFeature as any);
+      } else {
+        map.addSource(plumeSourceId, {
+          type: "geojson",
+          data: plumeFeature as any,
+        });
+
+        map.addLayer({
+          id: "selected-incident-plume-fill",
+          type: "fill",
+          source: plumeSourceId,
+          paint: {
+            "fill-color": "#ff9500",
+            "fill-opacity": 0.25,
+          },
+        });
+
+        map.addLayer({
+          id: "selected-incident-plume-line",
+          type: "line",
+          source: plumeSourceId,
+          paint: {
+            "line-color": "#ff9500",
+            "line-width": 1.5,
+            "line-dasharray": [2, 2],
+          },
+        });
+      }
+
+      // Evacuation Circle Source & Layers
+      if (map.getSource(evacSourceId)) {
+        (map.getSource(evacSourceId) as maplibregl.GeoJSONSource).setData(evacFeature as any);
+      } else {
+        map.addSource(evacSourceId, {
+          type: "geojson",
+          data: evacFeature as any,
+        });
+
+        map.addLayer({
+          id: "selected-incident-evac-fill",
+          type: "fill",
+          source: evacSourceId,
+          paint: {
+            "fill-color": "#ff3b30",
+            "fill-opacity": 0.15,
+          },
+        });
+
+        map.addLayer({
+          id: "selected-incident-evac-line",
+          type: "line",
+          source: evacSourceId,
+          paint: {
+            "line-color": "#ff3b30",
+            "line-width": 1.5,
+          },
+        });
+      }
+    }, [selectedEvent, isLoaded]);
+
+    // 5. Smooth Camera Fly-To on Event Selection
     useEffect(() => {
       if (!mapInstanceRef.current || !selectedEvent) return;
       const map = mapInstanceRef.current;
