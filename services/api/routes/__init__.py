@@ -3,11 +3,17 @@
 from fastapi import APIRouter
 
 from services.api.routes.detections import router as detections_router
+from services.api.routes.dossier import router as dossier_router
 from services.api.routes.events import router as events_router
+from services.api.routes.gis_layers import router as gis_layers_router
+from services.api.routes.hazmat import router as hazmat_router
 from services.api.routes.health import router as health_router
+from services.api.routes.historical import router as historical_router
 from services.api.routes.inference import router as inference_router
 from services.api.routes.layers import router as layers_router
 from services.api.routes.readiness import router as readiness_router
+from services.api.routes.responders import router as responders_router
+from services.api.routes.simulation import router as simulation_router
 from services.api.routes.sources import router as sources_router
 from services.api.routes.version import router as version_router
 
@@ -20,15 +26,27 @@ api_router.include_router(detections_router)
 api_router.include_router(events_router)
 api_router.include_router(layers_router)
 api_router.include_router(inference_router)
+api_router.include_router(responders_router)
+api_router.include_router(dossier_router)
+api_router.include_router(simulation_router)
+api_router.include_router(historical_router)
+api_router.include_router(hazmat_router)
+api_router.include_router(gis_layers_router)
 
 __all__ = [
     "api_router",
     "detections_router",
+    "dossier_router",
     "events_router",
+    "gis_layers_router",
+    "hazmat_router",
     "health_router",
+    "historical_router",
     "inference_router",
     "layers_router",
     "readiness_router",
+    "responders_router",
+    "simulation_router",
     "sources_router",
     "version_router",
 ]
