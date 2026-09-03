@@ -1,0 +1,158 @@
+{
+  "type": "FeatureCollection",
+  "total_facilities": 8,
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          70.0577,
+          22.4707
+        ]
+      },
+      "properties": {
+        "amenity": "fire_station",
+        "name": "Jamnagar District Fire & Emergency Services",
+        "phone": "+91-288-2550101",
+        "cluster_region": "Jamnagar Refining & Petrochemical SEZ",
+        "hospital_name": "GG Government Hospital & Burn Center, Jamnagar",
+        "hospital_phone": "+91-288-2553335",
+        "ndrf": "6th NDRF Battalion, Jarod, Vadodara (Air-droppable)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.2185,
+          17.6868
+        ]
+      },
+      "properties": {
+        "amenity": "fire_station",
+        "name": "Visakhapatnam Regional Fire Command Center",
+        "phone": "+91-891-2565101",
+        "cluster_region": "Vizag-Kakinada Petroleum, Chemical & Petrochemical Investment Region (PCPIR)",
+        "hospital_name": "King George Hospital (KGH) Trauma & Burn ICU, Vizag",
+        "hospital_phone": "+91-891-2564891",
+        "ndrf": "10th NDRF Battalion, Achyutapuram, Visakhapatnam"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          72.8956,
+          19.0144
+        ]
+      },
+      "properties": {
+        "amenity": "fire_station",
+        "name": "Mumbai Fire Brigade HQ, Byculla / Trombay Station",
+        "phone": "+91-22-23076111",
+        "cluster_region": "Chembur-Trombay & JNPT Petrochemical Corridor",
+        "hospital_name": "National Burns Center (Airoli) & KEM Hospital, Mumbai",
+        "hospital_phone": "+91-22-27793333",
+        "ndrf": "5th NDRF Battalion, Sudumbare, Pune"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          86.6114,
+          20.3164
+        ]
+      },
+      "properties": {
+        "amenity": "fire_station",
+        "name": "Paradip Industrial Fire Station",
+        "phone": "+91-6722-222101",
+        "cluster_region": "Paradip Port Petroleum & Fertilizer PCPIR",
+        "hospital_name": "SCB Medical College & Hospital Burn Center, Cuttack",
+        "hospital_phone": "+91-671-2414080",
+        "ndrf": "3rd NDRF Battalion, Mundali, Cuttack"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          80.2667,
+          13.1667
+        ]
+      },
+      "properties": {
+        "amenity": "fire_station",
+        "name": "Tamil Nadu Fire and Rescue Services - Manali Station",
+        "phone": "+91-44-25941101",
+        "cluster_region": "Manali-Ennore Petrochemical & Fertilizer Industrial Belt",
+        "hospital_name": "Kilpauk Medical College (KMC) Burns Plastic Surgery Unit, Chennai",
+        "hospital_phone": "+91-44-28364951",
+        "ndrf": "4th NDRF Battalion, Arakkonam, Ranipet"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          72.65,
+          21.1167
+        ]
+      },
+      "properties": {
+        "amenity": "fire_station",
+        "name": "Surat Municipal Corporation Fire HQ",
+        "phone": "+91-261-2423714",
+        "cluster_region": "Hazira LNG, Steel & Heavy Petrochemical Cluster",
+        "hospital_name": "New Civil Hospital & Burn Ward, Surat",
+        "hospital_phone": "+91-261-2244175",
+        "ndrf": "6th NDRF Battalion, Jarod, Vadodara"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          82.6644,
+          24.1997
+        ]
+      },
+      "properties": {
+        "amenity": "fire_station",
+        "name": "Singrauli District Fire Control Station",
+        "phone": "+91-7805-234101",
+        "cluster_region": "Singrauli Energy Hub (Thermal Power & Coal Mines)",
+        "hospital_name": "Nehru Centenary Hospital (NCL), Jayant, Singrauli",
+        "hospital_phone": "+91-7805-226224",
+        "ndrf": "11th NDRF Battalion, Varanasi"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          85.1011,
+          20.8392
+        ]
+      },
+      "properties": {
+        "amenity": "fire_station",
+        "name": "Angul District Fire Command",
+        "phone": "+91-6764-230101",
+        "cluster_region": "Angul-Talcher Steel, Smelter & Coal Mining Cluster",
+        "hospital_name": "District Headquarters Hospital Angul / AIIMS Bhubaneswar",
+        "hospital_phone": "+91-674-2476789",
+        "ndrf": "3rd NDRF Battalion, Mundali, Cuttack"
+      }
+    }
+  ]
+}
