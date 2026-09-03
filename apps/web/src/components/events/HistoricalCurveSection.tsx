@@ -30,7 +30,7 @@ export function HistoricalCurveSection({
       pts.push({ day: 90 - i, val, isAnomaly });
     }
     return pts;
-  }, [event.event_id, frp, meanFrp, stdFrp]);
+  }, [frp, meanFrp, stdFrp]);
 
   const maxVal = Math.max(...points.map((p) => p.val), 10);
   const recurrenceCount = points.filter((p) => p.val > 12).length;
