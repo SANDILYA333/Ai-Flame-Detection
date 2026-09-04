@@ -1,10 +1,11 @@
 """FastAPI routes for Tactical Incident Dossiers and reporting (DOSSIER-003)."""
 
 from fastapi import APIRouter
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 
 from services.api.schemas.dossier import TacticalDossierResponse
 from services.api.services.dossier import TacticalDossierService
+from services.api.services.pdf_dossier import TacticalPdfGenerator
 
 router = APIRouter(tags=["tactical-dossier"])
 
@@ -33,18 +34,46 @@ def get_tactical_dossier(event_id: str) -> TacticalDossierResponse:
 
 
 @router.get(
+    "/events/{event_id}/dossier/pdf",
+    response_class=Response,
+    operation_id="get_event_dossier_pdf",
+    summary="Generate official PDF Tactical Incident Dossier",
+    description="Generates publication-quality tactical emergency briefing PDF using ReportLab.",
+)
+@router.get(
+    "/api/incident-dossier/{event_id}/pdf",
+    response_class=Response,
+    operation_id="get_incident_dossier_pdf_alias",
+    summary="Alias for PDF dossier export",
+    include_in_schema=False,
+)
+def get_dossier_pdf(event_id: str) -> Response:
+    """Generate official publication-quality Tactical Incident Action Dossier PDF."""
+    dossier = TacticalDossierService.generate_dossier(event_id)
+    pdf_bytes = TacticalPdfGenerator.generate(dossier)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="tactical-dossier-{event_id}.pdf"',
+            "Content-Type": "application/pdf",
+        },
+    )
+
+
+@router.get(
     "/events/{event_id}/dossier/html",
     response_class=HTMLResponse,
     operation_id="get_event_dossier_html",
     summary="Render printable HTML Tactical Incident Dossier report",
     description=(
-        "Returns styled, printable HTML briefing document for PDF export."
+        "Returns styled, printable HTML briefing document."
     ),
 )
 @router.get(
-    "/api/incident-dossier/{event_id}/pdf",
+    "/api/incident-dossier/{event_id}/html",
     response_class=HTMLResponse,
-    operation_id="get_incident_dossier_pdf_alias",
+    operation_id="get_incident_dossier_html_alias",
     summary="Alias for printable HTML dossier",
     include_in_schema=False,
 )

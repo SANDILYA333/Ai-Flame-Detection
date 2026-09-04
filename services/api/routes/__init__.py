@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter
 
+from services.api.routes.agni import router as agni_router
 from services.api.routes.detections import router as detections_router
 from services.api.routes.dispersion import router as dispersion_router
 from services.api.routes.dossier import router as dossier_router
@@ -38,8 +39,10 @@ api_router.include_router(gis_layers_router)
 api_router.include_router(forests_router)
 api_router.include_router(weather_router)
 api_router.include_router(dispersion_router)
+api_router.include_router(agni_router)
 
 __all__ = [
+    "agni_router",
     "api_router",
     "detections_router",
     "dispersion_router",
