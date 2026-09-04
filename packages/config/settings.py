@@ -215,6 +215,82 @@ class Settings(BaseSettings):
         description="Prefix key namespace for Redis job queues",
     )
 
+    # Emergency Notification & Dispatch Configuration
+    NOTIFICATION_MODE: str = Field(
+        default="simulation",
+        description="Notification execution mode: 'simulation' or 'live'",
+    )
+    SMS_PROVIDER: str = Field(
+        default="fast2sms",
+        description="Active SMS messaging provider identifier",
+    )
+    WHATSAPP_PROVIDER: str = Field(
+        default="richautomate",
+        description="Active WhatsApp messaging provider identifier",
+    )
+    FAST2SMS_API_KEY: SecretStr | None = Field(
+        default=None,
+        description="Fast2SMS gateway API authorization key (secret)",
+    )
+    FAST2SMS_ENABLED: bool = Field(
+        default=True,
+        description="Whether Fast2SMS integration is enabled",
+    )
+    FAST2SMS_BASE_URL: str = Field(
+        default="https://www.fast2sms.com/dev/bulkV2",
+        description="Fast2SMS bulk API endpoint",
+    )
+    RICHAUTOMATE_API_KEY: SecretStr | None = Field(
+        default=None,
+        description="RichAutomate WhatsApp gateway API key (secret)",
+    )
+    RICHAUTOMATE_BASE_URL: str = Field(
+        default="https://richautomate.in/api/v1",
+        description="RichAutomate WhatsApp gateway base endpoint",
+    )
+    RICHAUTOMATE_ENABLED: bool = Field(
+        default=True,
+        description="Whether RichAutomate integration is enabled",
+    )
+    NOTIFICATION_TIMEOUT_SECONDS: float = Field(
+        default=10.0,
+        ge=1.0,
+        le=60.0,
+        description="Timeout in seconds for external notification provider requests",
+    )
+    NOTIFICATION_MAX_RETRIES: int = Field(
+        default=2,
+        ge=0,
+        le=5,
+        description="Maximum retry attempts for transient provider failures",
+    )
+    NOTIFICATION_RETRY_BACKOFF_SECONDS: float = Field(
+        default=0.1,
+        ge=0.01,
+        le=5.0,
+        description="Base exponential backoff interval in seconds",
+    )
+    EMERGENCY_RESPONSE_ENABLED: bool = Field(
+        default=True,
+        description="Global feature flag for emergency response & regulation",
+    )
+    EMERGENCY_AUTO_ESCALATION_ENABLED: bool = Field(
+        default=True,
+        description="Whether automatic emergency escalation is permitted",
+    )
+    EMERGENCY_REVIEW_MIN_CONFIDENCE: float = Field(
+        default=0.94,
+        ge=0.0,
+        le=1.0,
+        description="Calibrated confidence boundary requiring operator review",
+    )
+    EMERGENCY_AUTO_ESCALATION_MIN_CONFIDENCE: float = Field(
+        default=0.98,
+        ge=0.0,
+        le=1.0,
+        description="Calibrated confidence boundary permitting automatic escalation",
+    )
+
     def get_redis_url(self) -> str:
         """Construct full Redis connection URL."""
         if self.REDIS_URL is not None:
