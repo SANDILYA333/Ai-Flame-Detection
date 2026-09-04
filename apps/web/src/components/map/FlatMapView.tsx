@@ -7,9 +7,10 @@ import { MAPLIBRE_CONFIG } from "@/lib/map/maplibre-config";
 import { ThermalEvent } from "@/types/event";
 import { createFireMarkerElement, updateFireMarkerSelection } from "./FireMarkerElement";
 import { useEventContext } from "@/context/EventContext";
+import { useEventDispersion } from "@/hooks/useEventDispersion";
 import { fetchForestsGeoJson, ForestGeoJsonFeatureCollection } from "@/lib/api/forests";
 import { DEMO_FORESTS_GEOJSON } from "@/features/forests/mock/demo-forests";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw, Wind, Compass, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Configure MapLibre Web Worker URL explicitly to avoid localhost HTML fallback
@@ -19,72 +20,6 @@ if (typeof window !== "undefined" && typeof (maplibregl as any).setWorkerUrl ===
   } catch (err) {
     console.warn("MapLibre setWorkerUrl fallback:", err);
   }
-}
-
-function computePlumeGeometries(lat: number, lon: number, frp: number, windDir = 235) {
-  const downwindDeg = (windDir + 180) % 360;
-  const effFrp = Math.max(5, frp);
-  const plumeLenKm = Math.min(18.0, Math.max(1.5, (Math.sqrt(effFrp) * 1.1) / 3.8));
-  const R = 6371;
-
-  const offsetPoint = (distanceKm: number, bearingDeg: number): [number, number] => {
-    const radLat = (lat * Math.PI) / 180;
-    const radLon = (lon * Math.PI) / 180;
-    const radBearing = (bearingDeg * Math.PI) / 180;
-    const angDist = distanceKm / R;
-
-    const lat2 = Math.asin(
-      Math.sin(radLat) * Math.cos(angDist) +
-        Math.cos(radLat) * Math.sin(angDist) * Math.cos(radBearing)
-    );
-    const lon2 =
-      radLon +
-      Math.atan2(
-        Math.sin(radBearing) * Math.sin(angDist) * Math.cos(radLat),
-        Math.cos(angDist) - Math.sin(radLat) * Math.sin(lat2)
-      );
-    return [Number(((lon2 * 180) / Math.PI).toFixed(6)), Number(((lat2 * 180) / Math.PI).toFixed(6))];
-  };
-
-  const pts: [number, number][] = [[lon, lat]];
-  const halfAngle = 18;
-  const steps = 6;
-  for (let i = 1; i <= steps; i++) {
-    const frac = i / steps;
-    const d = frac * plumeLenKm;
-    const b = (downwindDeg - halfAngle * (1.0 - 0.3 * frac)) % 360;
-    pts.push(offsetPoint(d, b));
-  }
-  for (let arc = -12; arc <= 12; arc += 6) {
-    const b = (downwindDeg + arc) % 360;
-    pts.push(offsetPoint(plumeLenKm, b));
-  }
-  for (let i = steps; i >= 1; i--) {
-    const frac = i / steps;
-    const d = frac * plumeLenKm;
-    const b = (downwindDeg + halfAngle * (1.0 - 0.3 * frac)) % 360;
-    pts.push(offsetPoint(d, b));
-  }
-  pts.push([lon, lat]);
-
-  const evacRadiusKm = Math.min(3.5, Math.max(0.4, 0.25 * Math.pow(effFrp, 0.35)));
-  const circlePts: [number, number][] = [];
-  for (let angle = 0; angle <= 360; angle += 10) {
-    circlePts.push(offsetPoint(evacRadiusKm, angle));
-  }
-
-  return {
-    plumeFeature: {
-      type: "Feature",
-      geometry: { type: "Polygon", coordinates: [pts] },
-      properties: { label: "MODELLED HAZARD / DISPERSION ESTIMATE" },
-    },
-    evacFeature: {
-      type: "Feature",
-      geometry: { type: "Polygon", coordinates: [circlePts] },
-      properties: { label: "ERG INITIAL ISOLATION BOUNDARY" },
-    },
-  };
 }
 
 function computeCircleCoordinates(lat: number, lon: number, distanceKm: number): [number, number][] {
@@ -263,6 +198,9 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
     const forestGeoJsonRef = useRef<ForestGeoJsonFeatureCollection>(DEMO_FORESTS_GEOJSON);
     const [forestData, setForestData] = useState<ForestGeoJsonFeatureCollection>(DEMO_FORESTS_GEOJSON);
     const hoverPopupRef = useRef<maplibregl.Popup | null>(null);
+
+    // Atmospheric Dispersion & Plume Hazard State
+    const { dispersion, geojson: dispersionGeoJson } = useEventDispersion(selectedEvent);
 
     const initialCameraRef = useRef({
       lat: initialLat,
@@ -773,39 +711,47 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       });
     }, [events, selectedEvent, isLoaded]);
 
-    // Render Gaussian Plume, Evacuation Corridor & Incident Proximity Threat Rings on Event Selection
+    // Render Authoritative Gaussian Plume, Centerline, Isolation & Evacuation Corridors on Event Selection
     useEffect(() => {
       if (!mapInstanceRef.current || !isLoaded) return;
       const map = mapInstanceRef.current;
 
       const plumeSourceId = "selected-incident-plume-source";
+      const centerlineSourceId = "selected-incident-centerline-source";
+      const isolationSourceId = "selected-incident-isolation-source";
       const evacSourceId = "selected-incident-evac-source";
       const forestRingsSourceId = "selected-forest-threat-rings-source";
 
-      if (!selectedEvent) {
+      if (!selectedEvent || !dispersionGeoJson || dispersionGeoJson.features.length === 0) {
         if (map.getLayer("selected-incident-plume-fill")) map.removeLayer("selected-incident-plume-fill");
         if (map.getLayer("selected-incident-plume-line")) map.removeLayer("selected-incident-plume-line");
+        if (map.getLayer("selected-incident-centerline-line")) map.removeLayer("selected-incident-centerline-line");
+        if (map.getLayer("selected-incident-isolation-fill")) map.removeLayer("selected-incident-isolation-fill");
+        if (map.getLayer("selected-incident-isolation-line")) map.removeLayer("selected-incident-isolation-line");
         if (map.getLayer("selected-incident-evac-fill")) map.removeLayer("selected-incident-evac-fill");
         if (map.getLayer("selected-incident-evac-line")) map.removeLayer("selected-incident-evac-line");
         if (map.getLayer("selected-forest-threat-rings-line")) map.removeLayer("selected-forest-threat-rings-line");
         if (map.getLayer("selected-forest-threat-rings-fill")) map.removeLayer("selected-forest-threat-rings-fill");
+
         if (map.getSource(plumeSourceId)) map.removeSource(plumeSourceId);
+        if (map.getSource(centerlineSourceId)) map.removeSource(centerlineSourceId);
+        if (map.getSource(isolationSourceId)) map.removeSource(isolationSourceId);
         if (map.getSource(evacSourceId)) map.removeSource(evacSourceId);
         if (map.getSource(forestRingsSourceId)) map.removeSource(forestRingsSourceId);
         return;
       }
 
-      const { plumeFeature, evacFeature } = computePlumeGeometries(
-        selectedEvent.latitude,
-        selectedEvent.longitude,
-        selectedEvent.frp_mw
-      );
+      const plumeFeature = dispersionGeoJson.features.find((f) => f.id === "selected-incident-plume");
+      const centerlineFeature = dispersionGeoJson.features.find((f) => f.id === "selected-incident-centerline");
+      const isolationFeature = dispersionGeoJson.features.find((f) => f.id === "selected-incident-isolation-zone");
+      const evacFeature = dispersionGeoJson.features.find((f) => f.id === "selected-incident-evacuation-corridor");
+
       const threatRingsCollection = computeForestThreatRings(
         selectedEvent.latitude,
         selectedEvent.longitude
       );
 
-      // Proximity Threat Buffer Rings Source & Layers for selected incident
+      // 1. Proximity Threat Buffer Rings Source & Layers for selected incident
       if (map.getSource(forestRingsSourceId)) {
         (map.getSource(forestRingsSourceId) as maplibregl.GeoJSONSource).setData(threatRingsCollection as any);
       } else {
@@ -884,75 +830,141 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
         }
       }
 
-      // Plume Source & Layers
-      if (map.getSource(plumeSourceId)) {
-        (map.getSource(plumeSourceId) as maplibregl.GeoJSONSource).setData(plumeFeature as any);
-      } else {
-        map.addSource(plumeSourceId, {
-          type: "geojson",
-          data: plumeFeature as any,
-        });
-
-        if (!map.getLayer("selected-incident-plume-fill")) {
-          map.addLayer({
-            id: "selected-incident-plume-fill",
-            type: "fill",
-            source: plumeSourceId,
-            paint: {
-              "fill-color": "#ff9500",
-              "fill-opacity": 0.25,
-            },
+      // 2. Real Gaussian Plume Hazard Polygon Source & Layers
+      if (plumeFeature) {
+        if (map.getSource(plumeSourceId)) {
+          (map.getSource(plumeSourceId) as maplibregl.GeoJSONSource).setData(plumeFeature as any);
+        } else {
+          map.addSource(plumeSourceId, {
+            type: "geojson",
+            data: plumeFeature as any,
           });
+
+          if (!map.getLayer("selected-incident-plume-fill")) {
+            map.addLayer({
+              id: "selected-incident-plume-fill",
+              type: "fill",
+              source: plumeSourceId,
+              paint: {
+                "fill-color": "#f97316",
+                "fill-opacity": 0.28,
+              },
+            });
+          }
+
+          if (!map.getLayer("selected-incident-plume-line")) {
+            map.addLayer({
+              id: "selected-incident-plume-line",
+              type: "line",
+              source: plumeSourceId,
+              paint: {
+                "line-color": "#ea580c",
+                "line-width": 1.8,
+                "line-dasharray": [3, 2],
+              },
+            });
+          }
         }
+      }
 
-        if (!map.getLayer("selected-incident-plume-line")) {
-          map.addLayer({
-            id: "selected-incident-plume-line",
-            type: "line",
-            source: plumeSourceId,
-            paint: {
-              "line-color": "#ff9500",
-              "line-width": 1.5,
-              "line-dasharray": [2, 2],
-            },
+      // 3. Centerline Trajectory LineString Source & Layer
+      if (centerlineFeature) {
+        if (map.getSource(centerlineSourceId)) {
+          (map.getSource(centerlineSourceId) as maplibregl.GeoJSONSource).setData(centerlineFeature as any);
+        } else {
+          map.addSource(centerlineSourceId, {
+            type: "geojson",
+            data: centerlineFeature as any,
           });
+
+          if (!map.getLayer("selected-incident-centerline-line")) {
+            map.addLayer({
+              id: "selected-incident-centerline-line",
+              type: "line",
+              source: centerlineSourceId,
+              paint: {
+                "line-color": "#06b6d4",
+                "line-width": 2.2,
+                "line-dasharray": [4, 3],
+              },
+            });
+          }
         }
       }
 
-      // Evacuation Circle Source & Layers
-      if (map.getSource(evacSourceId)) {
-        (map.getSource(evacSourceId) as maplibregl.GeoJSONSource).setData(evacFeature as any);
-      } else {
-        map.addSource(evacSourceId, {
-          type: "geojson",
-          data: evacFeature as any,
-        });
-
-        if (!map.getLayer("selected-incident-evac-fill")) {
-          map.addLayer({
-            id: "selected-incident-evac-fill",
-            type: "fill",
-            source: evacSourceId,
-            paint: {
-              "fill-color": "#ff3b30",
-              "fill-opacity": 0.15,
-            },
+      // 4. Immediate Isolation Boundary Source & Layers (200m)
+      if (isolationFeature) {
+        if (map.getSource(isolationSourceId)) {
+          (map.getSource(isolationSourceId) as maplibregl.GeoJSONSource).setData(isolationFeature as any);
+        } else {
+          map.addSource(isolationSourceId, {
+            type: "geojson",
+            data: isolationFeature as any,
           });
-        }
 
-        if (!map.getLayer("selected-incident-evac-line")) {
-          map.addLayer({
-            id: "selected-incident-evac-line",
-            type: "line",
-            source: evacSourceId,
-            paint: {
-              "line-color": "#ff3b30",
-              "line-width": 1.5,
-            },
-          });
+          if (!map.getLayer("selected-incident-isolation-fill")) {
+            map.addLayer({
+              id: "selected-incident-isolation-fill",
+              type: "fill",
+              source: isolationSourceId,
+              paint: {
+                "fill-color": "#ef4444",
+                "fill-opacity": 0.16,
+              },
+            });
+          }
+
+          if (!map.getLayer("selected-incident-isolation-line")) {
+            map.addLayer({
+              id: "selected-incident-isolation-line",
+              type: "line",
+              source: isolationSourceId,
+              paint: {
+                "line-color": "#dc2626",
+                "line-width": 1.6,
+              },
+            });
+          }
         }
       }
-    }, [selectedEvent, isLoaded]);
+
+      // 5. Downwind Evacuation Boundary Source & Layers
+      if (evacFeature) {
+        if (map.getSource(evacSourceId)) {
+          (map.getSource(evacSourceId) as maplibregl.GeoJSONSource).setData(evacFeature as any);
+        } else {
+          map.addSource(evacSourceId, {
+            type: "geojson",
+            data: evacFeature as any,
+          });
+
+          if (!map.getLayer("selected-incident-evac-fill")) {
+            map.addLayer({
+              id: "selected-incident-evac-fill",
+              type: "fill",
+              source: evacSourceId,
+              paint: {
+                "fill-color": "#f59e0b",
+                "fill-opacity": 0.08,
+              },
+            });
+          }
+
+          if (!map.getLayer("selected-incident-evac-line")) {
+            map.addLayer({
+              id: "selected-incident-evac-line",
+              type: "line",
+              source: evacSourceId,
+              paint: {
+                "line-color": "#d97706",
+                "line-width": 1.2,
+                "line-dasharray": [2, 2],
+              },
+            });
+          }
+        }
+      }
+    }, [dispersionGeoJson, selectedEvent, isLoaded]);
 
     // Smooth Camera Fly-To on Event Selection
     useEffect(() => {
@@ -1001,6 +1013,65 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
             </button>
           </div>
         )}
+
+        {/* On-Map Wind Vector & Hazard Corridor HUD */}
+        {selectedEvent && dispersion && (
+          <div className="absolute top-3 left-3 z-10 pointer-events-auto bg-surface-raised/90 backdrop-blur-md border border-border/80 rounded-panel p-2.5 shadow-panel font-mono text-[10px] space-y-1 max-w-[220px] animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center justify-between border-b border-border/60 pb-1">
+              <span className="font-bold text-foreground flex items-center gap-1">
+                <Wind className="w-3 h-3 text-accent-cyan" />
+                WIND INTELLIGENCE
+              </span>
+              <span className="text-[9px] text-accent font-bold">
+                {dispersion.wind.speed_ms.toFixed(1)} m/s
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-foreground-secondary text-[9px]">
+              <span>From {dispersion.wind.direction_from_label} ({dispersion.wind.direction_from_deg.toFixed(0)}°)</span>
+              <span className="text-state-error font-bold flex items-center gap-0.5">
+                <ArrowUpRight className="w-2.5 h-2.5" />
+                {dispersion.wind.downwind_direction_label}
+              </span>
+            </div>
+            <div className="text-[9px] text-foreground-muted flex items-center justify-between pt-0.5 border-t border-border/40">
+              <span>Hazard Reach:</span>
+              <span className="text-foreground font-bold">{dispersion.dispersion.max_hazard_distance_km.toFixed(1)} km</span>
+            </div>
+          </div>
+        )}
+
+        {/* Interactive Wind & Cartography Map Legend */}
+        {selectedEvent && dispersion && (
+          <div className="absolute bottom-6 left-3 z-10 pointer-events-auto bg-surface-raised/90 backdrop-blur-md border border-border/80 rounded-panel p-2.5 shadow-panel font-mono text-[9.5px] space-y-1.5 max-w-[210px] animate-in fade-in duration-200 select-none">
+            <div className="font-bold text-foreground flex items-center justify-between border-b border-border/50 pb-1">
+              <span className="uppercase tracking-wider text-[9px]">WIND &amp; PLUME LEGEND</span>
+              <span className="text-[8.5px] text-accent-cyan font-bold">CLASS {dispersion.dispersion.stability_class}</span>
+            </div>
+            <div className="space-y-1 text-foreground-secondary text-[9px]">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-state-error border border-white shrink-0" />
+                <span>Thermal Incident Origin</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full border border-state-error/80 bg-state-error/20 shrink-0" />
+                <span>200m Modeled Isolation</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-2 border border-state-warning border-dashed bg-state-warning/15 shrink-0 rounded-xs" />
+                <span>Evacuation Corridor</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-2 border border-accent-cyan bg-accent-cyan/20 shrink-0 rounded-xs" />
+                <span>Gaussian Hazard Plume</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-0.5 bg-state-error shrink-0" />
+                <span>Downwind Trajectory</span>
+              </div>
+            </div>
+          </div>
+        )}
+
 
         {/* Subtle bottom-right basemap attribution */}
         <div className="absolute bottom-1 right-2 z-10 text-[9px] font-mono text-foreground-muted/60 pointer-events-none select-none">
