@@ -8,6 +8,7 @@ from threading import Lock
 from typing import ClassVar
 
 from packages.errors import ErrorCode, NotFoundError
+from packages.geospatial.coordinates import calculate_geodesic_bearing
 from packages.geospatial.distance import haversine_distance_meters
 from packages.logging import get_logger
 from packages.schemas.responders import (
@@ -417,7 +418,28 @@ class ResponseRecommendationService:
                 "Offshore marine event location — coastal command staging & air evacuation corridor applied"
             )
 
-        # 3. Calculate Geodesic Distance & Modeled ETA for All Responders
+        # Check Atmospheric Dispersion & Downwind Hazard Corridor
+        dispersion_res = None
+        try:
+            from packages.data.weather.dispersion_service import get_dispersion_service
+            disp_svc = get_dispersion_service()
+            dispersion_res = disp_svc.evaluate_event_dispersion(
+                event_id=event_id,
+                latitude=ev_lat,
+                longitude=ev_lon,
+                frp_mw=max_frp,
+            )
+        except Exception as e:
+            logger.debug(f"Dispersion calculation skipped/unavailable for event {event_id}: {e}")
+
+        if dispersion_res is not None:
+            w = dispersion_res.wind
+            disp = dispersion_res.dispersion
+            recommendation_basis.append(
+                f"Wind & Atmospheric Dispersion: {w.speed_ms:.1f} m/s from {w.direction_from_label} ({w.direction_from_deg:.0f}°) -> Downwind {w.downwind_direction_label} ({disp.plume_angle_deg:.0f}°), Hazard Reach: {disp.max_hazard_distance_km:.1f} km (Stability Class {disp.stability_class.value})"
+            )
+
+        # 3. Calculate Geodesic Distance, Modeled ETA & Plume Impact for All Responders
         raw_responders = ResponderDirectoryService.get_all_raw_responders()
         evaluated_responders: list[EmergencyResponder] = []
 
@@ -442,6 +464,26 @@ class ResponseRecommendationService:
             else:
                 eta_mins = max(1, round((dist_km / 45.0) * 60.0 + 2.0))
                 fmt_eta = f"~{eta_mins} min"
+
+            # Evaluate Downwind Plume Impact Status
+            plume_status = "UNAVAILABLE"
+            if dispersion_res is not None:
+                if dist_meters <= 200.0:
+                    plume_status = "IN_ISOLATION_ZONE"
+                else:
+                    resp_bearing = calculate_geodesic_bearing(ev_lat, ev_lon, r_lat, r_lon)
+                    downwind_bearing = dispersion_res.dispersion.plume_angle_deg
+                    bearing_diff = abs((resp_bearing - downwind_bearing + 180.0) % 360.0 - 180.0)
+                    max_hazard_km = dispersion_res.dispersion.max_hazard_distance_km
+
+                    if dist_km <= max_hazard_km and bearing_diff <= 30.0:
+                        plume_status = "IN_PLUME_CORRIDOR"
+                    elif dist_km <= (max_hazard_km + 5.0) and bearing_diff <= 45.0:
+                        plume_status = "DOWNWIND_SECTOR"
+                    elif bearing_diff > 90.0:
+                        plume_status = "UPWIND_CLEAR"
+                    else:
+                        plume_status = "CROSSWIND_CLEAR"
 
             # Explainable recommendation rationale per responder type
             r_type = r["type"]
@@ -542,9 +584,10 @@ class ResponseRecommendationService:
                     jurisdiction=r["jurisdiction"],
                     source=r["source"],
                     recommendation_reason=reason,
-                    plume_impact_status="UNAVAILABLE",
+                    plume_impact_status=plume_status,
                 )
             )
+
 
         # 4. Extract Nearest 2 Hospitals, Nearest 2 Fire Stations, Specialized Responders, and NDRF
         # A. Fire Responders (Industrial prioritized for industrial events, then geodesic distance, stable tie-break)
@@ -860,10 +903,31 @@ class NotificationAuditService:
             else 95.0
         )
         frp_val = float(target_event.max_frp_mw or 25.0)
-
         is_critical = (
             request.escalation_type == EscalationType.CRITICAL_MEDICAL or frp_val > 50.0
         )
+
+        # Fetch dispersion context if available for wind intelligence enrichment
+        wind_summary_str = None
+        hazard_reach_val = None
+        wind_sector_val = None
+        try:
+            from packages.data.weather.dispersion_service import get_dispersion_service
+            disp_svc = get_dispersion_service()
+            disp_data = disp_svc.evaluate_event_dispersion(
+                event_id=event_id,
+                latitude=target_event.centroid_geometry.latitude,
+                longitude=target_event.centroid_geometry.longitude,
+                frp_mw=frp_val,
+            )
+            if disp_data:
+                w_obj = disp_data.wind
+                d_obj = disp_data.dispersion
+                wind_summary_str = f"{w_obj.speed_ms:.1f} m/s ({w_obj.direction_from_label} -> {w_obj.downwind_direction_label})"
+                hazard_reach_val = d_obj.max_hazard_distance_km
+                wind_sector_val = int((d_obj.plume_angle_deg % 360.0) // 30) * 30
+        except Exception as e:
+            logger.debug(f"Dispersion lookup for alert notification skipped: {e}")
 
         alert_text = NotificationService.format_alert_message(
             event_id=event_id,
@@ -876,6 +940,9 @@ class NotificationAuditService:
             else ResponsePriority.HIGH,
             is_critical=is_critical,
             mode=request.mode,
+            wind_summary=wind_summary_str,
+            hazard_reach_km=hazard_reach_val,
+            isolation_radius_m=200.0,
         )
 
         # Execute Multi-channel dispatch with idempotency protection and bounded retries
@@ -892,8 +959,10 @@ class NotificationAuditService:
             responder_id=request.responder_id,
             escalation_type=request.escalation_type,
             trigger_source=request.escalation_type.value,
+            wind_sector=wind_sector_val,
             correlation_id=correlation_id,
         )
+
 
         # 4. Create Notification Record & Audit
         responder_name = target_responder["name"]
