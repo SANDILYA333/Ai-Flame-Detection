@@ -40,4 +40,13 @@ export interface XaiExplanation {
   decisionSummary: string;
   provenance: ModelProvenance;
   disclaimer: string;
+  attributionMethod?: string;
+  shapAttributions?: Array<{
+    feature: string;
+    raw_feature_name: string;
+    value?: string | number | boolean | null;
+    shap_value: number;
+    impact: string;
+    description: string;
+  }>;
 }
