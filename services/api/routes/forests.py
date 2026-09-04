@@ -46,6 +46,10 @@ def list_forests(
         str | None,
         Query(description="ISO 3166-1 alpha-2 country code (e.g. 'IN')"),
     ] = None,
+    country: Annotated[
+        str | None,
+        Query(description="Alias for country_code (e.g. 'IN')"),
+    ] = None,
     bbox: Annotated[
         str | None,
         Query(
@@ -91,7 +95,7 @@ def list_forests(
 ) -> GeoJsonFeatureCollection:
     """Retrieve canonical forest areas matching spatial or attribute filters."""
     return ForestQueryService.query_forests_geojson(
-        country=country_code,
+        country=country_code or country,
         bbox=bbox,
         min_lat=min_lat,
         max_lat=max_lat,
