@@ -1,17 +1,22 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import type { EmergencyResponder, ResponsePriority, NotificationAction } from "@/types/responders";
+import type {
+  EmergencyResponder,
+  ResponsePriority,
+  NotificationAction,
+  NotificationChannel,
+} from "@/types/responders";
 import {
   ShieldAlert,
   X,
   Send,
-  AlertTriangle,
-  Flame,
   Building2,
   Phone,
   CheckCircle2,
   Clock,
+  MessageSquare,
+  Smartphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +26,8 @@ export interface NotificationConfirmModalProps {
   eventId: string;
   priority: ResponsePriority;
   action: NotificationAction;
-  onConfirm: (notes?: string) => Promise<void>;
+  demoPhone?: string;
+  onConfirm: (notes?: string, channels?: NotificationChannel[]) => Promise<void>;
   onClose: () => void;
 }
 
@@ -31,15 +37,20 @@ export function NotificationConfirmModal({
   eventId,
   priority,
   action,
+  demoPhone,
   onConfirm,
   onClose,
 }: NotificationConfirmModalProps) {
   const [notes, setNotes] = useState("");
+  const [smsEnabled, setSmsEnabled] = useState(true);
+  const [whatsappEnabled, setWhatsappEnabled] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setNotes("");
+      setSmsEnabled(true);
+      setWhatsappEnabled(true);
       setIsSubmitting(false);
     }
   }, [isOpen]);
@@ -59,12 +70,19 @@ export function NotificationConfirmModal({
   if (!isOpen || !responder) return null;
 
   const isMobilize = action === "MOBILIZE";
+  const displayPhone = demoPhone || responder.phone || "+91-112";
+
+  const selectedChannels: NotificationChannel[] = [];
+  if (smsEnabled) selectedChannels.push("SMS");
+  if (whatsappEnabled) selectedChannels.push("WHATSAPP");
+
+  const isConfirmDisabled = isSubmitting || selectedChannels.length === 0;
 
   const handleConfirmClick = async () => {
-    if (isSubmitting) return;
+    if (isConfirmDisabled) return;
     setIsSubmitting(true);
     try {
-      await onConfirm(notes.trim() || undefined);
+      await onConfirm(notes.trim() || undefined, selectedChannels);
       onClose();
     } catch {
       setIsSubmitting(false);
@@ -145,14 +163,48 @@ export function NotificationConfirmModal({
             </div>
             <div className="flex items-center gap-1 col-span-2">
               <Phone className="w-3 h-3 text-foreground-muted shrink-0" />
-              <span className="text-foreground-muted">Contact:</span>
-              <span className="font-mono text-foreground">{responder.phone}</span>
+              <span className="text-foreground-muted">Destination Number:</span>
+              <span className="font-mono text-accent font-semibold">{displayPhone}</span>
             </div>
           </div>
 
-          <div className="text-[10px] text-foreground-muted pt-1 border-t border-border/40">
-            <span className="text-foreground-secondary font-semibold">Jurisdiction: </span>
-            <span>{responder.jurisdiction}</span>
+          {/* Interactive Multi-Channel Selector */}
+          <div className="pt-2 border-t border-border/40 space-y-1.5">
+            <span className="text-[10px] text-foreground-muted uppercase tracking-wider block font-semibold">
+              Select Delivery Channels
+            </span>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-1.5 cursor-pointer text-[10.5px]">
+                <input
+                  type="checkbox"
+                  checked={smsEnabled}
+                  onChange={(e) => setSmsEnabled(e.target.checked)}
+                  disabled={isSubmitting}
+                  className="rounded border-border text-accent focus:ring-accent"
+                />
+                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-accent/10 text-accent font-bold border border-accent/20">
+                  <Smartphone className="w-3 h-3" /> SMS (Fast2SMS)
+                </span>
+              </label>
+
+              <label className="flex items-center gap-1.5 cursor-pointer text-[10.5px]">
+                <input
+                  type="checkbox"
+                  checked={whatsappEnabled}
+                  onChange={(e) => setWhatsappEnabled(e.target.checked)}
+                  disabled={isSubmitting}
+                  className="rounded border-border text-state-success focus:ring-state-success"
+                />
+                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-state-success/10 text-state-success font-bold border border-state-success/20">
+                  <MessageSquare className="w-3 h-3" /> WhatsApp (RichAutomate)
+                </span>
+              </label>
+            </div>
+            {selectedChannels.length === 0 && (
+              <span className="text-[9.5px] text-state-error block">
+                At least one delivery channel must be selected.
+              </span>
+            )}
           </div>
         </div>
 
@@ -161,10 +213,10 @@ export function NotificationConfirmModal({
           <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-accent-cyan" />
           <div className="space-y-1">
             <div className="font-bold tracking-wider uppercase text-[10px]">
-              MODE: SIMULATED DEMO WORKFLOW
+              MODE: CONTROLLED EMERGENCY DISPATCH
             </div>
             <p className="text-foreground-secondary leading-relaxed">
-              Analyst confirmation required. In hackathon/prototype mode, this action safely creates a verified auditable demo response log without external SMS/WhatsApp side-effects.
+              Analyst authorization confirmed. Dispatches scientific alert payloads and records verifiable audit timestamps across selected communication channels.
             </p>
           </div>
         </div>
@@ -197,7 +249,7 @@ export function NotificationConfirmModal({
           <button
             type="button"
             onClick={handleConfirmClick}
-            disabled={isSubmitting}
+            disabled={isConfirmDisabled}
             className={cn(
               "px-4 py-1.5 text-xs font-mono font-bold rounded-control flex items-center gap-1.5 shadow-panel transition-all active:scale-95 disabled:opacity-50",
               isMobilize
@@ -208,7 +260,7 @@ export function NotificationConfirmModal({
             {isSubmitting ? (
               <>
                 <div className="w-3.5 h-3.5 rounded-full border-2 border-white/20 border-t-white animate-spin" />
-                <span>Simulating...</span>
+                <span>Dispatching...</span>
               </>
             ) : (
               <>
