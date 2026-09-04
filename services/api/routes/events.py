@@ -1,11 +1,13 @@
-"""FastAPI routes for canonical thermal events (API-006)."""
-
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
+from packages.config.settings import Settings
+from packages.data.weather import get_dispersion_service
 from packages.schemas.intelligence import IntelligenceResult
+from services.api.dependencies import get_app_settings
+from services.api.schemas.dispersion import DispersionCalculationResponse
 from services.api.schemas.events import (
     EventDetailResponse,
     EventEvidenceResponse,
@@ -114,3 +116,51 @@ def get_event_evidence(event_id: str) -> EventEvidenceResponse:
 def get_event_intelligence(event_id: str) -> IntelligenceResult:
     """Retrieve canonical thermal event intelligence."""
     return EventQueryService.get_event_intelligence(event_id)
+
+
+@router.get(
+    "/{event_id}/dispersion",
+    response_model=DispersionCalculationResponse,
+    operation_id="get_event_dispersion_hazard",
+    summary="Retrieve canonical atmospheric dispersion hazard for an event",
+    description="Returns downwind atmospheric dispersion hazard corridor for a specific thermal event.",
+)
+def get_event_dispersion_hazard(
+    event_id: str,
+    settings: Annotated[Settings, Depends(get_app_settings)],
+    frp_mw: Annotated[
+        float | None,
+        Query(ge=0.0, description="Override Fire Radiative Power in MW"),
+    ] = None,
+    release_height_m: Annotated[
+        float | None,
+        Query(ge=0.0, description="Override release height in meters"),
+    ] = None,
+    max_distance_km: Annotated[
+        float | None,
+        Query(ge=0.5, le=50.0, description="Downwind horizon in km"),
+    ] = None,
+) -> DispersionCalculationResponse:
+    """Retrieve atmospheric dispersion hazard coupled to event."""
+    event_detail = EventQueryService.get_event(event_id)
+    lon, lat = event_detail.geometry["coordinates"]
+    dispersion_service = get_dispersion_service(settings)
+    result = dispersion_service.evaluate_event_dispersion(
+        event_id=event_id,
+        latitude=lat,
+        longitude=lon,
+        frp_mw=frp_mw,
+        release_height_m=release_height_m,
+        max_distance_km=max_distance_km,
+    )
+    return DispersionCalculationResponse(
+        source_location=result.source_location,
+        event_id=result.event_id,
+        evaluated_at=result.evaluated_at,
+        wind=result.wind,
+        dispersion=result.dispersion,
+        trajectory=result.trajectory,
+        data_quality=result.data_quality,
+        model_confidence=result.model_confidence,
+    )
+
