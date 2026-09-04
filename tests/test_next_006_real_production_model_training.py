@@ -225,7 +225,7 @@ class TestNext006RealProductionModelTraining:
             r.model_copy(
                 update={
                     "partition": (
-                        SplitPartition.TRAIN if i % 2 == 0 else SplitPartition.TEST
+                        SplitPartition.TRAIN if i < 2 else SplitPartition.TEST
                     )
                 }
             )
