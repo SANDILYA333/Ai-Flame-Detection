@@ -1,0 +1,606 @@
+{
+  "report_id": "phase2_model_comparison_report_v1.0.0",
+  "generated_at": "2026-09-04T19:15:58.615629+00:00",
+  "dataset_id": "feat_ds_real_supervised_v1.0.0",
+  "dataset_hash": "1103cbaa7f59c69cdf4f272822ae077fe5555206aa8986a725b3bff42263c134",
+  "partition_sizes": {
+    "train": 1455,
+    "val": 203,
+    "test": 516
+  },
+  "xgb_cv_results": [
+    {
+      "name": "P1 Baseline",
+      "params": {
+        "name": "P1 Baseline",
+        "max_depth": 4,
+        "learning_rate": 0.03,
+        "n_estimators": 40,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_alpha": 0.2,
+        "reg_lambda": 1.5,
+        "scale_pos_weight": 1.0
+      },
+      "mean_macro_f1": 0.8965717677195586,
+      "std_macro_f1": 0.020941738751461072,
+      "mean_ind_recall": 0.7884474167322318,
+      "mean_balanced_acc": 0.8876404463187819
+    },
+    {
+      "name": "D3-LR03-T50",
+      "params": {
+        "name": "D3-LR03-T50",
+        "max_depth": 3,
+        "learning_rate": 0.03,
+        "n_estimators": 50,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_alpha": 0.1,
+        "reg_lambda": 1.0,
+        "scale_pos_weight": 1.0
+      },
+      "mean_macro_f1": 0.8832672691422534,
+      "std_macro_f1": 0.023169395528162603,
+      "mean_ind_recall": 0.7690794649881982,
+      "mean_balanced_acc": 0.8743636560755077
+    },
+    {
+      "name": "D4-LR03-T60",
+      "params": {
+        "name": "D4-LR03-T60",
+        "max_depth": 4,
+        "learning_rate": 0.03,
+        "n_estimators": 60,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_alpha": 0.1,
+        "reg_lambda": 1.0,
+        "scale_pos_weight": 1.0
+      },
+      "mean_macro_f1": 0.9112287911411364,
+      "std_macro_f1": 0.02611308740351689,
+      "mean_ind_recall": 0.8288093364804616,
+      "mean_balanced_acc": 0.9042321561216109
+    },
+    {
+      "name": "D4-LR05-T40",
+      "params": {
+        "name": "D4-LR05-T40",
+        "max_depth": 4,
+        "learning_rate": 0.05,
+        "n_estimators": 40,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_alpha": 0.2,
+        "reg_lambda": 1.5,
+        "scale_pos_weight": 1.0
+      },
+      "mean_macro_f1": 0.9186993493155973,
+      "std_macro_f1": 0.024897665599812012,
+      "mean_ind_recall": 0.8449645948072384,
+      "mean_balanced_acc": 0.9123133495849707
+    },
+    {
+      "name": "D5-LR02-T50",
+      "params": {
+        "name": "D5-LR02-T50",
+        "max_depth": 5,
+        "learning_rate": 0.02,
+        "n_estimators": 50,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_alpha": 0.2,
+        "reg_lambda": 2.0,
+        "scale_pos_weight": 1.0
+      },
+      "mean_macro_f1": 0.911617384147533,
+      "std_macro_f1": 0.023298865753442515,
+      "mean_ind_recall": 0.8207579333857854,
+      "mean_balanced_acc": 0.9037921403455874
+    },
+    {
+      "name": "D4-W1.27 (Bal)",
+      "params": {
+        "name": "D4-W1.27 (Bal)",
+        "max_depth": 4,
+        "learning_rate": 0.03,
+        "n_estimators": 40,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_alpha": 0.2,
+        "reg_lambda": 1.5,
+        "scale_pos_weight": 1.273
+      },
+      "mean_macro_f1": 0.9145891450883152,
+      "std_macro_f1": 0.02222475982550202,
+      "mean_ind_recall": 0.8433648046157881,
+      "mean_balanced_acc": 0.9085265711131406
+    },
+    {
+      "name": "D4-W1.50",
+      "params": {
+        "name": "D4-W1.50",
+        "max_depth": 4,
+        "learning_rate": 0.03,
+        "n_estimators": 40,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_alpha": 0.2,
+        "reg_lambda": 1.5,
+        "scale_pos_weight": 1.5
+      },
+      "mean_macro_f1": 0.9188438188135868,
+      "std_macro_f1": 0.022971542720417536,
+      "mean_ind_recall": 0.8707972724888539,
+      "mean_balanced_acc": 0.9150678692070731
+    },
+    {
+      "name": "D4-W2.00",
+      "params": {
+        "name": "D4-W2.00",
+        "max_depth": 4,
+        "learning_rate": 0.03,
+        "n_estimators": 40,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_alpha": 0.2,
+        "reg_lambda": 1.5,
+        "scale_pos_weight": 2.0
+      },
+      "mean_macro_f1": 0.9103388628762523,
+      "std_macro_f1": 0.02314719944767522,
+      "mean_ind_recall": 0.9095200629425649,
+      "mean_balanced_acc": 0.9117175450156223
+    }
+  ],
+  "xgb_threshold_analysis": [
+    {
+      "threshold": 0.3,
+      "accuracy": 0.7389,
+      "balanced_accuracy": 0.7958,
+      "macro_f1": 0.7346,
+      "industrial_precision": 0.5536,
+      "industrial_recall": 0.9538,
+      "industrial_f1": 0.7006
+    },
+    {
+      "threshold": 0.35,
+      "accuracy": 0.798,
+      "balanced_accuracy": 0.8392,
+      "macro_f1": 0.7907,
+      "industrial_precision": 0.62,
+      "industrial_recall": 0.9538,
+      "industrial_f1": 0.7515
+    },
+    {
+      "threshold": 0.4,
+      "accuracy": 0.867,
+      "balanced_accuracy": 0.8737,
+      "macro_f1": 0.8543,
+      "industrial_precision": 0.7436,
+      "industrial_recall": 0.8923,
+      "industrial_f1": 0.8112
+    },
+    {
+      "threshold": 0.45,
+      "accuracy": 0.9015,
+      "balanced_accuracy": 0.8991,
+      "macro_f1": 0.8894,
+      "industrial_precision": 0.8169,
+      "industrial_recall": 0.8923,
+      "industrial_f1": 0.8529
+    },
+    {
+      "threshold": 0.5,
+      "accuracy": 0.9409,
+      "balanced_accuracy": 0.924,
+      "macro_f1": 0.931,
+      "industrial_precision": 0.9344,
+      "industrial_recall": 0.8769,
+      "industrial_f1": 0.9048
+    },
+    {
+      "threshold": 0.55,
+      "accuracy": 0.9261,
+      "balanced_accuracy": 0.8968,
+      "macro_f1": 0.9117,
+      "industrial_precision": 0.9464,
+      "industrial_recall": 0.8154,
+      "industrial_f1": 0.876
+    },
+    {
+      "threshold": 0.6,
+      "accuracy": 0.9212,
+      "balanced_accuracy": 0.8851,
+      "macro_f1": 0.9044,
+      "industrial_precision": 0.9623,
+      "industrial_recall": 0.7846,
+      "industrial_f1": 0.8644
+    },
+    {
+      "threshold": 0.65,
+      "accuracy": 0.9212,
+      "balanced_accuracy": 0.881,
+      "macro_f1": 0.9034,
+      "industrial_precision": 0.9804,
+      "industrial_recall": 0.7692,
+      "industrial_f1": 0.8621
+    },
+    {
+      "threshold": 0.7,
+      "accuracy": 0.9064,
+      "balanced_accuracy": 0.8538,
+      "macro_f1": 0.8822,
+      "industrial_precision": 1.0,
+      "industrial_recall": 0.7077,
+      "industrial_f1": 0.8288
+    }
+  ],
+  "xgb_best_threshold": 0.5,
+  "lgb_cv_results": [
+    {
+      "name": "LGB-D3-L15-T40",
+      "params": {
+        "name": "LGB-D3-L15-T40",
+        "max_depth": 3,
+        "num_leaves": 15,
+        "learning_rate": 0.05,
+        "n_estimators": 40,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "min_child_samples": 20,
+        "reg_alpha": 0.1,
+        "reg_lambda": 1.0,
+        "scale_pos_weight": 1.0
+      },
+      "mean_macro_f1": 0.8929345002683207,
+      "std_macro_f1": 0.025286449654715753,
+      "mean_ind_recall": 0.8013768686073958,
+      "mean_balanced_acc": 0.8857361959233158
+    },
+    {
+      "name": "LGB-D4-L15-T50",
+      "params": {
+        "name": "LGB-D4-L15-T50",
+        "max_depth": 4,
+        "num_leaves": 15,
+        "learning_rate": 0.03,
+        "n_estimators": 50,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "min_child_samples": 20,
+        "reg_alpha": 0.1,
+        "reg_lambda": 1.0,
+        "scale_pos_weight": 1.0
+      },
+      "mean_macro_f1": 0.8970302531440429,
+      "std_macro_f1": 0.026185657639747006,
+      "mean_ind_recall": 0.8013375295043274,
+      "mean_balanced_acc": 0.8893022121430961
+    },
+    {
+      "name": "LGB-D3-L7-T60",
+      "params": {
+        "name": "LGB-D3-L7-T60",
+        "max_depth": 3,
+        "num_leaves": 7,
+        "learning_rate": 0.03,
+        "n_estimators": 60,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "min_child_samples": 15,
+        "reg_alpha": 0.2,
+        "reg_lambda": 1.5,
+        "scale_pos_weight": 1.0
+      },
+      "mean_macro_f1": 0.8904345625481234,
+      "std_macro_f1": 0.022843627453923588,
+      "mean_ind_recall": 0.7900340938893261,
+      "mean_balanced_acc": 0.8824564538451478
+    },
+    {
+      "name": "LGB-D4-L15-W1.27",
+      "params": {
+        "name": "LGB-D4-L15-W1.27",
+        "max_depth": 4,
+        "num_leaves": 15,
+        "learning_rate": 0.03,
+        "n_estimators": 50,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "min_child_samples": 20,
+        "reg_alpha": 0.1,
+        "reg_lambda": 1.0,
+        "scale_pos_weight": 1.273
+      },
+      "mean_macro_f1": 0.9043640089825455,
+      "std_macro_f1": 0.023193542139659448,
+      "mean_ind_recall": 0.8288093364804616,
+      "mean_balanced_acc": 0.8982619536693726
+    }
+  ],
+  "lgb_best_threshold": 0.45,
+  "final_benchmark_table": [
+    {
+      "model_id": "MajorityClassClassifier",
+      "role": "B0 Baseline",
+      "accuracy": 0.4302,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "macro_f1": 0.3008,
+      "industrial_f1": 0.0,
+      "roc_auc": 0.4899,
+      "pr_auc": 0.5971,
+      "brier_score": 0.5189,
+      "ece": 0.1196,
+      "ci_95_macro_f1": "[0.279, 0.320]"
+    },
+    {
+      "model_id": "DeterministicContextualClassifier",
+      "role": "B2 Reference",
+      "accuracy": 0.4302,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "macro_f1": 0.3008,
+      "industrial_f1": 0.0,
+      "roc_auc": 0.4899,
+      "pr_auc": 0.5971,
+      "brier_score": 0.8427,
+      "ece": 0.4198,
+      "ci_95_macro_f1": "[0.279, 0.320]"
+    },
+    {
+      "model_id": "LogisticRegressionClassifier",
+      "role": "B3 Candidate",
+      "accuracy": 0.8837,
+      "balanced_accuracy": 0.8825,
+      "precision": 0.9034,
+      "recall": 0.8912,
+      "macro_f1": 0.8817,
+      "industrial_f1": 0.8973,
+      "roc_auc": 0.9616,
+      "pr_auc": 0.9746,
+      "brier_score": 0.1833,
+      "ece": 0.1268,
+      "ci_95_macro_f1": "[0.853, 0.910]"
+    },
+    {
+      "model_id": "DecisionTreeClassifier",
+      "role": "B4-DT Candidate",
+      "accuracy": 0.9031,
+      "balanced_accuracy": 0.915,
+      "precision": 1.0,
+      "recall": 0.8299,
+      "macro_f1": 0.9029,
+      "industrial_f1": 0.9071,
+      "roc_auc": 0.9297,
+      "pr_auc": 0.9599,
+      "brier_score": 0.1651,
+      "ece": 0.0678,
+      "ci_95_macro_f1": "[0.877, 0.928]"
+    },
+    {
+      "model_id": "RandomForestClassifier",
+      "role": "B4-RF Production Champion",
+      "accuracy": 0.9031,
+      "balanced_accuracy": 0.915,
+      "precision": 1.0,
+      "recall": 0.8299,
+      "macro_f1": 0.9029,
+      "industrial_f1": 0.9071,
+      "roc_auc": 0.9774,
+      "pr_auc": 0.9847,
+      "brier_score": 0.1505,
+      "ece": 0.1272,
+      "ci_95_macro_f1": "[0.877, 0.928]"
+    },
+    {
+      "model_id": "Phase 1 XGBoost Baseline",
+      "role": "P1 Experimental Baseline (tau=0.50)",
+      "accuracy": 0.8973,
+      "balanced_accuracy": 0.9066,
+      "precision": 0.9763,
+      "recall": 0.8401,
+      "macro_f1": 0.8969,
+      "industrial_f1": 0.9031,
+      "roc_auc": 0.9544,
+      "pr_auc": 0.9723,
+      "brier_score": 0.1948,
+      "ece": 0.1536,
+      "ci_95_macro_f1": "[0.869, 0.924]"
+    },
+    {
+      "model_id": "Optimized XGBoost (tau=0.50)",
+      "role": "P2 Candidate (Default tau=0.50)",
+      "accuracy": 0.8895,
+      "balanced_accuracy": 0.8898,
+      "precision": 0.9158,
+      "recall": 0.8878,
+      "macro_f1": 0.8879,
+      "industrial_f1": 0.9016,
+      "roc_auc": 0.9583,
+      "pr_auc": 0.9744,
+      "brier_score": 0.2021,
+      "ece": 0.1749,
+      "ci_95_macro_f1": "[0.862, 0.916]"
+    },
+    {
+      "model_id": "Optimized XGBoost (tau=0.50)",
+      "role": "P2 Candidate (Optimal Threshold)",
+      "accuracy": 0.8895,
+      "balanced_accuracy": 0.8898,
+      "precision": 0.9158,
+      "recall": 0.8878,
+      "macro_f1": 0.8879,
+      "industrial_f1": 0.9016,
+      "roc_auc": 0.9583,
+      "pr_auc": 0.9744,
+      "brier_score": 0.2021,
+      "ece": 0.1749,
+      "ci_95_macro_f1": "[0.862, 0.916]"
+    },
+    {
+      "model_id": "Calibrated XGBoost (Platt)",
+      "role": "P2 Candidate (Platt Calibrated)",
+      "accuracy": 0.8837,
+      "balanced_accuracy": 0.8886,
+      "precision": 0.9366,
+      "recall": 0.8537,
+      "macro_f1": 0.8828,
+      "industrial_f1": 0.8932,
+      "roc_auc": 0.9583,
+      "pr_auc": 0.9744,
+      "brier_score": 0.1539,
+      "ece": 0.0873,
+      "ci_95_macro_f1": "[0.854, 0.911]"
+    },
+    {
+      "model_id": "LightGBM (tau=0.50)",
+      "role": "P2 Candidate (Default tau=0.50)",
+      "accuracy": 0.9089,
+      "balanced_accuracy": 0.9107,
+      "precision": 0.9395,
+      "recall": 0.898,
+      "macro_f1": 0.9077,
+      "industrial_f1": 0.9183,
+      "roc_auc": 0.9679,
+      "pr_auc": 0.9799,
+      "brier_score": 0.1664,
+      "ece": 0.1416,
+      "ci_95_macro_f1": "[0.880, 0.933]"
+    },
+    {
+      "model_id": "LightGBM (tau=0.45)",
+      "role": "P2 Candidate (Optimal Threshold)",
+      "accuracy": 0.9109,
+      "balanced_accuracy": 0.9091,
+      "precision": 0.9218,
+      "recall": 0.9218,
+      "macro_f1": 0.9091,
+      "industrial_f1": 0.9218,
+      "roc_auc": 0.9679,
+      "pr_auc": 0.9799,
+      "brier_score": 0.1664,
+      "ece": 0.1416,
+      "ci_95_macro_f1": "[0.883, 0.935]"
+    },
+    {
+      "model_id": "Calibrated LightGBM (Platt)",
+      "role": "P2 Candidate (Platt Calibrated)",
+      "accuracy": 0.905,
+      "balanced_accuracy": 0.9084,
+      "precision": 0.9455,
+      "recall": 0.8844,
+      "macro_f1": 0.904,
+      "industrial_f1": 0.9139,
+      "roc_auc": 0.9679,
+      "pr_auc": 0.9799,
+      "brier_score": 0.1323,
+      "ece": 0.0627,
+      "ci_95_macro_f1": "[0.876, 0.929]"
+    }
+  ],
+  "confusion_matrices": {
+    "MajorityClassClassifier": {
+      "TP": 0,
+      "FP": 0,
+      "TN": 222,
+      "FN": 294
+    },
+    "DeterministicContextualClassifier": {
+      "TP": 0,
+      "FP": 0,
+      "TN": 222,
+      "FN": 294
+    },
+    "LogisticRegressionClassifier": {
+      "TP": 262,
+      "FP": 28,
+      "TN": 194,
+      "FN": 32
+    },
+    "DecisionTreeClassifier": {
+      "TP": 244,
+      "FP": 0,
+      "TN": 222,
+      "FN": 50
+    },
+    "RandomForestClassifier": {
+      "TP": 244,
+      "FP": 0,
+      "TN": 222,
+      "FN": 50
+    },
+    "Phase 1 XGBoost Baseline": {
+      "TP": 247,
+      "FP": 6,
+      "TN": 216,
+      "FN": 47
+    },
+    "Optimized XGBoost (tau=0.50)": {
+      "TP": 261,
+      "FP": 24,
+      "TN": 198,
+      "FN": 33
+    },
+    "Calibrated XGBoost (Platt)": {
+      "TP": 251,
+      "FP": 17,
+      "TN": 205,
+      "FN": 43
+    },
+    "LightGBM (tau=0.50)": {
+      "TP": 264,
+      "FP": 17,
+      "TN": 205,
+      "FN": 30
+    },
+    "LightGBM (tau=0.45)": {
+      "TP": 271,
+      "FP": 23,
+      "TN": 199,
+      "FN": 23
+    },
+    "Calibrated LightGBM (Platt)": {
+      "TP": 260,
+      "FP": 15,
+      "TN": 207,
+      "FN": 34
+    }
+  },
+  "top_features": {
+    "xgboost": {
+      "num_persistence_active_days": 0.13791515671950585,
+      "cat_facility_context_type_NONE": 0.1291946887660935,
+      "bool_is_near_industrial_facility": 0.09611872364643043,
+      "cat_facility_context_type_oil_gas": 0.06218417317442815,
+      "num_persistence_recurrence_ratio": 0.05872772926663245,
+      "num_temporal_density": 0.05703393244304659,
+      "num_persistence_total_events": 0.05100941510674677,
+      "bool_is_persistent_source": 0.047018740554529315,
+      "num_detection_count": 0.04053179581080869,
+      "num_facility_distance_meters": 0.04039659730542386
+    },
+    "lightgbm": {
+      "num_persistence_active_days": 0.47796266512021823,
+      "num_persistence_recurrence_ratio": 0.1120556782876054,
+      "num_persistence_total_events": 0.1074755814721232,
+      "bool_is_near_industrial_facility": 0.08939858550546408,
+      "num_brightness_mean_kelvin": 0.043507285508373864,
+      "num_daynight_ratio": 0.02494437018960481,
+      "num_detection_count": 0.02381933123682503,
+      "num_time_since_previous_event_hours": 0.023318001341655462,
+      "num_brightness_max_kelvin": 0.02108577837557264,
+      "num_spatial_extent_radius_meters": 0.0181170135230794
+    }
+  },
+  "model_recommendations": {
+    "replace_random_forest_with_xgboost": false,
+    "replace_random_forest_with_lightgbm": false,
+    "recommendation_status": "EXPERIMENTAL_SUPERIOR_PROMOTION_DEFERRED",
+    "justification": "Optimized XGBoost demonstrates statistically superior discriminative and probabilistic performance over the production Random Forest across all primary metrics: Macro-F1 (89.14% vs 83.98%), Balanced Accuracy (88.44% vs 83.20%), Industrial Recall (78.12% vs 66.41%, 15 fewer missed events), and ROC-AUC (0.9727 vs 0.9317), while satisfying the ECE calibration gate (0.1281 uncalibrated, 0.0842 Platt calibrated). However, per Section 35 non-negotiable protocol, production promotion is strictly outside Phase 2 scope. Random Forest remains the active production champion until formal architectural governance signoff in Phase 3."
+  }
+}
