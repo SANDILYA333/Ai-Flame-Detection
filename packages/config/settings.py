@@ -205,6 +205,42 @@ class Settings(BaseSettings):
         description="Exponential backoff base factor in seconds for OSM requests",
     )
 
+    # Open-Meteo Weather API Configuration (Phase 1 Wind Intelligence)
+    OPEN_METEO_BASE_URL: str = Field(
+        default="https://api.open-meteo.com",
+        description="Base URL endpoint for Open-Meteo meteorological API",
+    )
+    OPEN_METEO_TIMEOUT_SECONDS: float = Field(
+        default=10.0,
+        gt=0.0,
+        le=120.0,
+        description="HTTP request timeout in seconds for Open-Meteo API",
+    )
+    OPEN_METEO_MAX_RETRIES: int = Field(
+        default=2,
+        ge=0,
+        le=5,
+        description="Maximum retry attempts for transient Open-Meteo API failures",
+    )
+    OPEN_METEO_RETRY_BACKOFF_FACTOR: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=10.0,
+        description="Exponential backoff base factor in seconds for Open-Meteo requests",
+    )
+    WEATHER_CACHE_TTL_SECONDS: int = Field(
+        default=900,
+        ge=0,
+        le=86400,
+        description="In-memory weather cache TTL in seconds (default 15 minutes)",
+    )
+    WEATHER_CACHE_MAX_ENTRIES: int = Field(
+        default=2048,
+        ge=16,
+        le=100000,
+        description="Maximum number of spatially bucketed weather cache entries",
+    )
+
     # Forest Threat & Proximity Intelligence Configuration (Phase 3 & 4)
     FOREST_SEARCH_DISTANCE_KM: float = Field(
         default=10.0,
