@@ -1,7 +1,7 @@
 {
   "task_id": "NEXT-008",
   "decision_version": "v1.0.0",
-  "created_at": "2026-09-04T08:38:17.624743+00:00",
+  "created_at": "2026-09-04T11:46:47.221982+00:00",
   "dataset_hash": "b511e3dee5f05594567ca4460f2a7bc64e65c9dab82d2969f70bd8d041ff7256",
   "evaluation_artifact_hash": "668683a3ca906d5b4fbd376159d7a69050f0b55ef890407e6cdc646e72da8a38",
   "feature_schema_version": "feat_v1.0.0",
@@ -201,6 +201,6 @@
   "provenance": {
     "evaluation_report_path": "artifacts/real/evaluation/real_model_evaluation_report.json",
     "production_artifact_dir": "artifacts/real/production",
-    "generated_at": "2026-09-04T08:38:17.624787+00:00"
+    "generated_at": "2026-09-04T11:46:47.222009+00:00"
   }
 }
