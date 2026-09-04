@@ -177,6 +177,113 @@ class Settings(BaseSettings):
         description="Safe HTTP User-Agent identifier for NASA FIRMS requests",
     )
 
+    # OpenStreetMap (OSM) Overpass API Configuration
+    OSM_OVERPASS_URL: str = Field(
+        default="https://overpass-api.de/api/interpreter",
+        description="Overpass API interpreter endpoint for OSM geospatial queries",
+    )
+    OSM_USER_AGENT: str = Field(
+        default="PyroSat-AI-Forest-Intelligence/1.0 (https://github.com/SANDILYA333/Ai-Flame-Detection)",
+        description="HTTP User-Agent header for OpenStreetMap Overpass API requests",
+    )
+    OSM_TIMEOUT_SECONDS: float = Field(
+        default=60.0,
+        gt=0.0,
+        le=300.0,
+        description="HTTP request timeout in seconds for Overpass API requests",
+    )
+    OSM_MAX_RETRIES: int = Field(
+        default=3,
+        ge=0,
+        le=10,
+        description="Maximum retry attempts for transient Overpass API failures",
+    )
+    OSM_RETRY_BACKOFF_FACTOR: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=10.0,
+        description="Exponential backoff base factor in seconds for OSM requests",
+    )
+
+    # Forest Threat & Proximity Intelligence Configuration (Phase 3 & 4)
+    FOREST_SEARCH_DISTANCE_KM: float = Field(
+        default=10.0,
+        gt=0.0,
+        le=500.0,
+        description="Default geographic search distance in km",
+    )
+    FOREST_THREAT_DISTANCE_KM: float = Field(
+        default=10.0,
+        gt=0.0,
+        le=100.0,
+        description="Distance threshold in km for proximity threat",
+    )
+    FOREST_AWARENESS_DISTANCE_KM: float = Field(
+        default=10.0,
+        gt=0.0,
+        le=100.0,
+        description="Distance in km for FOREST AWARENESS state",
+    )
+    FOREST_WARNING_DISTANCE_KM: float = Field(
+        default=5.0,
+        gt=0.0,
+        le=50.0,
+        description="Distance in km for FOREST WARNING state",
+    )
+    FOREST_CRITICAL_DISTANCE_KM: float = Field(
+        default=2.0,
+        ge=0.0,
+        le=50.0,
+        description="Distance in km for CRITICAL threat level",
+    )
+    FOREST_HIGH_DISTANCE_KM: float = Field(
+        default=2.5,
+        ge=0.0,
+        le=50.0,
+        description="Distance in km for HIGH threat level",
+    )
+    FOREST_MODERATE_DISTANCE_KM: float = Field(
+        default=5.0,
+        ge=0.0,
+        le=100.0,
+        description="Distance in km for MODERATE threat level",
+    )
+
+    @property
+    def FOREST_SEARCH_RADIUS_KM(self) -> float:
+        """Alias for FOREST_SEARCH_DISTANCE_KM."""
+        return self.FOREST_SEARCH_DISTANCE_KM
+
+    @property
+    def FOREST_THREAT_RADIUS_KM(self) -> float:
+        """Alias for FOREST_THREAT_DISTANCE_KM."""
+        return self.FOREST_THREAT_DISTANCE_KM
+
+    @property
+    def FOREST_AWARENESS_RADIUS_KM(self) -> float:
+        """Alias for FOREST_AWARENESS_DISTANCE_KM."""
+        return self.FOREST_AWARENESS_DISTANCE_KM
+
+    @property
+    def FOREST_WARNING_RADIUS_KM(self) -> float:
+        """Alias for FOREST_WARNING_DISTANCE_KM."""
+        return self.FOREST_WARNING_DISTANCE_KM
+
+    @property
+    def FOREST_CRITICAL_RADIUS_KM(self) -> float:
+        """Alias for FOREST_CRITICAL_DISTANCE_KM."""
+        return self.FOREST_CRITICAL_DISTANCE_KM
+
+    @property
+    def FOREST_HIGH_RADIUS_KM(self) -> float:
+        """Alias for FOREST_HIGH_DISTANCE_KM."""
+        return self.FOREST_HIGH_DISTANCE_KM
+
+    @property
+    def FOREST_MODERATE_RADIUS_KM(self) -> float:
+        """Alias for FOREST_MODERATE_DISTANCE_KM."""
+        return self.FOREST_MODERATE_DISTANCE_KM
+
     # Redis Job Queue Configuration (WORK-002 / Section 21)
     REDIS_URL: SecretStr | None = Field(
         default=None,
