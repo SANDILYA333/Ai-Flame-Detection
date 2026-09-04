@@ -12,6 +12,7 @@ from services.api.routes.gis_layers import router as gis_layers_router
 from services.api.routes.hazmat import router as hazmat_router
 from services.api.routes.health import router as health_router
 from services.api.routes.historical import router as historical_router
+from services.api.routes.industrial import router as industrial_router
 from services.api.routes.inference import router as inference_router
 from services.api.routes.layers import router as layers_router
 from services.api.routes.readiness import router as readiness_router
@@ -34,6 +35,7 @@ api_router.include_router(responders_router)
 api_router.include_router(dossier_router)
 api_router.include_router(simulation_router)
 api_router.include_router(historical_router)
+api_router.include_router(industrial_router)
 api_router.include_router(hazmat_router)
 api_router.include_router(gis_layers_router)
 api_router.include_router(forests_router)
@@ -53,6 +55,7 @@ __all__ = [
     "hazmat_router",
     "health_router",
     "historical_router",
+    "industrial_router",
     "inference_router",
     "layers_router",
     "readiness_router",
