@@ -6,6 +6,8 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { MAPLIBRE_CONFIG } from "@/lib/map/maplibre-config";
 import { ThermalEvent } from "@/types/event";
 import { createFireMarkerElement, updateFireMarkerSelection } from "./FireMarkerElement";
+import { useEventContext } from "@/context/EventContext";
+import { fetchForestsGeoJson, ForestGeoJsonFeatureCollection } from "@/lib/api/forests";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -81,6 +83,67 @@ function computePlumeGeometries(lat: number, lon: number, frp: number, windDir =
       geometry: { type: "Polygon", coordinates: [circlePts] },
       properties: { label: "ERG INITIAL ISOLATION BOUNDARY" },
     },
+  };
+}
+
+function computeForestThreatRings(lat: number, lon: number) {
+  const R = 6371;
+  const makeCircle = (distanceKm: number) => {
+    const pts: [number, number][] = [];
+    const radLat = (lat * Math.PI) / 180;
+    const radLon = (lon * Math.PI) / 180;
+    const angDist = distanceKm / R;
+    for (let angle = 0; angle <= 360; angle += 10) {
+      const radBearing = (angle * Math.PI) / 180;
+      const lat2 = Math.asin(
+        Math.sin(radLat) * Math.cos(angDist) +
+          Math.cos(radLat) * Math.sin(angDist) * Math.cos(radBearing)
+      );
+      const lon2 =
+        radLon +
+        Math.atan2(
+          Math.sin(radBearing) * Math.sin(angDist) * Math.cos(radLat),
+          Math.cos(angDist) - Math.sin(radLat) * Math.sin(lat2)
+        );
+      pts.push([
+        Number(((lon2 * 180) / Math.PI).toFixed(6)),
+        Number(((lat2 * 180) / Math.PI).toFixed(6)),
+      ]);
+    }
+    return pts;
+  };
+
+  return {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        geometry: { type: "Polygon", coordinates: [makeCircle(10.0)] },
+        properties: {
+          level: "AWARENESS",
+          label: "10 km Awareness Buffer",
+          color: "#3b82f6",
+        },
+      },
+      {
+        type: "Feature",
+        geometry: { type: "Polygon", coordinates: [makeCircle(5.0)] },
+        properties: {
+          level: "WARNING",
+          label: "5 km Warning Buffer",
+          color: "#f59e0b",
+        },
+      },
+      {
+        type: "Feature",
+        geometry: { type: "Polygon", coordinates: [makeCircle(2.0)] },
+        properties: {
+          level: "CRITICAL",
+          label: "2 km Critical Buffer",
+          color: "#ef4444",
+        },
+      },
+    ],
   };
 }
 
@@ -366,14 +429,18 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
 
       const plumeSourceId = "selected-incident-plume-source";
       const evacSourceId = "selected-incident-evac-source";
+      const forestRingsSourceId = "selected-forest-threat-rings-source";
 
       if (!selectedEvent) {
         if (map.getLayer("selected-incident-plume-fill")) map.removeLayer("selected-incident-plume-fill");
         if (map.getLayer("selected-incident-plume-line")) map.removeLayer("selected-incident-plume-line");
         if (map.getLayer("selected-incident-evac-fill")) map.removeLayer("selected-incident-evac-fill");
         if (map.getLayer("selected-incident-evac-line")) map.removeLayer("selected-incident-evac-line");
+        if (map.getLayer("selected-forest-threat-rings-line")) map.removeLayer("selected-forest-threat-rings-line");
+        if (map.getLayer("selected-forest-threat-rings-fill")) map.removeLayer("selected-forest-threat-rings-fill");
         if (map.getSource(plumeSourceId)) map.removeSource(plumeSourceId);
         if (map.getSource(evacSourceId)) map.removeSource(evacSourceId);
+        if (map.getSource(forestRingsSourceId)) map.removeSource(forestRingsSourceId);
         return;
       }
 
@@ -382,6 +449,85 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
         selectedEvent.longitude,
         selectedEvent.frp_mw
       );
+      const threatRingsCollection = computeForestThreatRings(
+        selectedEvent.latitude,
+        selectedEvent.longitude
+      );
+
+      // Proximity Threat Buffer Rings Source & Layers
+      if (map.getSource(forestRingsSourceId)) {
+        (map.getSource(forestRingsSourceId) as maplibregl.GeoJSONSource).setData(threatRingsCollection as any);
+      } else {
+        map.addSource(forestRingsSourceId, {
+          type: "geojson",
+          data: threatRingsCollection as any,
+        });
+
+        map.addLayer(
+          {
+            id: "selected-forest-threat-rings-fill",
+            type: "fill",
+            source: forestRingsSourceId,
+            paint: {
+              "fill-color": [
+                "match",
+                ["get", "level"],
+                "CRITICAL",
+                "#ef4444",
+                "WARNING",
+                "#f59e0b",
+                "AWARENESS",
+                "#3b82f6",
+                "#10b981",
+              ],
+              "fill-opacity": [
+                "match",
+                ["get", "level"],
+                "CRITICAL",
+                0.08,
+                "WARNING",
+                0.05,
+                "AWARENESS",
+                0.03,
+                0.02,
+              ],
+            },
+          },
+          map.getLayer("forest-intelligence-fill") ? "forest-intelligence-fill" : undefined
+        );
+
+        map.addLayer({
+          id: "selected-forest-threat-rings-line",
+          type: "line",
+          source: forestRingsSourceId,
+          paint: {
+            "line-color": [
+              "match",
+              ["get", "level"],
+              "CRITICAL",
+              "#ef4444",
+              "WARNING",
+              "#f59e0b",
+              "AWARENESS",
+              "#3b82f6",
+              "#10b981",
+            ],
+            "line-width": [
+              "match",
+              ["get", "level"],
+              "CRITICAL",
+              1.8,
+              "WARNING",
+              1.4,
+              "AWARENESS",
+              1.0,
+              1.0,
+            ],
+            "line-dasharray": [3, 2],
+            "line-opacity": 0.85,
+          },
+        });
+      }
 
       // Plume Source & Layers
       if (map.getSource(plumeSourceId)) {
@@ -456,6 +602,71 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
         essential: true,
       });
     }, [selectedEvent]);
+
+    // 6. Render OpenStreetMap Forest Intelligence Layer
+    const { activeLayers } = useEventContext();
+    const isForestLayerActive = activeLayers?.["indian-forest-reserves"] ?? true;
+
+    useEffect(() => {
+      if (!mapInstanceRef.current || !isLoaded) return;
+      const map = mapInstanceRef.current;
+      const forestSourceId = "forest-intelligence-source";
+      const forestFillLayerId = "forest-intelligence-fill";
+      const forestLineLayerId = "forest-intelligence-line";
+
+      if (!isForestLayerActive) {
+        if (map.getLayer(forestFillLayerId)) map.removeLayer(forestFillLayerId);
+        if (map.getLayer(forestLineLayerId)) map.removeLayer(forestLineLayerId);
+        if (map.getSource(forestSourceId)) map.removeSource(forestSourceId);
+        return;
+      }
+
+      let isCancelled = false;
+
+      fetchForestsGeoJson({ limit: 100 })
+        .then((data) => {
+          if (isCancelled || !mapInstanceRef.current) return;
+          if (map.getSource(forestSourceId)) {
+            (map.getSource(forestSourceId) as maplibregl.GeoJSONSource).setData(data as any);
+          } else {
+            map.addSource(forestSourceId, {
+              type: "geojson",
+              data: data as any,
+            });
+
+            map.addLayer(
+              {
+                id: forestFillLayerId,
+                type: "fill",
+                source: forestSourceId,
+                paint: {
+                  "fill-color": "#22c55e",
+                  "fill-opacity": 0.22,
+                },
+              },
+              map.getLayer("selected-incident-plume-fill") ? "selected-incident-plume-fill" : undefined
+            );
+
+            map.addLayer({
+              id: forestLineLayerId,
+              type: "line",
+              source: forestSourceId,
+              paint: {
+                "line-color": "#16a34a",
+                "line-width": 1.2,
+                "line-opacity": 0.8,
+              },
+            });
+          }
+        })
+        .catch((err) => {
+          console.warn("Forest layer fetch non-critical error:", err);
+        });
+
+      return () => {
+        isCancelled = true;
+      };
+    }, [isForestLayerActive, isLoaded]);
 
     const handleRetry = () => {
       setInitCount((c) => c + 1);
