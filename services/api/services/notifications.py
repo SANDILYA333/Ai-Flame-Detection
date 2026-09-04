@@ -48,9 +48,11 @@ class NotificationService:
         escalation_type: EscalationType,
         channel: NotificationChannel,
         trigger_source: str = "ADMIN_CONFIRMED",
+        wind_sector: int | None = None,
     ) -> str:
         """Generate a deterministic logical idempotency key across all operational dimensions."""
-        return f"{event_id}:{responder_id}:{escalation_type.value}:{channel.value}:{trigger_source}"
+        sector_str = f":wind_sec_{wind_sector}" if wind_sector is not None else ""
+        return f"{event_id}:{responder_id}:{escalation_type.value}:{channel.value}:{trigger_source}{sector_str}"
 
     @classmethod
     def validate_and_normalize_phone(cls, phone: str | None) -> str:
@@ -95,6 +97,9 @@ class NotificationService:
         priority: ResponsePriority,
         is_critical: bool = False,
         mode: NotificationMode = NotificationMode.SIMULATED,
+        wind_summary: str | None = None,
+        hazard_reach_km: float | None = None,
+        isolation_radius_m: float | None = 200.0,
     ) -> str:
         """Format scientific alert text adhering to Section 24 message template standards."""
         loc_str = location or "Spatial Anomaly Cluster"
@@ -108,6 +113,12 @@ class NotificationService:
             else ""
         )
 
+        wind_lines = ""
+        if wind_summary:
+            reach_str = f"\nPredicted Hazard Corridor: {hazard_reach_km:.1f} km" if hazard_reach_km else ""
+            iso_str = f"\nModeled Isolation Zone: {isolation_radius_m:.0f} m" if isolation_radius_m else ""
+            wind_lines = f"\nWind Conditions: {wind_summary}{reach_str}{iso_str}"
+
         if is_critical or priority == ResponsePriority.CRITICAL:
             return (
                 "FLAME INTELLIGENCE — CRITICAL ALERT\n\n"
@@ -115,7 +126,8 @@ class NotificationService:
                 f"Location: {loc_str}\n"
                 f"Classification: {cls_str}\n"
                 f"Model Confidence: {conf_str}%\n"
-                f"Radiative Power (FRP): {frp_str} MW\n"
+                f"Radiative Power (FRP): {frp_str} MW"
+                f"{wind_lines}\n"
                 f"Event ID: {event_id}\n\n"
                 "Emergency response and medical preparedness are recommended."
                 f"{mode_footer}"
@@ -127,11 +139,13 @@ class NotificationService:
             f"Location: {loc_str}\n"
             f"Classification: {cls_str}\n"
             f"Model Confidence: {conf_str}%\n"
-            f"Radiative Power (FRP): {frp_str} MW\n"
+            f"Radiative Power (FRP): {frp_str} MW"
+            f"{wind_lines}\n"
             f"Event ID: {event_id}\n\n"
             "Emergency response assessment is recommended."
             f"{mode_footer}"
         )
+
 
     @classmethod
     def format_forest_proximity_message(
@@ -181,6 +195,7 @@ class NotificationService:
         responder_id: str = "responder-default",
         escalation_type: EscalationType = EscalationType.ADMIN_CONFIRMED,
         trigger_source: str = "ADMIN_CONFIRMED",
+        wind_sector: int | None = None,
         correlation_id: str | None = None,
         settings: Settings | None = None,
     ) -> list[ChannelResult]:
@@ -198,6 +213,7 @@ class NotificationService:
                 escalation_type=escalation_type,
                 channel=ch,
                 trigger_source=trigger_source,
+                wind_sector=wind_sector,
             )
 
             # Check fine-grained channel idempotency cache
