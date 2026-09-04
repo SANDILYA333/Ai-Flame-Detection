@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from services.api.routes.detections import router as detections_router
 from services.api.routes.dossier import router as dossier_router
 from services.api.routes.events import router as events_router
+from services.api.routes.forests import router as forests_router
 from services.api.routes.gis_layers import router as gis_layers_router
 from services.api.routes.hazmat import router as hazmat_router
 from services.api.routes.health import router as health_router
@@ -32,12 +33,14 @@ api_router.include_router(simulation_router)
 api_router.include_router(historical_router)
 api_router.include_router(hazmat_router)
 api_router.include_router(gis_layers_router)
+api_router.include_router(forests_router)
 
 __all__ = [
     "api_router",
     "detections_router",
     "dossier_router",
     "events_router",
+    "forests_router",
     "gis_layers_router",
     "hazmat_router",
     "health_router",
