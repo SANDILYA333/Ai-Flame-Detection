@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef, useCallback } from "react";
+import React, { useEffect, useRef, useState, useMemo, useImperativeHandle, forwardRef, useCallback } from "react";
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MAPLIBRE_CONFIG } from "@/lib/map/maplibre-config";
@@ -10,6 +10,12 @@ import { useEventContext } from "@/context/EventContext";
 import { useEventDispersion } from "@/hooks/useEventDispersion";
 import { fetchForestsGeoJson, ForestGeoJsonFeatureCollection } from "@/lib/api/forests";
 import { DEMO_FORESTS_GEOJSON } from "@/features/forests/mock/demo-forests";
+import { useIndustrialAssets } from "@/hooks/useIndustrialAssets";
+import {
+  IndustrialAssetFeatureCollection,
+  filterIndustrialAssetsByLayers,
+  EMPTY_INDUSTRIAL_COLLECTION,
+} from "@/lib/api/industrial";
 import { AlertTriangle, RefreshCw, Wind, Compass, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -198,6 +204,15 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
     const forestGeoJsonRef = useRef<ForestGeoJsonFeatureCollection>(DEMO_FORESTS_GEOJSON);
     const [forestData, setForestData] = useState<ForestGeoJsonFeatureCollection>(DEMO_FORESTS_GEOJSON);
     const hoverPopupRef = useRef<maplibregl.Popup | null>(null);
+
+    // Industrial Infrastructure Layer State & Dynamic GIS Layer Selection
+    const { data: industrialData } = useIndustrialAssets();
+    const filteredIndustrialData = useMemo(() => {
+      return filterIndustrialAssetsByLayers(industrialData, activeLayers);
+    }, [industrialData, activeLayers]);
+    const industrialGeoJsonRef = useRef<IndustrialAssetFeatureCollection>(filteredIndustrialData);
+    industrialGeoJsonRef.current = filteredIndustrialData;
+    const industrialPopupRef = useRef<maplibregl.Popup | null>(null);
 
     // Atmospheric Dispersion & Plume Hazard State
     const { dispersion, geojson: dispersionGeoJson } = useEventDispersion(selectedEvent);
@@ -462,6 +477,198 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       }
     }, []);
 
+    /**
+     * Idempotently reconciles Industrial Infrastructure MapLibre GeoJSON Source and Circle Layers.
+     * Uses native WebGL circle rendering to guarantee zero coordinate drift during zoom and pan.
+     */
+    const reconcileIndustrialLayers = useCallback((
+      map: maplibregl.Map,
+      data: IndustrialAssetFeatureCollection,
+      active: boolean = true
+    ) => {
+      const sourceId = "industrial-assets-source";
+      const glowLayerId = "industrial-assets-glow";
+      const circleLayerId = "industrial-assets-circle";
+
+      const hasFeatures = active && Boolean(data && Array.isArray(data.features) && data.features.length > 0);
+
+      if (!hasFeatures) {
+        if (industrialPopupRef.current) {
+          industrialPopupRef.current.remove();
+          industrialPopupRef.current = null;
+        }
+        if (map.getSource(sourceId)) {
+          (map.getSource(sourceId) as maplibregl.GeoJSONSource).setData(EMPTY_INDUSTRIAL_COLLECTION as any);
+        }
+        if (map.getLayer(glowLayerId)) {
+          map.setLayoutProperty(glowLayerId, "visibility", "none");
+        }
+        if (map.getLayer(circleLayerId)) {
+          map.setLayoutProperty(circleLayerId, "visibility", "none");
+        }
+        return;
+      }
+
+      const currentData = (hasFeatures ? data : EMPTY_INDUSTRIAL_COLLECTION) as any;
+      if (map.getSource(sourceId)) {
+        (map.getSource(sourceId) as maplibregl.GeoJSONSource).setData(currentData);
+      } else {
+        map.addSource(sourceId, {
+          type: "geojson",
+          data: currentData,
+        });
+      }
+
+      // 1. Ambient tactical halo glow
+      if (!map.getLayer(glowLayerId)) {
+        map.addLayer({
+          id: glowLayerId,
+          type: "circle",
+          source: sourceId,
+          layout: {
+            visibility: hasFeatures ? "visible" : "none",
+          },
+          paint: {
+            "circle-radius": [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              4, 4.5,
+              8, 8.5,
+              14, 15,
+            ],
+            "circle-color": [
+              "match",
+              ["get", "industry"],
+              "power", "#eab308",
+              "oil_gas", "#f97316",
+              "metallurgy", "#a855f7",
+              "chemical", "#06b6d4",
+              "#10b981",
+            ],
+            "circle-opacity": 0.2,
+            "circle-blur": 0.6,
+          },
+        });
+      } else {
+        map.setLayoutProperty(glowLayerId, "visibility", hasFeatures ? "visible" : "none");
+      }
+
+      // 2. Crisp tactical circle layer
+      if (!map.getLayer(circleLayerId)) {
+        map.addLayer({
+          id: circleLayerId,
+          type: "circle",
+          source: sourceId,
+          layout: {
+            visibility: hasFeatures ? "visible" : "none",
+          },
+          paint: {
+            "circle-radius": [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              4, 2.5,
+              7, 4.5,
+              12, 7.5,
+            ],
+            "circle-color": [
+              "match",
+              ["get", "industry"],
+              "power", "#eab308",
+              "oil_gas", "#f97316",
+              "metallurgy", "#a855f7",
+              "chemical", "#06b6d4",
+              "#10b981",
+            ],
+            "circle-stroke-color": "#090d16",
+            "circle-stroke-width": 1.2,
+            "circle-opacity": 0.92,
+          },
+        });
+
+          // Interactive hover & tooltip popup
+          map.on("mouseenter", circleLayerId, (e) => {
+            map.getCanvas().style.cursor = "pointer";
+            const feat = e.features?.[0];
+            if (!feat) return;
+
+            const p = (feat.properties || {}) as Record<string, any>;
+            const coords = (feat.geometry as any).coordinates.slice();
+            const ind = String(p.industry || "industrial").toUpperCase();
+            const status = String(p.status || "operating").toUpperCase();
+            const capStr = p.capacity
+              ? `${p.capacity} ${p.capacity_unit || "MW"}`
+              : null;
+            const fuelStr = p.primary_fuel ? `Fuel: ${p.primary_fuel}` : null;
+            const ownerStr = p.owner ? `Owner: ${p.owner}` : null;
+            const locStr = [p.city, p.state, p.country || "India"].filter(Boolean).join(", ");
+            const coordStr = `${Number(coords[1]).toFixed(4)}°N, ${Number(coords[0]).toFixed(4)}°E`;
+
+            const sectorColor =
+              p.industry === "power"
+                ? "#eab308"
+                : p.industry === "oil_gas"
+                ? "#f97316"
+                : p.industry === "metallurgy"
+                ? "#a855f7"
+                : p.industry === "chemical"
+                ? "#06b6d4"
+                : "#10b981";
+
+            const popupHtml = `
+              <div style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; padding: 7px 10px; min-width: 200px; max-width: 260px; color: #f2f5f7; font-size: 11px; line-height: 1.4; background: rgba(13, 17, 23, 0.95); border: 1px solid #252c35; border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); backdrop-filter: blur(8px);">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px;">
+                  <strong style="font-size: 12px; color: #f2f5f7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    ${p.name || "Industrial Facility"}
+                  </strong>
+                </div>
+                <div style="display: flex; gap: 4px; margin-bottom: 5px; font-size: 9px;">
+                  <span style="background: ${sectorColor}26; color: ${sectorColor}; padding: 1px 5px; border-radius: 3px; border: 1px solid ${sectorColor}55; font-weight: 600;">
+                    ${ind}
+                  </span>
+                  <span style="background: rgba(57, 255, 136, 0.15); color: #39ff88; padding: 1px 5px; border-radius: 3px; border: 1px solid rgba(57, 255, 136, 0.3); font-weight: 600;">
+                    ${status}
+                  </span>
+                </div>
+                ${locStr ? `<div style="color: #b5bec8; font-size: 10px; margin-bottom: 2px;">📍 ${locStr}</div>` : ""}
+                ${capStr ? `<div style="color: #ffbf24; font-size: 10px; font-weight: 600; margin-bottom: 1px;">⚡ ${capStr}</div>` : ""}
+                ${fuelStr ? `<div style="color: #737e89; font-size: 9px; margin-bottom: 1px;">${fuelStr}</div>` : ""}
+                ${ownerStr ? `<div style="color: #4b545e; font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 3px;">${ownerStr}</div>` : ""}
+                <div style="border-top: 1px solid #252c35; padding-top: 3px; margin-top: 3px; display: flex; justify-content: space-between; font-size: 9px; color: #737e89;">
+                  <span>COORDS</span>
+                  <span style="color: #00d9ff;">${coordStr}</span>
+                </div>
+              </div>
+            `;
+
+            if (industrialPopupRef.current) {
+              industrialPopupRef.current.remove();
+            }
+
+            industrialPopupRef.current = new maplibregl.Popup({
+              closeButton: false,
+              closeOnClick: false,
+              offset: 10,
+              className: "industrial-tooltip-popup",
+            })
+              .setLngLat(coords as [number, number])
+              .setHTML(popupHtml)
+              .addTo(map);
+          });
+
+          map.on("mouseleave", circleLayerId, () => {
+            map.getCanvas().style.cursor = "";
+            if (industrialPopupRef.current) {
+              industrialPopupRef.current.remove();
+              industrialPopupRef.current = null;
+            }
+          });
+        } else {
+          map.setLayoutProperty(circleLayerId, "visibility", hasFeatures ? "visible" : "none");
+        }
+    }, []);
+
     const initializeMap = () => {
       if (!containerRef.current) return;
 
@@ -493,6 +700,7 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
           setHasError(false);
           map.resize();
           reconcileForestLayers(map, forestGeoJsonRef.current, isForestLayerActive);
+          reconcileIndustrialLayers(map, industrialGeoJsonRef.current);
         };
 
         if (map.loaded()) {
@@ -501,10 +709,11 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
           map.once("load", markLoaded);
         }
 
-        // Reconcile forest layers on any style update / reload
+        // Reconcile layers on any style update / reload
         map.on("styledata", () => {
           if (map.isStyleLoaded()) {
             reconcileForestLayers(map, forestGeoJsonRef.current, isForestLayerActive);
+            reconcileIndustrialLayers(map, industrialGeoJsonRef.current);
           }
         });
 
@@ -522,7 +731,9 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
             console.warn("MapLibre style error, applying fallback:", e);
             try {
               map.setStyle(MAPLIBRE_CONFIG.fallbackStyle as any);
-              markLoaded();
+              map.once("styledata", () => {
+                markLoaded();
+              });
             } catch (fallbackErr) {
               console.error("MapLibre fallback failed:", fallbackErr);
               setHasError(true);
@@ -536,7 +747,9 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
             fallbackAttemptedRef.current = true;
             try {
               map.setStyle(MAPLIBRE_CONFIG.fallbackStyle as any);
-              markLoaded();
+              map.once("styledata", () => {
+                markLoaded();
+              });
             } catch (fallbackErr) {
               setHasError(true);
             }
@@ -597,6 +810,10 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
             hoverPopupRef.current.remove();
             hoverPopupRef.current = null;
           }
+          if (industrialPopupRef.current) {
+            industrialPopupRef.current.remove();
+            industrialPopupRef.current = null;
+          }
           markerMapRef.current.forEach((rec) => rec.marker.remove());
           markerMapRef.current.clear();
           if (mapInstanceRef.current) {
@@ -619,17 +836,41 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initCount]);
 
+    // Resilient industrial reconciliation caller that guarantees applying updates even if style is mid-stream
+    const reconcileIndustrial = useCallback(() => {
+      const map = mapInstanceRef.current;
+      if (!map) return;
+      if (map.isStyleLoaded()) {
+        reconcileIndustrialLayers(map, filteredIndustrialData);
+      } else {
+        const onReady = () => {
+          if (mapInstanceRef.current && mapInstanceRef.current.isStyleLoaded()) {
+            reconcileIndustrialLayers(mapInstanceRef.current, filteredIndustrialData);
+          }
+        };
+        map.once("idle", onReady);
+        map.once("styledata", onReady);
+      }
+    }, [filteredIndustrialData, reconcileIndustrialLayers]);
+
     useEffect(() => {
       if (isVisible && mapInstanceRef.current) {
         mapInstanceRef.current.resize();
-        const t1 = setTimeout(() => mapInstanceRef.current?.resize(), 40);
-        const t2 = setTimeout(() => mapInstanceRef.current?.resize(), 160);
+        reconcileIndustrial();
+        const t1 = setTimeout(() => {
+          mapInstanceRef.current?.resize();
+          reconcileIndustrial();
+        }, 40);
+        const t2 = setTimeout(() => {
+          mapInstanceRef.current?.resize();
+          reconcileIndustrial();
+        }, 160);
         return () => {
           clearTimeout(t1);
           clearTimeout(t2);
         };
       }
-    }, [isVisible]);
+    }, [isVisible, reconcileIndustrial]);
 
     // Initial forest load
     useEffect(() => {
@@ -659,6 +900,12 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
         reconcileForestLayers(map, forestData, isForestLayerActive);
       }
     }, [forestData, isForestLayerActive, isLoaded, reconcileForestLayers]);
+
+    // Reconcile industrial infrastructure layer whenever activeLayers or industrialData changes
+    useEffect(() => {
+      if (!mapInstanceRef.current || !isLoaded) return;
+      reconcileIndustrial();
+    }, [isLoaded, reconcileIndustrial]);
 
     // Render & In-Place Reconcile Thermal Fire Markers on 2D Map
     useEffect(() => {

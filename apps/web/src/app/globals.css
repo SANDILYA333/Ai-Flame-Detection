@@ -157,3 +157,21 @@ body {
     transition: none !important;
   }
 }
+
+/* MapLibre Tactical Tooltip & Popup Dark HUD Overrides */
+.maplibregl-popup-content {
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.maplibregl-popup-tip {
+  display: none !important;
+}
+
+.industrial-tooltip-popup,
+.forest-tooltip-popup {
+  pointer-events: none !important;
+  z-index: 40 !important;
+}
