@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from services.api.routes.detections import router as detections_router
+from services.api.routes.dispersion import router as dispersion_router
 from services.api.routes.dossier import router as dossier_router
 from services.api.routes.events import router as events_router
 from services.api.routes.forests import router as forests_router
@@ -17,6 +18,7 @@ from services.api.routes.responders import router as responders_router
 from services.api.routes.simulation import router as simulation_router
 from services.api.routes.sources import router as sources_router
 from services.api.routes.version import router as version_router
+from services.api.routes.weather import router as weather_router
 
 api_router = APIRouter()
 api_router.include_router(health_router)
@@ -34,10 +36,13 @@ api_router.include_router(historical_router)
 api_router.include_router(hazmat_router)
 api_router.include_router(gis_layers_router)
 api_router.include_router(forests_router)
+api_router.include_router(weather_router)
+api_router.include_router(dispersion_router)
 
 __all__ = [
     "api_router",
     "detections_router",
+    "dispersion_router",
     "dossier_router",
     "events_router",
     "forests_router",
@@ -52,4 +57,5 @@ __all__ = [
     "simulation_router",
     "sources_router",
     "version_router",
+    "weather_router",
 ]
