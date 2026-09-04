@@ -49,6 +49,8 @@ describe("Emergency Response & Analyst-Confirmed Notification Suite", () => {
     assert.equal(rec.response_priority, "CRITICAL");
     assert.equal(rec.is_routine_flare, false);
     assert.equal(rec.is_abstained_or_unknown, false);
+    assert.equal(rec.escalation_type, "CRITICAL_MEDICAL");
+    assert.equal(rec.auto_escalation_eligible, true);
     assert.ok(rec.priority_reason.includes("High-intensity"));
     assert.ok(rec.responders.length > 0);
 
@@ -56,7 +58,46 @@ describe("Emergency Response & Analyst-Confirmed Notification Suite", () => {
     const topResp = rec.responders[0];
     assert.equal(topResp.id, "fire-002");
     assert.ok(topResp.distance_meters < 2000, "Should be within 2km");
-    assert.ok(topResp.estimated_eta_minutes <= 5, "ETA should be minimal");
+    assert.ok((topResp.estimated_eta_minutes ?? 0) <= 5, "ETA should be minimal");
+  });
+
+  it("extracts nearest 2 hospitals and nearest 2 fire stations correctly", () => {
+    const sampleEvent = DEMO_THERMAL_EVENTS[0];
+    const rec = calculateLocalResponseRecommendation(sampleEvent);
+
+    assert.ok(rec.nearest_hospitals);
+    assert.ok(rec.nearest_fire_stations);
+    assert.equal(rec.nearest_hospitals.length, 2);
+    assert.equal(rec.nearest_fire_stations.length, 2);
+
+    rec.nearest_hospitals.forEach((h) => {
+      assert.ok(h.type === "BURN_ICU" || h.type === "HOSPITAL");
+    });
+    rec.nearest_fire_stations.forEach((f) => {
+      assert.ok(f.type === "CHEMICAL_FIRE_STATION" || f.type === "FIRE_STATION");
+    });
+  });
+
+  it("evaluates confidence escalation thresholds properly", () => {
+    const highConfAutoEvent: ThermalEvent = {
+      ...DEMO_THERMAL_EVENTS[0],
+      event_id: "EVT-HIGH-AUTO",
+      frp_mw: 20.0,
+      confidence: 0.992,
+    };
+    const recAuto = calculateLocalResponseRecommendation(highConfAutoEvent);
+    assert.equal(recAuto.escalation_type, "HIGH_CONFIDENCE_AUTO");
+    assert.equal(recAuto.auto_escalation_eligible, true);
+
+    const highConfReviewEvent: ThermalEvent = {
+      ...DEMO_THERMAL_EVENTS[0],
+      event_id: "EVT-HIGH-REVIEW",
+      frp_mw: 20.0,
+      confidence: 0.965,
+    };
+    const recReview = calculateLocalResponseRecommendation(highConfReviewEvent);
+    assert.equal(recReview.escalation_type, "ADMIN_CONFIRMED");
+    assert.equal(recReview.auto_escalation_eligible, false);
   });
 
   it("calculates MONITOR_ONLY for routine operational flaring to prevent false alarms", () => {
@@ -130,7 +171,7 @@ describe("Emergency Response & Analyst-Confirmed Notification Suite", () => {
     assert.ok(firstMedIdx < ndrfIdx, "Medical should precede NDRF");
   });
 
-  it("simulates analyst notification and updates response activity history", async () => {
+  it("simulates multi-channel notification and updates response activity history", async () => {
     const eventId = DEMO_THERMAL_EVENTS[0].event_id;
     const responder = LOCAL_EMERGENCY_RESPONDERS[0];
 
@@ -140,7 +181,10 @@ describe("Emergency Response & Analyst-Confirmed Notification Suite", () => {
         responder_id: responder.id,
         action: "NOTIFY",
         mode: "SIMULATED",
-        analyst_notes: "Priority dispatch test",
+        recipient_phone: "+91 9876543210",
+        channels: ["SMS", "WHATSAPP"],
+        escalation_type: "ADMIN_CONFIRMED",
+        analyst_notes: "Priority dispatch multi-channel test",
       },
       responder.name,
       responder.type
@@ -149,6 +193,9 @@ describe("Emergency Response & Analyst-Confirmed Notification Suite", () => {
     assert.equal(result.status, "SIMULATED");
     assert.equal(result.mode, "SIMULATED");
     assert.equal(result.responder_id, responder.id);
+    assert.equal(result.recipient_phone, "+91 9876543210");
+    assert.ok(result.channels);
+    assert.equal(result.channels.length, 2);
     assert.ok(result.notification_id.startsWith(`NOTIF-${eventId}`));
 
     // Fetch activity
@@ -156,6 +203,7 @@ describe("Emergency Response & Analyst-Confirmed Notification Suite", () => {
     assert.ok(activity.length >= 1);
     assert.equal(activity[0].responder_id, responder.id);
     assert.equal(activity[0].status, "SIMULATED");
-    assert.equal(activity[0].analyst_notes, "Priority dispatch test");
+    assert.equal(activity[0].recipient_phone, "+91 9876543210");
+    assert.equal(activity[0].analyst_notes, "Priority dispatch multi-channel test");
   });
 });
