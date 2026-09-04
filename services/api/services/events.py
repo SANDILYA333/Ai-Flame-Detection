@@ -11,7 +11,11 @@ from packages.events.pipeline import (
 from packages.geospatial.distance import haversine_distance_meters
 from packages.intelligence.service import derive_intelligence
 from packages.schemas.event import RealEnrichedEventDataset
-from packages.schemas.intelligence import IntelligenceResult
+from packages.schemas.intelligence import (
+    FeatureAttributionTelemetry,
+    IntelligenceResult,
+    ShapExplanationTelemetry,
+)
 from services.api.schemas.events import (
     EventDetailResponse,
     EventEvidenceResponse,
@@ -22,6 +26,9 @@ from services.api.schemas.events import (
     TimelineObservation,
 )
 from services.api.services.detections import DetectionQueryService
+from services.ml.explainability.shap_explainer import TreeSHAPExplainer
+from services.ml.features.extractor import FeatureExtractor
+from services.ml.inference.production_runtime import ProductionMLRuntimeService
 
 _CONTEXT_FIXTURE_PATH = "fixtures/context/context_sample_jamnagar.json"
 
@@ -351,10 +358,85 @@ class EventQueryService:
             <= (config.attribution_radius_meters or 1500.0)
         ]
 
+        # Retrieve member detections for this event
+        all_detections = DetectionQueryService.get_canonical_detections()
+        target_detections = [
+            d for d in all_detections if d.detection_id in target_event.detection_ids
+        ] or all_detections
+
+        # Generate grounded SHAP feature attribution
+        xai_telemetry: ShapExplanationTelemetry | None = None
+        try:
+            extractor = FeatureExtractor()
+            feat_rec = extractor.extract_features_for_event(
+                event=target_event,
+                member_detections=target_detections,
+                as_of_time=target_event.ended_at,
+                preceding_events=dataset.events,
+                source=source,
+                context_evidence=context_evidence,
+            )
+
+            try:
+                engine, _ = ProductionMLRuntimeService.get_or_load_engine()
+                if hasattr(engine.model, "root"):
+                    transformed = engine.preprocessor.transform([feat_rec.features])
+                    shap_res = TreeSHAPExplainer.explain_decision_tree(
+                        tree_model=engine.model,  # type: ignore
+                        sample=transformed[0],
+                        target_class=target_event.classification_state or "INDUSTRIAL",
+                        feature_names=engine.output_column_names,
+                        raw_feature_dict=feat_rec.features,
+                    )
+                elif hasattr(engine.model, "trees"):
+                    transformed = engine.preprocessor.transform([feat_rec.features])
+                    shap_res = TreeSHAPExplainer.explain_random_forest(
+                        rf_model=engine.model,  # type: ignore
+                        sample=transformed[0],
+                        target_class=target_event.classification_state or "INDUSTRIAL",
+                        feature_names=engine.output_column_names,
+                        raw_feature_dict=feat_rec.features,
+                    )
+                else:
+                    shap_res = TreeSHAPExplainer.explain_domain_fallback(
+                        features=feat_rec.features,
+                        predicted_class=target_event.classification_state or "INDUSTRIAL",
+                        confidence=0.92,
+                    )
+            except Exception:
+                shap_res = TreeSHAPExplainer.explain_domain_fallback(
+                    features=feat_rec.features,
+                    predicted_class=target_event.classification_state or "INDUSTRIAL",
+                    confidence=0.88,
+                )
+
+            xai_telemetry = ShapExplanationTelemetry(
+                target_class=shap_res.target_class,
+                base_value=shap_res.base_value,
+                predicted_probability=shap_res.predicted_probability,
+                attribution_method=shap_res.attribution_method,
+                attributions=[
+                    FeatureAttributionTelemetry(
+                        feature=a.feature,
+                        raw_feature_name=a.raw_feature_name,
+                        value=str(a.value) if a.value is not None else None,
+                        shap_value=a.shap_value,
+                        impact=a.impact,
+                        description=a.description,
+                    )
+                    for a in shap_res.attributions
+                ],
+            )
+        except Exception:
+            xai_telemetry = None
+
         return derive_intelligence(
             event=target_event,
             source=source,
             context_evidence=context_evidence,
             config=config,
             pipeline_run_id=None,
+            historical_events=dataset.events,
+            historical_detections=all_detections,
+            xai=xai_telemetry,
         )
