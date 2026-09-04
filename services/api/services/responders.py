@@ -1,6 +1,7 @@
 """Application service for emergency responder lookup and notification simulation."""
 
 import json
+import math
 from datetime import UTC, datetime
 from pathlib import Path
 from threading import Lock
@@ -10,9 +11,15 @@ from packages.errors import ErrorCode, NotFoundError
 from packages.geospatial.distance import haversine_distance_meters
 from packages.logging import get_logger
 from packages.schemas.responders import (
+    ChannelDeliveryStatus,
+    ChannelResult,
     EmergencyResponder,
+    EscalationDecision,
+    EscalationState,
+    EscalationType,
     EventResponseRecommendation,
     NotificationAction,
+    NotificationChannel,
     NotificationMode,
     NotificationRequest,
     NotificationResponse,
@@ -21,7 +28,10 @@ from packages.schemas.responders import (
     ResponseActivityRecord,
     ResponsePriority,
 )
+from services.api.services.escalation import EscalationPolicyService
 from services.api.services.events import EventQueryService
+from services.api.services.notifications import NotificationService
+from services.api.services.providers.fast2sms import mask_phone_number
 
 logger = get_logger("services.api.services.responders")
 
@@ -34,6 +44,12 @@ class ResponderDirectoryService:
 
     _cached_responders: ClassVar[list[dict] | None] = None
     _lock: ClassVar[Lock] = Lock()
+
+    @classmethod
+    def clear_cache(cls) -> None:
+        """Clear cached responder records for testing or reloading."""
+        with cls._lock:
+            cls._cached_responders = None
 
     @classmethod
     def _find_data_file(cls, filename: str) -> Path | None:
@@ -113,23 +129,25 @@ class ResponderDirectoryService:
                             if is_hazmat:
                                 caps.append("Industrial HAZMAT Mitigation Unit")
 
-                        records.append({
-                            "id": r_id,
-                            "name": str(
-                                item.get("name", "Emergency Service Facility")
-                            ),
-                            "type": resp_type,
-                            "city": str(item.get("city", "Unknown City")),
-                            "state": str(item.get("state", "India")),
-                            "latitude": float(item.get("lat", 0.0)),
-                            "longitude": float(item.get("lon", 0.0)),
-                            "phone": str(item.get("phone", "+91-112")),
-                            "capabilities": caps or ["Standard Emergency Response"],
-                            "jurisdiction": (
-                                f"{item.get('city', 'District')} Emergency Authority"
-                            ),
-                            "source": "National Emergency Responder Database",
-                        })
+                        records.append(
+                            {
+                                "id": r_id,
+                                "name": str(
+                                    item.get("name", "Emergency Service Facility")
+                                ),
+                                "type": resp_type,
+                                "city": str(item.get("city", "Unknown City")),
+                                "state": str(item.get("state", "India")),
+                                "latitude": float(item.get("lat", 0.0)),
+                                "longitude": float(item.get("lon", 0.0)),
+                                "phone": str(item.get("phone", "+91-112")),
+                                "capabilities": caps or ["Standard Emergency Response"],
+                                "jurisdiction": (
+                                    f"{item.get('city', 'District')} Emergency Authority"
+                                ),
+                                "source": "National Emergency Responder Database",
+                            }
+                        )
                 except Exception as e:
                     logger.warning(f"Failed to load emergency_responders.json: {e}")
 
@@ -151,29 +169,31 @@ class ResponderDirectoryService:
                         fs_id = f"fs-{c_id.lower()}"
                         if fs_id not in seen_ids and c.get("fire_station_hq"):
                             seen_ids.add(fs_id)
-                            records.append({
-                                "id": fs_id,
-                                "name": str(c.get("fire_station_hq")),
-                                "type": ResponderType.CHEMICAL_FIRE_STATION,
-                                "city": dist,
-                                "state": state,
-                                "latitude": lat,
-                                "longitude": lon,
-                                "phone": str(c.get("phone", "+91-112")),
-                                "capabilities": [
-                                    "Industrial Fire Brigade Command",
-                                    str(
-                                        c.get(
-                                            "industrial_brigade",
-                                            "Industrial Mutual Aid Scheme",
-                                        )
+                            records.append(
+                                {
+                                    "id": fs_id,
+                                    "name": str(c.get("fire_station_hq")),
+                                    "type": ResponderType.CHEMICAL_FIRE_STATION,
+                                    "city": dist,
+                                    "state": state,
+                                    "latitude": lat,
+                                    "longitude": lon,
+                                    "phone": str(c.get("phone", "+91-112")),
+                                    "capabilities": [
+                                        "Industrial Fire Brigade Command",
+                                        str(
+                                            c.get(
+                                                "industrial_brigade",
+                                                "Industrial Mutual Aid Scheme",
+                                            )
+                                        ),
+                                    ],
+                                    "jurisdiction": f"{cluster_name} Regional Command",
+                                    "source": (
+                                        "State Industrial Emergency Coordination Registry"
                                     ),
-                                ],
-                                "jurisdiction": f"{cluster_name} Regional Command",
-                                "source": (
-                                    "State Industrial Emergency Coordination Registry"
-                                ),
-                            })
+                                }
+                            )
 
                         # Apex Burn Hospital
                         hosp_id = f"hosp-{c_id.lower()}"
@@ -181,64 +201,66 @@ class ResponderDirectoryService:
                             "nearest_apex_burn_hospital"
                         ):
                             seen_ids.add(hosp_id)
-                            records.append({
-                                "id": hosp_id,
-                                "name": str(c.get("nearest_apex_burn_hospital")),
-                                "type": ResponderType.BURN_ICU,
-                                "city": dist,
-                                "state": state,
-                                "latitude": lat + 0.015,
-                                "longitude": lon + 0.015,
-                                "phone": str(
-                                    c.get("hospital_phone", "+91-112")
-                                ),
-                                "capabilities": [
-                                    "Apex Burn Trauma Center",
-                                    "Industrial Toxicology & Burn Ward",
-                                ],
-                                "jurisdiction": f"{dist} Apex Medical Jurisdiction",
-                                "source": "National Trauma & Burn Registry",
-                            })
+                            records.append(
+                                {
+                                    "id": hosp_id,
+                                    "name": str(c.get("nearest_apex_burn_hospital")),
+                                    "type": ResponderType.BURN_ICU,
+                                    "city": dist,
+                                    "state": state,
+                                    "latitude": lat + 0.015,
+                                    "longitude": lon + 0.015,
+                                    "phone": str(c.get("hospital_phone", "+91-112")),
+                                    "capabilities": [
+                                        "Apex Burn Trauma Center",
+                                        "Industrial Toxicology & Burn Ward",
+                                    ],
+                                    "jurisdiction": f"{dist} Apex Medical Jurisdiction",
+                                    "source": "National Trauma & Burn Registry",
+                                }
+                            )
 
                         # NDRF Battalion
                         ndrf_id = f"ndrf-{c_id.lower()}"
                         if ndrf_id not in seen_ids and c.get("ndrf_battalion"):
                             seen_ids.add(ndrf_id)
-                            records.append({
-                                "id": ndrf_id,
-                                "name": str(c.get("ndrf_battalion")),
-                                "type": ResponderType.NDRF,
-                                "city": dist,
-                                "state": state,
-                                "latitude": lat + 0.05,
-                                "longitude": lon + 0.05,
-                                "phone": "+91-11-24363260",
-                                "capabilities": [
-                                    "Specialized Industrial Disaster Response",
-                                    "CBRN Battalion Support",
-                                ],
-                                "jurisdiction": (
-                                    "National Disaster Response Force (NDRF)"
-                                ),
-                                "source": "NDRF National Command Directory",
-                            })
+                            records.append(
+                                {
+                                    "id": ndrf_id,
+                                    "name": str(c.get("ndrf_battalion")),
+                                    "type": ResponderType.NDRF,
+                                    "city": dist,
+                                    "state": state,
+                                    "latitude": lat + 0.05,
+                                    "longitude": lon + 0.05,
+                                    "phone": "+91-11-24363260",
+                                    "capabilities": [
+                                        "Specialized Industrial Disaster Response",
+                                        "CBRN Battalion Support",
+                                    ],
+                                    "jurisdiction": (
+                                        "National Disaster Response Force (NDRF)"
+                                    ),
+                                    "source": "NDRF National Command Directory",
+                                }
+                            )
                 except Exception as e:
-                    logger.warning(
-                        f"Failed to load emergency_services_india.json: {e}"
-                    )
+                    logger.warning(f"Failed to load emergency_services_india.json: {e}")
 
             cls._cached_responders = records
             return cls._cached_responders
 
 
 class ResponseRecommendationService:
-    """Service calculating geodesic proximity and deterministic policy."""
+    """Service calculating geodesic proximity, deterministic policy, and escalation state."""
 
     @classmethod
     def get_recommendations_for_event(
-        cls, event_id: str
+        cls,
+        event_id: str,
+        demo_phone: str | None = None,
     ) -> EventResponseRecommendation:
-        """Derive prioritized responder recommendations for a given event."""
+        """Derive prioritized responder recommendations and evaluate escalation for a given event."""
         dataset = EventQueryService.get_canonical_enriched_dataset()
         target_event = next(
             (ev for ev in dataset.events if ev.event_id == event_id), None
@@ -255,29 +277,51 @@ class ResponseRecommendationService:
             (lbl for lbl in dataset.reference_labels if lbl.entity_id == event_id),
             None,
         )
-        classification = label.assigned_class if label else "UNKNOWN"
+        classification = "UNKNOWN"
+        if label and label.assigned_class:
+            classification = label.assigned_class.strip().upper()
+        elif getattr(target_event, "classification_state", None):
+            classification = str(target_event.classification_state).strip().upper()
+        else:
+            try:
+                intel = EventQueryService.get_event_intelligence(event_id)
+                if intel.classification and intel.classification.assigned_class:
+                    classification = (
+                        str(intel.classification.assigned_class).strip().upper()
+                    )
+            except Exception:
+                pass
 
         source = next(
             (s for s in dataset.persistent_sources if event_id in s.linked_event_ids),
             None,
         )
-        is_persistent = (
-            source is not None
-            and source.persistence_state.value in ["PERSISTENT", "RECURRING"]
-        )
+        is_persistent = source is not None and source.persistence_state.value in [
+            "PERSISTENT",
+            "RECURRING",
+        ]
 
         ev_lat = target_event.centroid_geometry.latitude
         ev_lon = target_event.centroid_geometry.longitude
         max_frp = target_event.max_frp_mw
 
+        # Calculate or extract calibrated confidence score
+        confidence: float = 0.85
+        if label and label.confidence_score is not None:
+            confidence = float(label.confidence_score)
+        else:
+            try:
+                intel = EventQueryService.get_event_intelligence(event_id)
+                if intel.uncertainty.calibrated_confidence is not None:
+                    confidence = float(intel.uncertainty.calibrated_confidence)
+            except Exception:
+                confidence = 0.95 if classification == "INDUSTRIAL" else 0.50
+
         # 2. Evaluate Deterministic Operational Response Policy
-        is_abstained_or_unknown = (
-            classification == "UNKNOWN"
-            or (
-                label is not None
-                and getattr(label, "label_tier", None)
-                and label.label_tier.value == "TIER_C"
-            )
+        is_abstained_or_unknown = classification == "UNKNOWN" or (
+            label is not None
+            and getattr(label, "label_tier", None)
+            and label.label_tier.value == "TIER_C"
         )
 
         is_routine_flare = (
@@ -285,7 +329,7 @@ class ResponseRecommendationService:
             and classification == "INDUSTRIAL"
             and any(
                 "flare" in (ce.facility_name or "").lower()
-                or "flare" in (ce.infrastructure_type or "").lower()
+                or "flare" in str(ce.context_type).lower()
                 for ce in dataset.context_evidence
                 if haversine_distance_meters(
                     ev_lat, ev_lon, ce.geometry.latitude, ce.geometry.longitude
@@ -331,18 +375,14 @@ class ResponseRecommendationService:
                     f"High-intensity industrial thermal anomaly ({max_frp:.1f} MW) "
                     "with proximate infrastructure. Multi-agency response recommended."
                 )
-                recommendation_basis.append(
-                    "High radiative thermal power (>50 MW FRP)"
-                )
+                recommendation_basis.append("High radiative thermal power (>50 MW FRP)")
             else:
                 response_priority = ResponsePriority.HIGH
                 priority_reason = (
                     "Industrial thermal anomaly within infrastructure perimeter. "
                     "Chemical fire brigade and burn trauma readiness recommended."
                 )
-            recommendation_basis.append(
-                "Industrial infrastructure proximity verified"
-            )
+            recommendation_basis.append("Industrial infrastructure proximity verified")
             recommendation_basis.append(
                 "Chemical / hazardous material response capability match"
             )
@@ -355,8 +395,26 @@ class ResponseRecommendationService:
             recommendation_basis.append(
                 "Non-industrial / biomass classification profile"
             )
+            recommendation_basis.append("Geodesic perimeter proximity matching")
+
+        # Check if event is offshore
+        is_offshore = (
+            (18.0 <= ev_lat <= 21.0 and 70.0 <= ev_lon <= 72.3)
+            or any(
+                "offshore" in (ce.facility_name or "").lower()
+                or "offshore" in str(ce.context_type).lower()
+                or "platform" in (ce.facility_name or "").lower()
+                for ce in dataset.context_evidence
+                if haversine_distance_meters(
+                    ev_lat, ev_lon, ce.geometry.latitude, ce.geometry.longitude
+                )
+                <= 15000.0
+            )
+        )
+
+        if is_offshore:
             recommendation_basis.append(
-                "Geodesic perimeter proximity matching"
+                "Offshore marine event location — coastal command staging & air evacuation corridor applied"
             )
 
         # 3. Calculate Geodesic Distance & Modeled ETA for All Responders
@@ -374,48 +432,97 @@ class ResponseRecommendationService:
                 fmt_dist = f"{round(dist_meters)} m"
             else:
                 fmt_dist = (
-                    f"{dist_km:.1f} km"
-                    if dist_km < 10
-                    else f"{round(dist_km)} km"
+                    f"{dist_km:.1f} km" if dist_km < 10 else f"{round(dist_km)} km"
                 )
 
-            # Modeled ETA: ~45 km/h emergency speed + 2 min staging
-            eta_mins = max(1, round((dist_km / 45.0) * 60.0 + 2.0))
-            fmt_eta = f"~{eta_mins} min"
+            # Modeled ETA:
+            if is_offshore:
+                eta_mins = None
+                fmt_eta = "Offshore Transit: Maritime / Heli Required (~90-120 min)"
+            else:
+                eta_mins = max(1, round((dist_km / 45.0) * 60.0 + 2.0))
+                fmt_eta = f"~{eta_mins} min"
 
             # Explainable recommendation rationale per responder type
             r_type = r["type"]
-            if r_type in [
-                ResponderType.CHEMICAL_FIRE_STATION,
-                ResponderType.FIRE_STATION,
-            ]:
-                if dist_km < 30.0 and classification == "INDUSTRIAL":
+            if is_offshore:
+                if r_type in [
+                    ResponderType.CHEMICAL_FIRE_STATION,
+                    ResponderType.FIRE_STATION,
+                    ResponderType.INDUSTRIAL_FIRE_SAFETY,
+                    ResponderType.MUNICIPAL_FIRE_STATION,
+                    ResponderType.PORT_EMERGENCY_SERVICES,
+                ]:
                     reason = (
-                        "Primary chemical & industrial fire response unit "
-                        "proximate to infrastructure perimeter"
+                        "Nearest coastal industrial port fire command staging base "
+                        "for offshore platform maritime/air dispatch"
+                    )
+                elif r_type in [
+                    ResponderType.BURN_ICU,
+                    ResponderType.HOSPITAL,
+                    ResponderType.BURN_INTENSIVE_CARE_HOSPITAL,
+                ]:
+                    reason = (
+                        "Apex burn trauma center equipped for offshore helipad casualty air-evacuation"
+                    )
+                elif r_type in [
+                    ResponderType.NDRF,
+                    ResponderType.NDRF_DISASTER_BATTALION,
+                ]:
+                    reason = (
+                        "Regional NDRF disaster battalion with air-droppable CBRN and coastal response capabilities"
                     )
                 else:
-                    reason = (
-                        "Nearest municipal fire safety command within "
-                        "operational response radius"
-                    )
-            elif r_type in [ResponderType.BURN_ICU, ResponderType.HOSPITAL]:
-                if r_type == ResponderType.BURN_ICU:
-                    reason = (
-                        "Apex burn trauma ICU and toxic exposure treatment center "
-                        "within operational corridor"
-                    )
-                else:
-                    reason = (
-                        "Regional emergency medical facility with casualty admission"
-                    )
-            elif r_type == ResponderType.NDRF:
-                reason = (
-                    "Regional NDRF battalion equipped for specialized industrial "
-                    "disaster & CBRN mitigation"
-                )
+                    reason = "Coastal disaster management support resource"
             else:
-                reason = "Regional disaster management support resource"
+                if r_type in [
+                    ResponderType.CHEMICAL_FIRE_STATION,
+                    ResponderType.FIRE_STATION,
+                    ResponderType.INDUSTRIAL_FIRE_SAFETY,
+                    ResponderType.MUNICIPAL_FIRE_STATION,
+                ]:
+                    if dist_km < 30.0 and classification == "INDUSTRIAL":
+                        reason = (
+                            "Primary chemical & industrial fire response unit "
+                            "proximate to infrastructure perimeter"
+                        )
+                    else:
+                        reason = (
+                            "Nearest municipal fire safety command within "
+                            "operational response radius"
+                        )
+                elif r_type in [
+                    ResponderType.BURN_ICU,
+                    ResponderType.HOSPITAL,
+                    ResponderType.BURN_INTENSIVE_CARE_HOSPITAL,
+                ]:
+                    if r_type in [
+                        ResponderType.BURN_ICU,
+                        ResponderType.BURN_INTENSIVE_CARE_HOSPITAL,
+                    ]:
+                        reason = (
+                            "Apex burn trauma ICU and toxic exposure treatment center "
+                            "within operational corridor"
+                        )
+                    else:
+                        reason = (
+                            "Regional emergency medical facility with casualty admission"
+                        )
+                elif r_type in [
+                    ResponderType.NDRF,
+                    ResponderType.NDRF_DISASTER_BATTALION,
+                ]:
+                    reason = (
+                        "Regional NDRF battalion equipped for specialized industrial "
+                        "disaster & CBRN mitigation"
+                    )
+                elif r_type in [
+                    ResponderType.SPECIALIZED_HAZMAT_UNIT,
+                    ResponderType.PORT_EMERGENCY_SERVICES,
+                ]:
+                    reason = "Specialized industrial and hazardous materials containment unit"
+                else:
+                    reason = "Regional disaster management support resource"
 
             evaluated_responders.append(
                 EmergencyResponder(
@@ -439,55 +546,209 @@ class ResponseRecommendationService:
                 )
             )
 
-        # 4. Deterministic Ranking: Type Relevance Priority (Fire -> Med -> NDRF)
-        def type_rank(t: ResponderType) -> int:
-            if t in [
-                ResponderType.CHEMICAL_FIRE_STATION,
-                ResponderType.FIRE_STATION,
-            ]:
-                return 0
-            if t in [ResponderType.BURN_ICU, ResponderType.HOSPITAL]:
-                return 1
-            if t == ResponderType.NDRF:
-                return 2
-            return 3
-
-        evaluated_responders.sort(key=lambda r: (type_rank(r.type), r.distance_meters))
-
-        top_fire = [
+        # 4. Extract Nearest 2 Hospitals, Nearest 2 Fire Stations, Specialized Responders, and NDRF
+        # A. Fire Responders (Industrial prioritized for industrial events, then geodesic distance, stable tie-break)
+        fire_candidates = [
             r
             for r in evaluated_responders
             if r.type
             in [
                 ResponderType.CHEMICAL_FIRE_STATION,
                 ResponderType.FIRE_STATION,
+                ResponderType.INDUSTRIAL_FIRE_SAFETY,
+                ResponderType.MUNICIPAL_FIRE_STATION,
             ]
-        ][:2]
-        top_med = [
+        ]
+        if classification == "INDUSTRIAL":
+            fire_candidates.sort(
+                key=lambda r: (
+                    (
+                        0
+                        if r.type
+                        in [
+                            ResponderType.CHEMICAL_FIRE_STATION,
+                            ResponderType.INDUSTRIAL_FIRE_SAFETY,
+                        ]
+                        else 1
+                    ),
+                    r.distance_meters,
+                    r.id,
+                )
+            )
+        else:
+            fire_candidates.sort(key=lambda r: (r.distance_meters, r.id))
+        nearest_fire_stations = fire_candidates[:2]
+
+        # B. Hospitals (Burn ICU / Toxic trauma prioritized for critical/industrial events, then geodesic distance, stable tie-break)
+        med_candidates = [
             r
             for r in evaluated_responders
-            if r.type in [ResponderType.BURN_ICU, ResponderType.HOSPITAL]
-        ][:2]
-        top_ndrf = [
-            r for r in evaluated_responders if r.type == ResponderType.NDRF
-        ][:1]
+            if r.type
+            in [
+                ResponderType.BURN_ICU,
+                ResponderType.HOSPITAL,
+                ResponderType.BURN_INTENSIVE_CARE_HOSPITAL,
+            ]
+        ]
+        if (
+            response_priority in [ResponsePriority.CRITICAL, ResponsePriority.HIGH]
+            or classification == "INDUSTRIAL"
+        ):
+            med_candidates.sort(
+                key=lambda r: (
+                    (
+                        0
+                        if r.type
+                        in [
+                            ResponderType.BURN_ICU,
+                            ResponderType.BURN_INTENSIVE_CARE_HOSPITAL,
+                        ]
+                        else 1
+                    ),
+                    r.distance_meters,
+                    r.id,
+                )
+            )
+        else:
+            med_candidates.sort(key=lambda r: (r.distance_meters, r.id))
+        nearest_hospitals = med_candidates[:2]
 
-        final_responders = top_fire + top_med + top_ndrf
+        # C. Specialized Responders (Port Emergency, Hazmat units)
+        specialized_candidates = [
+            r
+            for r in evaluated_responders
+            if r.type
+            in [
+                ResponderType.SPECIALIZED_HAZMAT_UNIT,
+                ResponderType.PORT_EMERGENCY_SERVICES,
+            ]
+            or any(
+                "port" in c.lower() or "hazmat" in c.lower() or "foam" in c.lower()
+                for c in r.capabilities
+            )
+        ]
+        selected_ids = {r.id for r in nearest_fire_stations + nearest_hospitals}
+        specialized_candidates = [
+            r for r in specialized_candidates if r.id not in selected_ids
+        ]
+        specialized_candidates.sort(key=lambda r: (r.distance_meters, r.id))
+        specialized_responders = specialized_candidates[:2]
+
+        # D. NDRF Regional Battalion
+        ndrf_candidates = [
+            r
+            for r in evaluated_responders
+            if r.type in [ResponderType.NDRF, ResponderType.NDRF_DISASTER_BATTALION]
+        ]
+        ndrf_candidates.sort(key=lambda r: (r.distance_meters, r.id))
+        ndrf_responders = ndrf_candidates[:1]
+
+        # E. Unified deterministic final responders list (Fire -> Hospitals -> Specialized -> NDRF)
+        final_responders: list[EmergencyResponder] = []
+        final_seen_ids: set[str] = set()
+        for r in (
+            nearest_fire_stations
+            + nearest_hospitals
+            + specialized_responders
+            + ndrf_responders
+        ):
+            if r.id not in final_seen_ids:
+                final_seen_ids.add(r.id)
+                final_responders.append(r)
+
+        # 5. Evaluate Authoritative Backend Escalation Policy
+        escalation_decision = EscalationPolicyService.evaluate_decision(
+            event_id=event_id,
+            confidence=confidence,
+            operational_priority=response_priority,
+        )
+
+        auto_escalation_eligible = (
+            escalation_decision.automatic or escalation_decision.medical_escalation
+        )
+        escalation_type: EscalationType | None = None
+        if (
+            escalation_decision.medical_escalation
+            and response_priority == ResponsePriority.CRITICAL
+        ):
+            escalation_type = EscalationType.CRITICAL_MEDICAL
+        elif escalation_decision.automatic:
+            escalation_type = EscalationType.HIGH_CONFIDENCE_AUTO
+        elif (
+            escalation_decision.escalation_state
+            == EscalationState.ADMIN_REVIEW_REQUIRED
+        ):
+            escalation_type = EscalationType.ADMIN_CONFIRMED
+
+        auto_escalation_triggered = NotificationService.is_escalation_processed(
+            event_id, EscalationType.HIGH_CONFIDENCE_AUTO
+        ) or NotificationService.is_escalation_processed(
+            event_id, EscalationType.CRITICAL_MEDICAL
+        )
+
+        if (
+            not auto_escalation_triggered
+            and auto_escalation_eligible
+            and demo_phone
+            and escalation_type
+        ):
+            # Proactive authoritative trigger
+            try:
+                primary_responder = (
+                    nearest_hospitals[0]
+                    if escalation_decision.medical_escalation and nearest_hospitals
+                    else nearest_fire_stations[0]
+                    if nearest_fire_stations
+                    else final_responders[0]
+                )
+                NotificationAuditService.process_notification(
+                    event_id,
+                    NotificationRequest(
+                        responder_id=primary_responder.id,
+                        action=NotificationAction.NOTIFY,
+                        mode=NotificationMode.SIMULATED,
+                        recipient_phone=demo_phone,
+                        channels=[
+                            NotificationChannel.SMS,
+                            NotificationChannel.WHATSAPP,
+                        ],
+                        escalation_type=escalation_type,
+                        analyst_notes=(
+                            "Automatic high-confidence demo escalation"
+                            if escalation_decision.automatic
+                            else "Critical event medical escalation"
+                        ),
+                    ),
+                )
+                auto_escalation_triggered = True
+            except Exception as e:
+                logger.warning(f"Auto-escalation dispatch failed: {e}")
 
         return EventResponseRecommendation(
             event_id=event_id,
             response_priority=response_priority,
             priority_reason=priority_reason,
+            confidence=round(confidence, 4),
+            auto_escalation_eligible=auto_escalation_eligible,
+            auto_escalation_triggered=auto_escalation_triggered,
+            escalation_type=escalation_type,
+            medical_escalation=escalation_decision.medical_escalation,
+            policy_drivers=escalation_decision.policy_drivers,
+            escalation_decision=escalation_decision,
             is_routine_flare=is_routine_flare,
             is_abstained_or_unknown=is_abstained_or_unknown,
             responders=final_responders,
+            nearest_hospitals=nearest_hospitals,
+            nearest_fire_stations=nearest_fire_stations,
+            specialized_responders=specialized_responders,
+            ndrf_responders=ndrf_responders,
             recommendation_basis=recommendation_basis,
             evaluated_at=datetime.now(UTC),
         )
 
 
 class NotificationAuditService:
-    """Thread-safe service for analyst-confirmed emergency notifications."""
+    """Thread-safe service for emergency notifications and audit logging."""
 
     _activity_log: ClassVar[list[ResponseActivityRecord]] = []
     _lock: ClassVar[Lock] = Lock()
@@ -498,7 +759,7 @@ class NotificationAuditService:
         event_id: str,
         request: NotificationRequest,
     ) -> NotificationResponse:
-        """Process and simulate an analyst-confirmed notification request."""
+        """Process and dispatch an emergency notification request with multi-channel tracking and idempotency."""
         # 1. Validate Target Event Exists
         dataset = EventQueryService.get_canonical_enriched_dataset()
         target_event = next(
@@ -523,11 +784,118 @@ class NotificationAuditService:
                 code=ErrorCode.RESOURCE_NOT_FOUND,
             )
 
-        # 3. Create Simulation Notification Record
+        # 3. Determine phone number & multi-channel dispatch
+        phone = request.recipient_phone or target_responder.get("phone") or "+91-112"
+        phone_normalized = "+91-112"
+        try:
+            phone_normalized = NotificationService.validate_and_normalize_phone(phone)
+        except Exception:
+            if request.recipient_phone:
+                raise
+            phone_normalized = "+911120000000"
+
+        masked_phone = mask_phone_number(phone_normalized)
+        correlation_id = NotificationService.generate_correlation_id(event_id)
         now = datetime.now(UTC)
         ts_str = now.strftime("%Y%m%d-%H%M%S")
         notification_id = f"NOTIF-{event_id}-{request.responder_id}-{ts_str}"
 
+        # 3b. Atomic Idempotency Check for Automatic Escalation
+        is_auto = request.escalation_type in [
+            EscalationType.HIGH_CONFIDENCE_AUTO,
+            EscalationType.CRITICAL_MEDICAL,
+        ]
+        if is_auto and not NotificationService.record_escalation(
+            event_id, request.escalation_type
+        ):
+            logger.info(
+                f"Duplicate automatic escalation suppressed for Event={event_id}, "
+                f"Type={request.escalation_type.value}, Correlation={correlation_id}"
+            )
+            suppressed_channels = [
+                ChannelResult(
+                    channel=ch,
+                    status=ChannelDeliveryStatus.DUPLICATE_SUPPRESSED,
+                    recipient=phone_normalized,
+                    destination_masked=masked_phone,
+                    message=f"Duplicate automatic escalation suppressed for {ch.value}.",
+                    provider="idempotency_guard",
+                    provider_message_id=None,
+                    correlation_id=correlation_id,
+                    submitted_at=now,
+                    retry_count=0,
+                )
+                for ch in (
+                    request.channels
+                    or [NotificationChannel.SMS, NotificationChannel.WHATSAPP]
+                )
+            ]
+            return NotificationResponse(
+                notification_id=f"SUPPRESSED-{event_id}-{request.responder_id}",
+                event_id=event_id,
+                responder_id=request.responder_id,
+                responder_name=target_responder["name"],
+                action=request.action,
+                status=NotificationStatus.DUPLICATE_SUPPRESSED,
+                mode=request.mode,
+                escalation_type=request.escalation_type,
+                trigger_source=request.escalation_type,
+                recipient_phone=phone_normalized,
+                destination_masked=masked_phone,
+                correlation_id=correlation_id,
+                channels=suppressed_channels,
+                timestamp=now,
+                message="Duplicate automatic escalation request was suppressed.",
+            )
+
+        # Format message template
+        label = next(
+            (lbl for lbl in dataset.reference_labels if lbl.entity_id == event_id),
+            None,
+        )
+        classification = label.assigned_class if label else "UNCLASSIFIED"
+        confidence_val = (
+            float(label.confidence_score * 100.0)
+            if label and label.confidence_score is not None
+            else 95.0
+        )
+        frp_val = float(target_event.max_frp_mw or 25.0)
+
+        is_critical = (
+            request.escalation_type == EscalationType.CRITICAL_MEDICAL or frp_val > 50.0
+        )
+
+        alert_text = NotificationService.format_alert_message(
+            event_id=event_id,
+            location=f"{target_responder['city']}, {target_responder['state']}",
+            classification=classification,
+            confidence_percent=confidence_val,
+            frp_mw=frp_val,
+            priority=ResponsePriority.CRITICAL
+            if is_critical
+            else ResponsePriority.HIGH,
+            is_critical=is_critical,
+            mode=request.mode,
+        )
+
+        # Execute Multi-channel dispatch with idempotency protection and bounded retries
+        channels = request.channels or [
+            NotificationChannel.SMS,
+            NotificationChannel.WHATSAPP,
+        ]
+        channel_results = NotificationService.dispatch_multichannel(
+            event_id=event_id,
+            recipient_phone=phone_normalized,
+            message_text=alert_text,
+            channels=channels,
+            mode=request.mode,
+            responder_id=request.responder_id,
+            escalation_type=request.escalation_type,
+            trigger_source=request.escalation_type.value,
+            correlation_id=correlation_id,
+        )
+
+        # 4. Create Notification Record & Audit
         responder_name = target_responder["name"]
         resp_type = target_responder["type"]
         action_verb = (
@@ -536,7 +904,27 @@ class NotificationAuditService:
             else "Emergency response alert"
         )
 
-        # 4. Log in Audit Trail
+        # Determine overall status
+        failed_count = sum(
+            1 for c in channel_results if c.status == ChannelDeliveryStatus.FAILED
+        )
+        suppressed_count = sum(
+            1
+            for c in channel_results
+            if c.status == ChannelDeliveryStatus.DUPLICATE_SUPPRESSED
+        )
+
+        if suppressed_count == len(channel_results):
+            overall_status = NotificationStatus.DUPLICATE_SUPPRESSED
+        elif failed_count == len(channel_results):
+            overall_status = NotificationStatus.FAILED
+        elif failed_count > 0:
+            overall_status = NotificationStatus.PARTIAL
+        elif request.mode == NotificationMode.LIVE:
+            overall_status = NotificationStatus.SENT
+        else:
+            overall_status = NotificationStatus.SIMULATED
+
         record = ResponseActivityRecord(
             notification_id=notification_id,
             event_id=event_id,
@@ -544,8 +932,14 @@ class NotificationAuditService:
             responder_name=responder_name,
             responder_type=resp_type,
             action=request.action,
-            status=NotificationStatus.SIMULATED,
-            mode=NotificationMode.SIMULATED,
+            status=overall_status,
+            mode=request.mode,
+            escalation_type=request.escalation_type,
+            trigger_source=request.escalation_type,
+            recipient_phone=phone_normalized,
+            destination_masked=masked_phone,
+            correlation_id=correlation_id,
+            channels=channel_results,
             timestamp=now,
             analyst_notes=request.analyst_notes,
         )
@@ -554,9 +948,35 @@ class NotificationAuditService:
             cls._activity_log.append(record)
 
         logger.info(
-            f"Analyst-confirmed notification simulated: Event={event_id}, "
-            f"Recipient={responder_name}, Action={request.action.value}"
+            f"Notification processed: Event={event_id}, Recipient={responder_name}, "
+            f"Phone={masked_phone}, Type={request.escalation_type.value}, "
+            f"Status={overall_status.value}, Correlation={correlation_id}"
         )
+
+        # Construct actionable summary message preserving exact required success wording
+        if overall_status == NotificationStatus.DUPLICATE_SUPPRESSED:
+            message = "Duplicate notification request was suppressed."
+        elif failed_count == 0:
+            if request.mode == NotificationMode.LIVE:
+                message = (
+                    f"Notification has been sent successfully to {phone_normalized}."
+                )
+            else:
+                message = f"Notification has been sent successfully to {phone_normalized}. (SIMULATED)"
+        elif failed_count < len(channel_results):
+            succeeded = [
+                c.channel.value
+                for c in channel_results
+                if c.status != ChannelDeliveryStatus.FAILED
+            ]
+            failed = [
+                c.channel.value
+                for c in channel_results
+                if c.status == ChannelDeliveryStatus.FAILED
+            ]
+            message = f"{', '.join(succeeded)} notification sent successfully. {', '.join(failed)} notification failed."
+        else:
+            message = "Notification could not be sent."
 
         return NotificationResponse(
             notification_id=notification_id,
@@ -564,14 +984,100 @@ class NotificationAuditService:
             responder_id=request.responder_id,
             responder_name=responder_name,
             action=request.action,
-            status=NotificationStatus.SIMULATED,
-            mode=NotificationMode.SIMULATED,
+            status=overall_status,
+            mode=request.mode,
+            escalation_type=request.escalation_type,
+            trigger_source=request.escalation_type,
+            recipient_phone=phone_normalized,
+            destination_masked=masked_phone,
+            correlation_id=correlation_id,
+            channels=channel_results,
             timestamp=now,
-            message=(
-                f"{action_verb} simulated successfully for {responder_name}. "
-                "Safe demo record logged."
-            ),
+            message=message,
         )
+
+    @classmethod
+    def evaluate_and_trigger_automatic_escalation(
+        cls,
+        event_id: str,
+        mode: NotificationMode = NotificationMode.SIMULATED,
+    ) -> list[NotificationResponse]:
+        """Backend-controlled evaluation and execution of automatic emergency notification workflows.
+
+        Strictly enforces:
+        - >98% model confidence -> Automatic high-confidence notification to nearest fire responder and hospital.
+        - CRITICAL priority with medical escalation -> Automatic critical trauma notification to nearest burn unit.
+        - Idempotent: Never re-triggers if already executed.
+        - Decoupled from React lifecycle or frontend rendering.
+        """
+        from services.api.services.escalation import EscalationPolicyService
+
+        responses: list[NotificationResponse] = []
+        dataset = EventQueryService.get_canonical_enriched_dataset()
+        target_event = next(
+            (ev for ev in dataset.events if ev.event_id == event_id), None
+        )
+        if target_event is None:
+            return responses
+
+        rec = ResponseRecommendationService.get_recommendations_for_event(event_id)
+        decision = EscalationPolicyService.evaluate_event(event_id)
+
+        # 1. Automatic High-Confidence Escalation (>98%)
+        if (
+            decision.automatic
+            and decision.escalation_state == EscalationState.AUTOMATIC_ESCALATION
+            and not NotificationService.is_escalation_processed(
+                event_id, EscalationType.HIGH_CONFIDENCE_AUTO
+            )
+        ):
+            logger.info(
+                f"[Auto-Escalation] Executing automatic dispatch for Event={event_id} (Confidence={conf_val})"
+            )
+            # Notify top fire station
+            if rec.nearest_fire_stations:
+                top_fire = rec.nearest_fire_stations[0]
+                resp = cls.process_notification(
+                    event_id,
+                    NotificationRequest(
+                        responder_id=top_fire.id,
+                        action=NotificationAction.NOTIFY,
+                        mode=mode,
+                        recipient_phone=top_fire.phone if top_fire.phone != "N/A" else "+919876543210",
+                        channels=[NotificationChannel.SMS, NotificationChannel.WHATSAPP],
+                        escalation_type=EscalationType.HIGH_CONFIDENCE_AUTO,
+                        analyst_notes="System automatic emergency escalation (>98% confidence)",
+                    ),
+                )
+                responses.append(resp)
+
+        # 2. Critical Medical Escalation (CRITICAL priority + medical escalation)
+        if (
+            decision.medical_escalation
+            and not NotificationService.is_escalation_processed(
+                event_id, EscalationType.CRITICAL_MEDICAL
+            )
+        ):
+            logger.info(
+                f"[Critical-Escalation] Executing critical medical dispatch for Event={event_id}"
+            )
+            if rec.nearest_hospitals:
+                top_hosp = rec.nearest_hospitals[0]
+                resp = cls.process_notification(
+                    event_id,
+                    NotificationRequest(
+                        responder_id=top_hosp.id,
+                        action=NotificationAction.MOBILIZE,
+                        mode=mode,
+                        recipient_phone=top_hosp.phone if top_hosp.phone != "N/A" else "+919876543210",
+                        channels=[NotificationChannel.SMS, NotificationChannel.WHATSAPP],
+                        escalation_type=EscalationType.CRITICAL_MEDICAL,
+                        analyst_notes="System automatic critical medical emergency mobilization",
+                    ),
+                )
+                responses.append(resp)
+
+        return responses
 
     @classmethod
     def get_activity_for_event(cls, event_id: str) -> list[ResponseActivityRecord]:
@@ -583,6 +1089,7 @@ class NotificationAuditService:
 
     @classmethod
     def clear_activity_log(cls) -> None:
-        """Clear audit history (used for test isolation)."""
+        """Clear audit history and idempotency states (used for test isolation)."""
         with cls._lock:
             cls._activity_log.clear()
+        NotificationService.clear_escalation_records()
