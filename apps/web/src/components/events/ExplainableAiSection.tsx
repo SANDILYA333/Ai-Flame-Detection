@@ -18,6 +18,9 @@ import {
   Radio,
   FileCode2,
   Info,
+  Sliders,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
@@ -52,7 +55,7 @@ export function ExplainableAiSection({
         <div className="flex items-center gap-1.5 text-foreground">
           <Brain className="w-3.5 h-3.5 text-accent" />
           <span className="text-[11px] font-bold tracking-wider uppercase">
-            Why This Classification?
+            Why This Classification? (XAI)
           </span>
         </div>
 
@@ -93,8 +96,76 @@ export function ExplainableAiSection({
         <div className="text-[9.5px] text-foreground-muted">{xai.decisionSummary}</div>
       </div>
 
-      {/* 3. Evidence Checklist / Signal Matrix */}
-      <div className="space-y-1.5">
+      {/* 3. SHAP Feature Attribution / Sharp Weights */}
+      {xai.shapAttributions && xai.shapAttributions.length > 0 && (
+        <div className="space-y-1.5 pt-1 border-t border-border/60">
+          <div className="flex items-center justify-between text-[9px] uppercase tracking-wider text-foreground-muted font-semibold">
+            <div className="flex items-center gap-1">
+              <Sliders className="w-3 h-3 text-accent" />
+              <span>SHAP Feature Attribution (Sharp Weights)</span>
+            </div>
+            <span className="text-[8px] px-1.5 py-0.2 rounded bg-surface border border-border text-accent font-bold">
+              {xai.attributionMethod || "TREE_SHAP"}
+            </span>
+          </div>
+
+          <div className="space-y-1.5">
+            {xai.shapAttributions.slice(0, 5).map((attr) => {
+              const isPositive = attr.shap_value >= 0;
+              const absVal = Math.min(1.0, Math.abs(attr.shap_value));
+              const pctWidth = Math.max(10, Math.round(absVal * 100));
+
+              return (
+                <div
+                  key={attr.raw_feature_name}
+                  className="p-1.5 rounded bg-background/60 border border-border/40 text-[9.5px] space-y-1"
+                >
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="font-semibold text-foreground truncate">
+                      {attr.feature}
+                    </span>
+                    <div className="flex items-center gap-1 shrink-0 font-mono">
+                      {attr.value !== undefined && attr.value !== null && (
+                        <span className="text-[9px] text-foreground-muted">
+                          [{String(attr.value)}]
+                        </span>
+                      )}
+                      <span
+                        className={cn(
+                          "text-[9px] font-bold px-1 rounded",
+                          isPositive
+                            ? "bg-accent/15 text-accent"
+                            : "bg-state-warning/15 text-state-warning"
+                        )}
+                      >
+                        {isPositive ? `+${attr.shap_value.toFixed(3)}` : attr.shap_value.toFixed(3)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Impact weight visual bar */}
+                  <div className="w-full h-1 bg-surface-hover rounded-full overflow-hidden flex items-center">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all duration-300",
+                        isPositive ? "bg-accent" : "bg-state-warning"
+                      )}
+                      style={{ width: `${pctWidth}%` }}
+                    />
+                  </div>
+
+                  <p className="text-[8.5px] text-foreground-secondary leading-snug">
+                    {attr.description}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 4. Evidence Checklist / Signal Matrix */}
+      <div className="space-y-1.5 pt-1 border-t border-border/60">
         <div className="text-[9px] uppercase tracking-wider text-foreground-muted font-semibold flex items-center justify-between">
           <span>Grounded Evidence Signals</span>
           <span className="text-[8.5px] text-foreground-muted/70">Threshold: 0.70</span>
@@ -150,7 +221,7 @@ export function ExplainableAiSection({
         </div>
       </div>
 
-      {/* 4. Calibrated Class Probabilities Breakdown */}
+      {/* 5. Calibrated Class Probabilities Breakdown */}
       <div className="space-y-1 pt-1.5 border-t border-border/60 text-[10px]">
         <div className="text-[9px] uppercase tracking-wider text-foreground-muted font-semibold">
           Calibrated Class Probabilities
@@ -177,7 +248,7 @@ export function ExplainableAiSection({
         </div>
       </div>
 
-      {/* 5. Provenance & Scientific Lineage Footer */}
+      {/* 6. Provenance & Scientific Lineage Footer */}
       <div className="pt-2 border-t border-border/50 text-[8.5px] text-foreground-muted flex items-center justify-between">
         <div className="flex items-center gap-1">
           <Cpu className="w-2.5 h-2.5 text-accent" />
