@@ -166,6 +166,14 @@ export function NotificationConfirmModal({
               <span className="text-foreground-muted">Destination Number:</span>
               <span className="font-mono text-accent font-semibold">{displayPhone}</span>
             </div>
+            {responder.plume_impact_status && responder.plume_impact_status !== "UNAVAILABLE" && (
+              <div className="flex items-center gap-1.5 col-span-2 pt-1 border-t border-border/30 text-[10px]">
+                <span className="text-foreground-muted">Downwind Plume Status:</span>
+                <span className="font-bold text-accent font-mono">
+                  {responder.plume_impact_status.replace(/_/g, " ")}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Interactive Multi-Channel Selector */}

@@ -307,6 +307,44 @@ export function EmergencyResponseSection({
     Boolean(recommendation?.medical_escalation) ||
     Boolean(recommendation?.escalation_decision?.medical_escalation);
 
+  const renderPlumeImpactBadge = (status?: string) => {
+    if (!status || status === "UNAVAILABLE") return null;
+    switch (status) {
+      case "IN_ISOLATION_ZONE":
+        return (
+          <span className="text-[8px] px-1.5 py-0.2 rounded font-bold uppercase border bg-state-error/20 text-state-error border-state-error/40 animate-pulse shrink-0">
+            ⭕ IN 200M ISOLATION
+          </span>
+        );
+      case "IN_PLUME_CORRIDOR":
+        return (
+          <span className="text-[8px] px-1.5 py-0.2 rounded font-bold uppercase border bg-state-error/20 text-state-error border-state-error/40 shrink-0">
+            ⚠️ IN PLUME CORRIDOR
+          </span>
+        );
+      case "DOWNWIND_SECTOR":
+        return (
+          <span className="text-[8px] px-1.5 py-0.2 rounded font-bold uppercase border bg-state-warning/20 text-state-warning border-state-warning/40 shrink-0">
+            🌪️ DOWNWIND SECTOR
+          </span>
+        );
+      case "UPWIND_CLEAR":
+        return (
+          <span className="text-[8px] px-1.5 py-0.2 rounded font-bold uppercase border bg-state-success/20 text-state-success border-state-success/40 shrink-0">
+            🛡️ UPWIND CLEAR
+          </span>
+        );
+      case "CROSSWIND_CLEAR":
+        return (
+          <span className="text-[8px] px-1.5 py-0.2 rounded font-bold uppercase border bg-surface-hover text-foreground-muted border-border shrink-0">
+            ↔️ CROSSWIND CLEAR
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div
       id="emergency-response-section"
@@ -563,9 +601,12 @@ export function EmergencyResponseSection({
                             </div>
                           </div>
 
-                          <span className="text-[8.5px] px-1.5 py-0.2 rounded font-bold uppercase border bg-accent-cyan/10 text-accent-cyan border-accent-cyan/20 shrink-0">
-                            {resp.type.replace(/_/g, " ")}
-                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                            {renderPlumeImpactBadge(resp.plume_impact_status)}
+                            <span className="text-[8.5px] px-1.5 py-0.2 rounded font-bold uppercase border bg-accent-cyan/10 text-accent-cyan border-accent-cyan/20 shrink-0">
+                              {resp.type.replace(/_/g, " ")}
+                            </span>
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-3 gap-1 text-[10px] text-foreground-secondary bg-background/50 p-1.5 rounded border border-border/40 font-mono">
@@ -650,9 +691,12 @@ export function EmergencyResponseSection({
                             </div>
                           </div>
 
-                          <span className="text-[8.5px] px-1.5 py-0.2 rounded font-bold uppercase border bg-accent/10 text-accent border-accent/20 shrink-0">
-                            {resp.type.replace(/_/g, " ")}
-                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                            {renderPlumeImpactBadge(resp.plume_impact_status)}
+                            <span className="text-[8.5px] px-1.5 py-0.2 rounded font-bold uppercase border bg-accent/10 text-accent border-accent/20 shrink-0">
+                              {resp.type.replace(/_/g, " ")}
+                            </span>
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-3 gap-1 text-[10px] text-foreground-secondary bg-background/50 p-1.5 rounded border border-border/40 font-mono">
@@ -737,9 +781,12 @@ export function EmergencyResponseSection({
                             </div>
                           </div>
 
-                          <span className="text-[8.5px] px-1.5 py-0.2 rounded font-bold uppercase border bg-accent/10 text-accent border-accent/20 shrink-0">
-                            {resp.type.replace(/_/g, " ")}
-                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                            {renderPlumeImpactBadge(resp.plume_impact_status)}
+                            <span className="text-[8.5px] px-1.5 py-0.2 rounded font-bold uppercase border bg-accent/10 text-accent border-accent/20 shrink-0">
+                              {resp.type.replace(/_/g, " ")}
+                            </span>
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-3 gap-1 text-[10px] text-foreground-secondary bg-background/50 p-1.5 rounded border border-border/40 font-mono">
@@ -806,10 +853,14 @@ export function EmergencyResponseSection({
                         </div>
                       </div>
 
-                      <span className="text-[8.5px] px-1.5 py-0.2 rounded font-bold uppercase border bg-state-error/10 text-state-error border-state-error/20 shrink-0">
-                        NDRF
-                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                        {renderPlumeImpactBadge(ndrfResponder.plume_impact_status)}
+                        <span className="text-[8.5px] px-1.5 py-0.2 rounded font-bold uppercase border bg-state-error/10 text-state-error border-state-error/20 shrink-0">
+                          NDRF
+                        </span>
+                      </div>
                     </div>
+
 
                     <div className="grid grid-cols-3 gap-1 text-[10px] text-foreground-secondary bg-background/50 p-1.5 rounded border border-border/40 font-mono">
                       <div>
