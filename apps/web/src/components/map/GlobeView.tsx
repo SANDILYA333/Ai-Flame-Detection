@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback, useImperativeHandle, forwardRef } from "react";
 import Globe, { GlobeInstance } from "globe.gl";
 import { GLOBE_CONFIG } from "@/lib/map/globe-config";
 import { ThermalEvent } from "@/types/event";
@@ -9,6 +9,8 @@ import { WebGLFallback } from "./WebGLFallback";
 import { useEventContext } from "@/context/EventContext";
 import { fetchForestsGeoJson, ForestGeoJsonFeatureCollection } from "@/lib/api/forests";
 import { DEMO_FORESTS_GEOJSON } from "@/features/forests/mock/demo-forests";
+import { useIndustrialAssets } from "@/hooks/useIndustrialAssets";
+import { isIndustrialAssetVisible } from "@/lib/api/industrial";
 import { cn } from "@/lib/utils";
 
 export interface GlobeViewProps {
@@ -52,10 +54,20 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
     const [isLoaded, setIsLoaded] = useState(false);
     const autoRotateTimerRef = useRef<NodeJS.Timeout | null>(null);
     const isInteractingRef = useRef<boolean>(false);
+    const renderIndustrialPointsRef = useRef<(() => void) | null>(null);
 
     const { activeLayers } = useEventContext();
     const isForestLayerActive = activeLayers?.["indian-forest-reserves"] ?? true;
     const [forestData, setForestData] = useState<ForestGeoJsonFeatureCollection>(DEMO_FORESTS_GEOJSON);
+
+    // Industrial Infrastructure Layer State & Dynamic GIS Layer Selection
+    const { data: industrialData } = useIndustrialAssets();
+    const filteredIndustrialFeatures = useMemo(() => {
+      if (!industrialData?.features?.length) return [];
+      return industrialData.features.filter((f) =>
+        isIndustrialAssetVisible(f, activeLayers)
+      );
+    }, [industrialData, activeLayers]);
 
     const initialCameraRef = useRef({
       lat: initialLat,
@@ -273,6 +285,7 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
         if (w > 0 && h > 0) {
           globeInstanceRef.current.width(w).height(h);
         }
+        renderIndustrialPointsRef.current?.();
       }
     }, [isVisible]);
 
@@ -365,6 +378,68 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
         `
         );
     }, [forestData, isForestLayerActive, isLoaded]);
+
+    // 4b. Render 3D Industrial Infrastructure Points on Globe
+    const renderIndustrialPoints = useCallback(() => {
+      if (!globeInstanceRef.current || !isLoaded) return;
+      const globe = globeInstanceRef.current as any;
+
+      if (!filteredIndustrialFeatures.length) {
+        globe.pointsTransitionDuration(0);
+        globe.pointsData([]);
+        return;
+      }
+
+      globe
+        .pointsTransitionDuration(0)
+        .pointsData([...filteredIndustrialFeatures])
+        .pointLat((d: any) => d.geometry.coordinates[1])
+        .pointLng((d: any) => d.geometry.coordinates[0])
+        .pointColor((d: any) => {
+          const ind = d.properties?.industry;
+          if (ind === "power") return "#eab308";
+          if (ind === "oil_gas") return "#f97316";
+          if (ind === "metallurgy") return "#a855f7";
+          if (ind === "chemical") return "#06b6d4";
+          return "#10b981";
+        })
+        .pointAltitude(0.005)
+        .pointRadius(0.22)
+        .pointLabel((d: any) => {
+          const p = d.properties || {};
+          const ind = String(p.industry || "industrial").toUpperCase();
+          const status = String(p.status || "operating").toUpperCase();
+          const cap = p.capacity ? ` • ${p.capacity} ${p.capacity_unit || "MW"}` : "";
+          const loc = [p.city, p.state, p.country || "India"].filter(Boolean).join(", ");
+          const sectorColor =
+            p.industry === "power"
+              ? "#eab308"
+              : p.industry === "oil_gas"
+              ? "#f97316"
+              : p.industry === "metallurgy"
+              ? "#a855f7"
+              : p.industry === "chemical"
+              ? "#06b6d4"
+              : "#10b981";
+
+          return `
+            <div style="font-family: ui-monospace, monospace; font-size: 11px; padding: 6px 9px; background: rgba(13, 17, 23, 0.95); border: 1px solid #252c35; border-radius: 5px; color: #f2f5f7; pointer-events: none; box-shadow: 0 6px 18px rgba(0,0,0,0.6); max-width: 240px;">
+              <div style="font-weight: bold; color: #f2f5f7; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.name || "Industrial Facility"}</div>
+              <div style="display: flex; gap: 4px; margin-bottom: 3px; font-size: 9px;">
+                <span style="background: ${sectorColor}26; color: ${sectorColor}; padding: 1px 4px; border-radius: 2px; border: 1px solid ${sectorColor}55; font-weight: 600;">${ind}</span>
+                <span style="background: rgba(57, 255, 136, 0.15); color: #39ff88; padding: 1px 4px; border-radius: 2px; border: 1px solid rgba(57, 255, 136, 0.3); font-weight: 600;">${status}</span>
+              </div>
+              ${loc ? `<div style="color: #b5bec8; font-size: 10px;">📍 ${loc}</div>` : ""}
+              ${cap ? `<div style="color: #ffbf24; font-size: 10px; font-weight: 600;">⚡ ${cap.replace(/^ • /, "")}</div>` : ""}
+            </div>
+          `;
+        });
+    }, [filteredIndustrialFeatures, isLoaded]);
+
+    useEffect(() => {
+      renderIndustrialPointsRef.current = renderIndustrialPoints;
+      renderIndustrialPoints();
+    }, [renderIndustrialPoints]);
 
     // 5. Smooth Camera Fly-To on Event Selection
     useEffect(() => {

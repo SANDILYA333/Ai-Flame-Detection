@@ -1,4 +1,4 @@
-import { GisLayerItem } from "@/types/layer";
+import type { GisLayerItem } from "@/types/layer";
 
 export const APP_CONFIG = {
   name: "PyroSat-AI v2.5",
@@ -59,7 +59,7 @@ export const INITIAL_LAYERS: GisLayerItem[] = [
     category: "infrastructure",
     description: "Hydrocarbon extraction, refining, petrochemicals & LNG terminals",
     icon: "Flame",
-    enabled: false,
+    enabled: true,
     color: "#ff9500",
   },
   {
@@ -68,7 +68,7 @@ export const INITIAL_LAYERS: GisLayerItem[] = [
     category: "infrastructure",
     description: "Blast furnaces, DRI units & electric arc smelting facilities",
     icon: "Building2",
-    enabled: false,
+    enabled: true,
     color: "#af52de",
   },
   {
