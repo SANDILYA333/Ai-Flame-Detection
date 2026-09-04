@@ -317,9 +317,11 @@ export function calculateLocalResponseRecommendation(
 
   const topFire = evaluatedResponders
     .filter((r) => r.type === "CHEMICAL_FIRE_STATION" || r.type === "FIRE_STATION")
+    .sort((a, b) => a.distance_meters - b.distance_meters)
     .slice(0, 2);
   const topMed = evaluatedResponders
     .filter((r) => r.type === "BURN_ICU" || r.type === "HOSPITAL")
+    .sort((a, b) => a.distance_meters - b.distance_meters)
     .slice(0, 2);
   const topNdrf = evaluatedResponders
     .filter((r) => r.type === "NDRF")
@@ -327,13 +329,32 @@ export function calculateLocalResponseRecommendation(
 
   const finalResponders = [...topFire, ...topMed, ...topNdrf];
 
+  const isCritical = responsePriority === "CRITICAL";
+  const conf = event.confidence ?? 0.85;
+  const isHighConfAuto = conf > 0.98;
+  const autoEscEligible = isCritical || isHighConfAuto;
+
+  const escalationType = isCritical
+    ? ("CRITICAL_MEDICAL" as const)
+    : isHighConfAuto
+    ? ("HIGH_CONFIDENCE_AUTO" as const)
+    : conf > 0.94
+    ? ("ADMIN_CONFIRMED" as const)
+    : null;
+
   return {
     event_id: event.event_id,
     response_priority: responsePriority,
     priority_reason: priorityReason,
+    confidence: conf,
+    auto_escalation_eligible: autoEscEligible,
+    auto_escalation_triggered: false,
+    escalation_type: escalationType,
     is_routine_flare: isRoutineFlare,
     is_abstained_or_unknown: isAbstained,
     responders: finalResponders,
+    nearest_hospitals: topMed,
+    nearest_fire_stations: topFire,
     recommendation_basis: recommendationBasis,
     evaluated_at: new Date().toISOString(),
   };
