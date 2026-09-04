@@ -69,6 +69,27 @@ def test_tactical_dossier_html_endpoint():
     assert event_id in resp.text
 
 
+def test_tactical_dossier_pdf_endpoint():
+    """Verify ReportLab publication-quality tactical PDF endpoint."""
+    event_id = get_valid_event_id()
+    resp = client.get(f"/events/{event_id}/dossier/pdf")
+    assert resp.status_code == 200
+    assert resp.headers["content-type"] == "application/pdf"
+    assert f"tactical-dossier-{event_id}.pdf" in resp.headers.get("content-disposition", "")
+    assert len(resp.content) > 1000
+    assert resp.content.startswith(b"%PDF-")
+
+
+def test_tactical_dossier_pdf_alias_endpoint():
+    """Verify alias endpoint for ReportLab tactical PDF export."""
+    event_id = get_valid_event_id()
+    resp = client.get(f"/api/incident-dossier/{event_id}/pdf")
+    assert resp.status_code == 200
+    assert resp.headers["content-type"] == "application/pdf"
+    assert len(resp.content) > 1000
+    assert resp.content.startswith(b"%PDF-")
+
+
 def test_ai_simulation_classify_endpoint():
     """Verify AI Simulation Lab custom prediction endpoint."""
     payload = {

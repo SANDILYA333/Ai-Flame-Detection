@@ -20,6 +20,7 @@ from packages.events.pipeline import (
 )
 from packages.feasibility.candidates import JAMNAGAR_KUTCH
 from packages.schemas.ml import (
+    DatasetRowStatus,
     ModelArtifact,
     SplitPartition,
     SplitStrategy,
@@ -224,9 +225,14 @@ class TestNext006RealProductionModelTraining:
         new_records = [
             r.model_copy(
                 update={
-                    "partition": (
+                    "split_partition": (
                         SplitPartition.TRAIN if i < 2 else SplitPartition.TEST
-                    )
+                    ),
+                    "row_status": (
+                        DatasetRowStatus.TRAIN_ELIGIBLE
+                        if i < 2
+                        else DatasetRowStatus.TEST_ELIGIBLE
+                    ),
                 }
             )
             for i, r in enumerate(supervised_ds.records)
