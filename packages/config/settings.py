@@ -434,6 +434,22 @@ class Settings(BaseSettings):
         description="Calibrated confidence boundary permitting automatic escalation",
     )
 
+    # Google Gemini AI Configuration (AGNI Phase 2 Command Interpretation)
+    GEMINI_API_KEY: SecretStr | None = Field(
+        default=None,
+        description="Google Gemini API key for AGNI natural language voice command interpretation",
+    )
+    GEMINI_MODEL: str = Field(
+        default="gemini-2.5-flash",
+        description="Google Gemini model identifier for AGNI interpretation",
+    )
+    GEMINI_TIMEOUT_SECONDS: float = Field(
+        default=15.0,
+        gt=0.0,
+        le=60.0,
+        description="HTTP request timeout in seconds for Gemini API requests",
+    )
+
     def get_redis_url(self) -> str:
         """Construct full Redis connection URL."""
         if self.REDIS_URL is not None:
