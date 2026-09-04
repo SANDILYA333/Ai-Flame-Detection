@@ -3,9 +3,12 @@
 import React, { useState, useMemo } from "react";
 import { ThermalEvent } from "@/types/event";
 import { useEventDetail } from "@/hooks/useEventDetail";
+import { useEventDispersion } from "@/hooks/useEventDispersion";
 import { EventClassificationHeader } from "./EventClassificationHeader";
 import { ClassProbabilityBreakdown } from "./ClassProbabilityBreakdown";
 import { EventOverviewGrid } from "./EventOverviewGrid";
+import { WindVectorCard } from "./WindVectorCard";
+import { HazardDispersionCard } from "./HazardDispersionCard";
 import { IndustrialAssetSection } from "./IndustrialAssetSection";
 import { ForestProximityCard } from "./ForestProximityCard";
 import { ExplainableAiSection } from "./ExplainableAiSection";
@@ -33,6 +36,9 @@ import {
   Cpu,
   FileText,
   Siren,
+  Wind,
+  Compass,
+  ArrowUpRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -68,6 +74,11 @@ export function EventIntelligencePanel({
     error,
     refetch,
   } = useEventDetail(event?.event_id);
+
+  const {
+    dispersion,
+    isLoading: isDispersionLoading,
+  } = useEventDispersion(event);
 
   // Compute operational risk assessment
   const risk = useMemo(() => {
@@ -212,6 +223,93 @@ export function EventIntelligencePanel({
           <span>OPEN TACTICAL INCIDENT BRIEFING (DOSSIER)</span>
         </button>
 
+        {/* 💨 TOP PROMINENT ENTRY POINT: WIND INTELLIGENCE & DOWNWIND PLUME */}
+        <div
+          data-testid="top-wind-intelligence-card"
+          className="p-3 rounded-control font-mono space-y-2.5 shadow-sm border bg-accent-cyan/10 border-accent-cyan/40 transition-all duration-200"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Wind className="w-4 h-4 shrink-0 text-accent-cyan animate-pulse-subtle" />
+              <span className="text-[11px] font-bold text-foreground uppercase tracking-wider truncate">
+                WIND INTELLIGENCE &amp; PLUME
+              </span>
+            </div>
+            <span
+              className={cn(
+                "text-[9px] px-2 py-0.5 rounded border font-bold uppercase shrink-0",
+                dispersion?.data_quality === "LIVE"
+                  ? "bg-state-success/20 text-state-success border-state-success/40"
+                  : dispersion?.data_quality === "FALLBACK" || dispersion?.data_quality === "CACHED"
+                  ? "bg-state-warning/20 text-state-warning border-state-warning/40"
+                  : "bg-surface-hover text-foreground-muted border-border"
+              )}
+            >
+              {dispersion?.data_quality === "LIVE"
+                ? "● LIVE METEOROLOGY"
+                : dispersion?.data_quality === "FALLBACK"
+                ? "○ FALLBACK / SIMULATION"
+                : dispersion?.data_quality === "CACHED"
+                ? "○ CACHED METEOROLOGY"
+                : isDispersionLoading
+                ? "CALCULATING..."
+                : "READY"}
+            </span>
+          </div>
+
+          {dispersion?.wind ? (
+            <div className="grid grid-cols-2 gap-2 text-[10px] bg-background/90 p-2.5 rounded-control border border-border/60">
+              <div>
+                <span className="text-foreground-muted block text-[9px] uppercase tracking-wider">
+                  Wind Velocity
+                </span>
+                <span className="font-bold text-foreground text-xs">
+                  {dispersion.wind.speed_ms.toFixed(1)} m/s{" "}
+                  <span className="text-foreground-muted text-[9.5px]">
+                    ({(dispersion.wind.speed_ms * 3.6).toFixed(1)} km/h)
+                  </span>
+                </span>
+              </div>
+              <div>
+                <span className="text-foreground-muted block text-[9px] uppercase tracking-wider">
+                  Hazard Bearing
+                </span>
+                <span className="font-bold text-state-error text-xs flex items-center gap-1">
+                  <ArrowUpRight className="w-3 h-3" />
+                  {dispersion.wind.direction_from_label} → {dispersion.wind.downwind_direction_label}
+                </span>
+              </div>
+              <div className="col-span-2 pt-1.5 border-t border-border/40 flex items-center justify-between">
+                <span className="text-foreground-muted text-[9px] uppercase tracking-wider">
+                  Downwind Reach / Corridor
+                </span>
+                <span className="font-bold text-[10px] text-accent-cyan">
+                  {dispersion.dispersion.max_hazard_distance_km.toFixed(1)} km (Stability {dispersion.dispersion.stability_class})
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="text-[10px] text-foreground-muted bg-background/80 p-2 rounded-control border border-border/50">
+              {isDispersionLoading ? "Calculating Gaussian plume atmospheric dispersion..." : "Atmospheric wind vectors & plume ready."}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              onCenterMap?.();
+              const el = document.getElementById("wind-intelligence-detail");
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }}
+            className="w-full py-1.5 px-3 rounded-control font-bold text-xs bg-accent-cyan hover:bg-accent-cyan/90 text-background flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm"
+          >
+            <Compass className="w-3.5 h-3.5" />
+            <span>FOCUS WIND &amp; PLUME DISPERSION</span>
+          </button>
+        </div>
+
         {/* 🚨 TOP PROMINENT ENTRY POINT: EMERGENCY RESPONSE & REGULATION */}
         <div
           data-testid="top-emergency-response-card"
@@ -334,6 +432,20 @@ export function EventIntelligencePanel({
 
             {/* Level 3: Geographic Centroid, FRP, Detections, Satellite */}
             <EventOverviewGrid event={event} />
+
+            {/* Level 3.5: Atmospheric Conditions, Live Wind Vector & Gaussian Dispersion */}
+            <div id="wind-intelligence-detail" className="space-y-3 scroll-mt-2">
+              <WindVectorCard
+                wind={dispersion?.wind}
+                dataQuality={dispersion?.data_quality}
+                isLoading={isDispersionLoading}
+              />
+
+              <HazardDispersionCard
+                dispersion={dispersion}
+                isLoading={isDispersionLoading}
+              />
+            </div>
 
             {/* Level 4: Operational Risk & Hazard Evaluation */}
             <div className="p-2.5 rounded-control bg-surface/90 border border-border/80 font-mono space-y-2">
