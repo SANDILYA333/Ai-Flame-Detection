@@ -1,4 +1,5 @@
 import { apiFetch } from "./client";
+import { DEMO_FORESTS_GEOJSON } from "@/features/forests/mock/demo-forests";
 
 export interface ForestFeatureProperties {
   forest_id: string;
@@ -143,17 +144,44 @@ export async function fetchForestsGeoJson(params: {
   limit?: number;
   offset?: number;
 } = {}): Promise<ForestGeoJsonFeatureCollection> {
-  return apiFetch<ForestGeoJsonFeatureCollection>("/forests", {
-    params: {
-      country: params.country,
-      bbox: params.bbox,
-      forest_type: params.forest_type,
-      search: params.search,
-      limit: params.limit ?? 100,
-      offset: params.offset ?? 0,
-    },
-    timeoutMs: 8000,
-  });
+  try {
+    const data = await apiFetch<ForestGeoJsonFeatureCollection>("/forests", {
+      params: {
+        country: params.country,
+        bbox: params.bbox,
+        forest_type: params.forest_type,
+        search: params.search,
+        limit: params.limit ?? 100,
+        offset: params.offset ?? 0,
+      },
+      timeoutMs: 8000,
+    });
+    if (data && Array.isArray(data.features) && data.features.length > 0) {
+      return data;
+    }
+    return DEMO_FORESTS_GEOJSON;
+  } catch (err) {
+    console.warn("fetchForestsGeoJson API unavailable, using offline demo forest fixtures:", err);
+    let features = [...DEMO_FORESTS_GEOJSON.features];
+    if (params.country) {
+      features = features.filter(
+        (f) => f.properties.country_code?.toUpperCase() === params.country?.toUpperCase()
+      );
+    }
+    if (params.search) {
+      const q = params.search.toLowerCase();
+      features = features.filter(
+        (f) =>
+          f.properties.name?.toLowerCase().includes(q) ||
+          f.properties.name_en?.toLowerCase().includes(q) ||
+          f.properties.region?.toLowerCase().includes(q)
+      );
+    }
+    return {
+      type: "FeatureCollection",
+      features,
+    };
+  }
 }
 
 /**
