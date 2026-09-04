@@ -3,6 +3,7 @@
 import hashlib
 from collections.abc import Sequence
 from datetime import UTC, datetime
+from typing import Any
 
 from packages.config.scientific import ScientificConfig
 from packages.schemas.context import ContextEvidence
@@ -65,6 +66,9 @@ def build_intelligence_result(
     model_version: str | None = "v1.0-rules-engine",
     notes: str | None = None,
     created_at: datetime | None = None,
+    temporal_baseline: Any | None = None,
+    pyrometry: Any | None = None,
+    xai: Any | None = None,
 ) -> IntelligenceResult:
     """Construct a canonical IntelligenceResult domain model from evaluated dimensions.
 
@@ -83,6 +87,9 @@ def build_intelligence_result(
         model_version: Inference model or rules engine version string.
         notes: Optional explanatory notes.
         created_at: Optional UTC creation timestamp (defaults to current UTC).
+        temporal_baseline: Optional rolling 90-day baseline telemetry.
+        pyrometry: Optional Planck/Dozier pyrometry telemetry.
+        xai: Optional SHAP feature attributions telemetry.
 
     Returns:
         IntelligenceResult: Canonical validated IntelligenceResult domain model.
@@ -113,4 +120,7 @@ def build_intelligence_result(
         model_version=model_version,
         configuration_version=config.version,
         notes=notes,
+        temporal_baseline=temporal_baseline,
+        pyrometry=pyrometry,
+        xai=xai,
     )

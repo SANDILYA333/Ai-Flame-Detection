@@ -16,10 +16,19 @@ from packages.intelligence.reasoning import (
     infer_phenomenon_type,
 )
 from packages.intelligence.uncertainty import compute_uncertainty_metric
+from packages.intelligence.baseline import TemporalBaselineEngine
+from packages.physics.pyrometry import DozierPyrometrySolver
 from packages.schemas.context import ContextEvidence
+from packages.schemas.detection import Detection
 from packages.schemas.enums import PersistenceState
 from packages.schemas.event import Event
-from packages.schemas.intelligence import IntelligenceResult
+from packages.schemas.intelligence import (
+    FeatureAttributionTelemetry,
+    IntelligenceResult,
+    PyrometryTelemetry,
+    ShapExplanationTelemetry,
+    TemporalBaselineTelemetry,
+)
 from packages.schemas.source import PersistentSource
 
 logger = logging.getLogger(__name__)
@@ -33,6 +42,11 @@ def derive_intelligence(
     pipeline_run_id: str | None = None,
     model_version: str | None = "v1.0-rules-engine",
     notes: str | None = None,
+    historical_events: Sequence[Event] | None = None,
+    historical_detections: Sequence[Detection] | None = None,
+    temporal_baseline: TemporalBaselineTelemetry | None = None,
+    pyrometry: PyrometryTelemetry | None = None,
+    xai: ShapExplanationTelemetry | None = None,
 ) -> IntelligenceResult:
     """Derive an evidence-backed, uncertainty-aware canonical IntelligenceResult.
 
@@ -41,6 +55,7 @@ def derive_intelligence(
     2. Proximity to context infrastructure is NOT proof of causality.
     3. Low confidence triggers first-class abstention recommendation.
     4. Evaluates all 6 orthogonal ontology dimensions simultaneously.
+    5. Enriches with 90-day rolling baseline, Planck pyrometry, and SHAP.
 
     Args:
         event: Canonical Event domain model.
@@ -50,6 +65,11 @@ def derive_intelligence(
         pipeline_run_id: Optional pipeline execution identifier.
         model_version: Inference rules engine or model version string.
         notes: Optional analyst or operational notes.
+        historical_events: Optional history of events for 90-day baseline calculation.
+        historical_detections: Optional historical raw detections.
+        temporal_baseline: Explicit baseline override if pre-computed.
+        pyrometry: Explicit pyrometry override if pre-computed.
+        xai: Explicit XAI explanation override if pre-computed.
 
     Returns:
         IntelligenceResult: Canonical validated IntelligenceResult domain model.
@@ -105,7 +125,66 @@ def derive_intelligence(
         abstention_threshold=abstain_thresh,
     )
 
-    # 5. Build canonical IntelligenceResult
+    # 5. Compute 90-day baseline if not supplied
+    final_baseline: TemporalBaselineTelemetry | None = temporal_baseline
+    if final_baseline is None:
+        try:
+            bl_res = TemporalBaselineEngine.calculate_baseline(
+                current_event=event,
+                historical_events=historical_events,
+                historical_detections=historical_detections,
+                window_days=90,
+                radius_km=1.0,
+            )
+            final_baseline = TemporalBaselineTelemetry(
+                recurrence_90d=bl_res.recurrence_90d,
+                historical_mean_frp=bl_res.historical_mean_frp,
+                historical_std_frp=bl_res.historical_std_frp,
+                sample_count=bl_res.sample_count,
+                active_calendar_days=bl_res.active_calendar_days,
+                frp_z_score=bl_res.frp_z_score,
+                frp_surge_ratio=bl_res.frp_surge_ratio,
+                operational_status=bl_res.operational_status,
+                is_critical_anomaly=bl_res.is_critical_anomaly,
+                window_days=bl_res.window_days,
+                radius_km=bl_res.radius_km,
+                is_cold_start=bl_res.is_cold_start,
+            )
+        except Exception as e:
+            logger.warning("Failed to derive temporal baseline: %s", e)
+            final_baseline = None
+
+    # 6. Compute pyrometry if not supplied
+    final_pyrometry: PyrometryTelemetry | None = pyrometry
+    if final_pyrometry is None and historical_detections:
+        # Find highest MWIR detection in member detections for this event
+        valid_dets = [
+            d
+            for d in historical_detections
+            if d.brightness_ti4_k is not None and d.brightness_ti5_k is not None
+        ]
+        if valid_dets:
+            top_det = max(valid_dets, key=lambda d: d.brightness_ti4_k or 0.0)
+            if (top_det.brightness_ti4_k or 0.0) > (top_det.brightness_ti5_k or 0.0):
+                p_res = DozierPyrometrySolver.solve(
+                    bright_mwir_k=top_det.brightness_ti4_k or 300.0,
+                    bright_lwir_k=top_det.brightness_ti5_k or 290.0,
+                )
+                final_pyrometry = PyrometryTelemetry(
+                    available=p_res.is_valid,
+                    emitter_temp_k=p_res.emitter_temp_k,
+                    emitter_area_m2=p_res.emitter_area_m2,
+                    fractional_area_p=p_res.fractional_area_p,
+                    background_temp_k=p_res.background_temp_k,
+                    mwir_radiance_observed=p_res.mwir_radiance_observed,
+                    lwir_radiance_observed=p_res.lwir_radiance_observed,
+                    radiance_residual=p_res.radiance_residual,
+                    is_valid=p_res.is_valid,
+                    convergence_status=p_res.convergence_status,
+                    phenomenon_tag=p_res.phenomenon_tag,
+                )
+
+    # 7. Build canonical IntelligenceResult
     result = build_intelligence_result(
         event=event,
         source=source,
@@ -120,6 +199,9 @@ def derive_intelligence(
         pipeline_run_id=pipeline_run_id,
         model_version=model_version,
         notes=notes,
+        temporal_baseline=final_baseline,
+        pyrometry=final_pyrometry,
+        xai=xai,
     )
 
     logger.info(
