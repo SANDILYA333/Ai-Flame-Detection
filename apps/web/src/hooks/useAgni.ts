@@ -364,19 +364,24 @@ export function useAgni(options: UseAgniOptions = {}): UseAgniReturn {
             setStatus("speaking");
           },
           onEnd: () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
             setStatus("idle");
           },
           onError: (err) => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
             console.warn("[AGNI:TTS] Speech ended with error:", err);
             setStatus("idle");
           },
         });
 
-        // Safety fallback: auto-reset to idle if browser drops TTS events
+        // Dynamic safety fallback: auto-reset to idle if browser drops TTS events.
+        // Timeout scales with text length to accommodate longer responses.
         if (spoken) {
+          const wordCount = responseText.split(/\s+/).length;
+          const dynamicTimeout = Math.min(20000, Math.max(6000, wordCount * 600));
           timeoutRef.current = setTimeout(() => {
-            setStatus("idle");
-          }, 8000);
+            setStatus((prev) => (prev === "speaking" ? "idle" : prev));
+          }, dynamicTimeout);
         } else {
           timeoutRef.current = setTimeout(() => {
             setStatus("idle");

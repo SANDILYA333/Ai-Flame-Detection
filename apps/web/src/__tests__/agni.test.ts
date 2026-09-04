@@ -27,6 +27,7 @@ describe("AGNI Voice Intelligence Architecture & State Machine Suite", () => {
       "activating",
       "listening",
       "processing",
+      "executing",
       "speaking",
       "error",
     ];
@@ -34,7 +35,7 @@ describe("AGNI Voice Intelligence Architecture & State Machine Suite", () => {
     validStates.forEach((state) => {
       assert.ok(typeof state === "string");
     });
-    assert.equal(validStates.length, 6);
+    assert.equal(validStates.length, 7);
   });
 
   it("Step 2: Validates type-safe AGNI action execution dispatcher", async () => {
@@ -589,5 +590,126 @@ describe("AGNI Voice Intelligence Architecture & State Machine Suite", () => {
       (globalThis as any).SpeechSynthesisUtterance = originalUtterance;
       agniService.isTtsMuted = false;
     }
+  });
+
+  it("Step 22: Preset 1 — Industrial Anomaly Filter executes through full pipeline", async () => {
+    let appliedClass = "";
+    const handlers: AgniActionHandlers = {
+      setClassification: (cls) => { appliedClass = cls; },
+      setSearchQuery: () => {},
+    };
+
+    const preset = AGNI_DEMO_PRESETS.find((p) => p.id === "filter_industrial");
+    assert.ok(preset, "Industrial filter preset must exist");
+
+    // Simulate what executeDemoPreset does: processTranscript -> interpretTranscript -> executeStructuredCommand
+    const res = await agniService.interpretTranscript(preset!.spokenPrompt);
+    assert.ok(
+      res.command.intent === "FILTER_THERMAL_EVENTS" ||
+      res.command.intent === "FILTER_THERMAL_ANOMALIES"
+    );
+
+    const executed = await agniService.executeStructuredCommand(res.command, handlers);
+    assert.equal(executed, true);
+    assert.equal(appliedClass, "INDUSTRIAL");
+  });
+
+  it("Step 23: Preset 2 — Multi-Step Industrial Gujarat executes with correct state mutations", async () => {
+    let appliedClass = "";
+    let searchApplied = "";
+    let criterionUsed = "";
+
+    const handlers: AgniActionHandlers = {
+      setClassification: (cls) => { appliedClass = cls; },
+      setSearchQuery: (q) => { searchApplied = q; },
+      selectEventByCriterion: (crit) => { criterionUsed = crit; },
+      toggleLayer: () => {},
+      showResponders: () => {},
+    };
+
+    const preset = AGNI_DEMO_PRESETS.find((p) => p.id === "multi_step_gujarat_severe");
+    assert.ok(preset, "Gujarat multi-step preset must exist");
+
+    const res = await agniService.interpretTranscript(preset!.spokenPrompt);
+    assert.ok(
+      res.command.intent === "MULTI_STEP" || res.command.intent === "FILTER_THERMAL_EVENTS",
+      `Expected MULTI_STEP or FILTER_THERMAL_EVENTS, got ${res.command.intent}`
+    );
+
+    const executed = await agniService.executeStructuredCommand(res.command, handlers);
+    assert.equal(executed, true);
+    assert.equal(appliedClass, "INDUSTRIAL");
+  });
+
+  it("Step 24: Preset 3 — Refinery + Responders multi-step executes correctly", async () => {
+    let appliedClass = "";
+    let responderToggled = false;
+
+    const handlers: AgniActionHandlers = {
+      setClassification: (cls) => { appliedClass = cls; },
+      setSearchQuery: () => {},
+      toggleLayer: (l) => {
+        if (l === "india-emergency-services") responderToggled = true;
+      },
+      showResponders: () => { responderToggled = true; },
+    };
+
+    const preset = AGNI_DEMO_PRESETS.find((p) => p.id === "multi_step_refinery_responders");
+    assert.ok(preset, "Refinery + responders preset must exist");
+
+    const res = await agniService.interpretTranscript(preset!.spokenPrompt);
+    const executed = await agniService.executeStructuredCommand(res.command, handlers);
+    assert.equal(executed, true);
+    assert.equal(appliedClass, "INDUSTRIAL");
+    assert.equal(responderToggled, true);
+  });
+
+  it("Step 25: Preset 4 — Hide Forests + Focus Jamnagar multi-step executes", async () => {
+    let appliedClass = "";
+    let toggledLayer = "";
+    let toggledEnabled: boolean | undefined;
+    let searchQuery = "";
+
+    const handlers: AgniActionHandlers = {
+      setClassification: (cls) => { appliedClass = cls; },
+      setSearchQuery: (q) => { searchQuery = q; },
+      toggleLayer: (l, e) => { toggledLayer = l; toggledEnabled = e; },
+    };
+
+    const preset = AGNI_DEMO_PRESETS.find((p) => p.id === "multi_step_forest_jamnagar");
+    assert.ok(preset, "Forest/Jamnagar preset must exist");
+
+    const res = await agniService.interpretTranscript(preset!.spokenPrompt);
+    assert.ok(
+      res.command.intent === "MULTI_STEP" || res.command.intent === "FILTER_THERMAL_EVENTS",
+      `Expected MULTI_STEP, got ${res.command.intent}`
+    );
+
+    const executed = await agniService.executeStructuredCommand(res.command, handlers);
+    assert.equal(executed, true);
+    assert.equal(appliedClass, "INDUSTRIAL");
+    assert.equal(toggledLayer, "indian-forest-reserves");
+    assert.equal(toggledEnabled, false);
+    assert.ok(searchQuery.includes("Jamnagar"));
+  });
+
+  it("Step 26: Speech recognition callback contract validation", () => {
+    // Verify startSpeechRecognition returns false in non-browser (Node) environment
+    const started = agniService.startSpeechRecognition({
+      onTranscript: () => {},
+      onError: () => {},
+      onEnd: () => {},
+    });
+    assert.equal(started, false, "Speech recognition should return false in non-browser env");
+
+    // Verify stopSpeechRecognition is safe to call even without active instance
+    agniService.stopSpeechRecognition();
+    // No crash means pass
+  });
+
+  it("Step 27: TTS stopSpeechSynthesis is safe to call without active speech", () => {
+    // Should not throw even without window.speechSynthesis
+    agniService.stopSpeechSynthesis();
+    // No crash means pass
   });
 });

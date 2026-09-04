@@ -289,7 +289,7 @@ export function GlobalForestMonitoringHub({
               size="sm"
               onClick={runEscalationDemo}
               disabled={isDemoRunning}
-              className="h-7 px-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm transition-all"
+              className="h-7 px-3 bg-accent hover:bg-accent/90 text-bg-base text-xs font-bold shadow-sm transition-all"
             >
               {isDemoRunning ? (
                 <span className="flex items-center gap-1.5">

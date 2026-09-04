@@ -25,6 +25,7 @@ export class AgniService implements IAgniService {
   private currentUtterance: any = null;
   private availableVoices: any[] = [];
   private voicesInitialized: boolean = false;
+  private ttsResumeInterval: ReturnType<typeof setInterval> | null = null;
   public isTtsMuted: boolean = false;
 
   constructor() {
@@ -55,6 +56,78 @@ export class AgniService implements IAgniService {
       }
     } catch {
       // Ignore initial voice load errors in headless environments
+    }
+  }
+
+  /**
+   * Wait for browser voices to become available (max 2s timeout).
+   * Chromium loads voices asynchronously; getVoices() returns [] on first call.
+   */
+  private waitForVoices(): Promise<void> {
+    if (this.voicesInitialized && this.availableVoices.length > 0) {
+      return Promise.resolve();
+    }
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      return Promise.resolve();
+    }
+    return new Promise<void>((resolve) => {
+      // Try immediate load
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        this.availableVoices = voices;
+        this.voicesInitialized = true;
+        resolve();
+        return;
+      }
+      // Wait for voiceschanged event with timeout
+      const timeout = setTimeout(() => {
+        this.voicesInitialized = true; // proceed even without voices
+        resolve();
+      }, 2000);
+      const handler = () => {
+        clearTimeout(timeout);
+        try {
+          this.availableVoices = window.speechSynthesis.getVoices() || [];
+          this.voicesInitialized = true;
+        } catch { /* ignore */ }
+        resolve();
+      };
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.addEventListener("voiceschanged", handler, { once: true });
+      } else {
+        clearTimeout(timeout);
+        this.voicesInitialized = true;
+        resolve();
+      }
+    });
+  }
+
+  /**
+   * Start Chromium TTS keep-alive interval.
+   * Chromium silently kills SpeechSynthesisUtterance after ~15 seconds of continuous speech.
+   * Periodically calling resume() prevents this browser bug.
+   */
+  private startTtsKeepAlive(): void {
+    this.stopTtsKeepAlive();
+    this.ttsResumeInterval = setInterval(() => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        try {
+          if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+            window.speechSynthesis.pause();
+            window.speechSynthesis.resume();
+          }
+        } catch { /* ignore */ }
+      }
+    }, 5000);
+  }
+
+  /**
+   * Clear Chromium TTS keep-alive interval
+   */
+  private stopTtsKeepAlive(): void {
+    if (this.ttsResumeInterval) {
+      clearInterval(this.ttsResumeInterval);
+      this.ttsResumeInterval = null;
     }
   }
 
@@ -261,7 +334,8 @@ export class AgniService implements IAgniService {
     }
 
     try {
-      // 1. Cancel previous utterance
+      // 1. Cancel previous utterance and stop keep-alive
+      this.stopTtsKeepAlive();
       window.speechSynthesis.cancel();
       if (window.speechSynthesis.paused) {
         window.speechSynthesis.resume();
@@ -270,6 +344,13 @@ export class AgniService implements IAgniService {
       // 2. Ensure voices list is populated
       if (!this.voicesInitialized || this.availableVoices.length === 0) {
         this.initVoices();
+        // If still no voices, attempt synchronous re-fetch
+        if (this.availableVoices.length === 0) {
+          try {
+            this.availableVoices = window.speechSynthesis.getVoices() || [];
+            if (this.availableVoices.length > 0) this.voicesInitialized = true;
+          } catch { /* ignore */ }
+        }
       }
 
       // 3. Create utterance and retain reference in class field to prevent garbage collection
@@ -305,12 +386,15 @@ export class AgniService implements IAgniService {
       utterance.pitch = 1.0;
 
       utterance.onstart = () => {
+        // Start Chromium keep-alive to prevent 15-second silent kill bug
+        this.startTtsKeepAlive();
         if (callbacks?.onStart) {
           callbacks.onStart();
         }
       };
 
       utterance.onend = () => {
+        this.stopTtsKeepAlive();
         this.currentUtterance = null;
         if (callbacks?.onEnd) {
           callbacks.onEnd();
@@ -318,6 +402,7 @@ export class AgniService implements IAgniService {
       };
 
       utterance.onerror = (event: any) => {
+        this.stopTtsKeepAlive();
         if (event?.error !== "interrupted" && event?.error !== "canceled") {
           console.warn("[AGNI:TTS] Speech synthesis error:", event?.error || event);
         }
@@ -337,6 +422,7 @@ export class AgniService implements IAgniService {
       return true;
     } catch (err) {
       console.warn("[AGNI:TTS] speakText exception:", err);
+      this.stopTtsKeepAlive();
       this.currentUtterance = null;
       return false;
     }
@@ -346,6 +432,7 @@ export class AgniService implements IAgniService {
    * Cancel and halt any active SpeechSynthesis utterance
    */
   stopSpeechSynthesis(): void {
+    this.stopTtsKeepAlive();
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       try {
         window.speechSynthesis.cancel();

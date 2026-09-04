@@ -39,6 +39,13 @@ export function AgniStatus({
           containerClass: "bg-accent-cyan/15 border-accent-cyan/40 text-accent-cyan font-semibold",
           pulse: true,
         };
+      case "executing":
+        return {
+          label: "EXECUTING",
+          dotVariant: "live" as const,
+          containerClass: "bg-accent-cyan/15 border-accent-cyan/40 text-accent-cyan font-bold",
+          pulse: true,
+        };
       case "speaking":
         return {
           label: "RESPONDING",

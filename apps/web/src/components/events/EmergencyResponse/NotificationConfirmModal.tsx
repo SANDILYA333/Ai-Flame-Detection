@@ -262,7 +262,7 @@ export function NotificationConfirmModal({
               "px-4 py-1.5 text-xs font-mono font-bold rounded-control flex items-center gap-1.5 shadow-panel transition-all active:scale-95 disabled:opacity-50",
               isMobilize
                 ? "bg-state-error text-white hover:bg-state-error/90"
-                : "bg-accent text-white hover:bg-accent/90"
+                : "bg-accent text-bg-base hover:bg-accent/90"
             )}
           >
             {isSubmitting ? (

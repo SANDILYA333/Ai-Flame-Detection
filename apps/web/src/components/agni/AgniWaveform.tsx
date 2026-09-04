@@ -62,6 +62,11 @@ export function AgniWaveform({
       } else if (status === "processing") {
         // Scanning wave
         heightPercent = 30;
+      } else if (status === "executing") {
+        // Cascading pulse — each bar activates sequentially
+        const phase = (i / barsCount) * Math.PI * 2;
+        heightPercent = 20 + Math.abs(Math.sin(phase)) * 45;
+        isHot = i % 2 === 0;
       } else if (status === "speaking") {
         // Rhythmic synthetic speaking waveform
         const wave = 25 + Math.abs(Math.sin((i / barsCount) * Math.PI * 3)) * 60;
@@ -91,12 +96,12 @@ export function AgniWaveform({
       style={{ height: `${height}px` }}
     >
       {/* Background glow when active */}
-      {(status === "listening" || status === "speaking") && (
+      {(status === "listening" || status === "speaking" || status === "executing") && (
         <div className="absolute inset-0 bg-accent/5 rounded-control blur-sm pointer-events-none" />
       )}
 
       {/* Processing radar sweep overlay */}
-      {status === "processing" && (
+      {(status === "processing" || status === "executing") && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-accent-cyan to-transparent animate-pulse" />
         </div>
@@ -114,6 +119,10 @@ export function AgniWaveform({
           barColor = "bg-state-warning/80";
         } else if (status === "processing") {
           barColor = "bg-accent-cyan animate-pulse";
+        } else if (status === "executing") {
+          barColor = bar.isHot
+            ? "bg-accent-cyan shadow-[0_0_6px_rgba(0,217,255,0.5)]"
+            : "bg-accent-cyan/60";
         } else if (status === "speaking") {
           barColor = bar.isHot
             ? "bg-accent shadow-[0_0_6px_rgba(57,255,136,0.5)]"

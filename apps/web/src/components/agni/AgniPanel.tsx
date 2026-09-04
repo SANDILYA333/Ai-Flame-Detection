@@ -15,6 +15,7 @@ import {
   Terminal,
   Volume2,
   VolumeX,
+  Loader2,
 } from "lucide-react";
 import { AgniStatus } from "./AgniStatus";
 import { AgniWaveform } from "./AgniWaveform";
@@ -76,8 +77,10 @@ export function AgniPanel({
 
   const isListening = status === "listening";
   const isProcessing = status === "processing";
+  const isExecuting = status === "executing";
   const isSpeaking = status === "speaking";
   const isError = status === "error";
+  const isBusy = isProcessing || isExecuting;
 
   // Handle escape key to close panel
   useEffect(() => {
@@ -117,7 +120,11 @@ export function AgniPanel({
       <div className="h-10 px-3.5 bg-surface border-b border-border flex items-center justify-between gap-2 shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-5 h-5 rounded-control bg-accent/20 border border-accent/40 flex items-center justify-center text-accent">
-            <Radio className={cn("w-3 h-3 text-accent", isListening && "animate-pulse")} />
+            {isSpeaking ? (
+              <Volume2 className="w-3 h-3 text-accent animate-pulse" />
+            ) : (
+              <Radio className={cn("w-3 h-3 text-accent", isListening && "animate-pulse")} />
+            )}
           </div>
           <span className="text-xs font-bold font-mono tracking-wider text-foreground">
             AGNI
@@ -167,6 +174,10 @@ export function AgniPanel({
           <span>
             {isListening
               ? `${Math.round(audioTelemetry.amplitude * 100)}% AMP`
+              : isSpeaking
+              ? "TTS ACTIVE"
+              : isExecuting
+              ? "DISPATCHING"
               : status.toUpperCase()}
           </span>
         </div>
@@ -186,17 +197,19 @@ export function AgniPanel({
           <button
             type="button"
             onClick={isListening || isSpeaking ? onStopListening : onStartListening}
-            disabled={isProcessing}
+            disabled={isBusy}
+            aria-label={isListening ? "Stop listening" : isSpeaking ? "Stop speaking" : "Start listening"}
             className={cn(
               "flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-control text-xs font-mono font-bold transition-all",
               isListening || isSpeaking
                 ? "bg-state-warning/15 hover:bg-state-warning/25 border border-state-warning/40 text-state-warning"
-                : "bg-accent/15 hover:bg-accent/25 border border-accent/40 text-accent"
+                : "bg-accent/15 hover:bg-accent/25 border border-accent/40 text-accent",
+              isBusy && "opacity-50 cursor-not-allowed"
             )}
           >
             {isSpeaking ? (
               <>
-                <MicOff className="w-3.5 h-3.5" />
+                <VolumeX className="w-3.5 h-3.5" />
                 <span>STOP SPEAKING</span>
               </>
             ) : isListening ? (
@@ -252,22 +265,60 @@ export function AgniPanel({
 
       {/* 4. Transcribed Command & AGNI Response Area */}
       <div className="p-3.5 flex flex-col gap-3 max-h-56 overflow-y-auto">
-        {/* User Command Preview */}
+        {/* Operator Intent — Live/Final Transcript */}
         {transcript ? (
           <div className="flex flex-col gap-1">
             <div className="flex items-center justify-between text-[10px] font-mono text-accent-cyan">
-              <span>OPERATOR INTENT</span>
+              <span className="flex items-center gap-1.5">
+                <span>OPERATOR INTENT</span>
+                {/* Live/Final indicator */}
+                {transcript.isFinal ? (
+                  <span className="px-1 py-0.5 rounded bg-accent/20 text-accent text-[9px] font-bold">
+                    FINAL
+                  </span>
+                ) : (
+                  <span className="px-1 py-0.5 rounded bg-accent-cyan/20 text-accent-cyan text-[9px] font-bold flex items-center gap-0.5">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-cyan opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent-cyan" />
+                    </span>
+                    LIVE
+                  </span>
+                )}
+              </span>
               <span>{transcript.source.toUpperCase()}</span>
             </div>
-            <div className="p-2.5 rounded-control bg-surface border border-border text-xs text-foreground font-sans leading-relaxed">
+            <div
+              className={cn(
+                "p-2.5 rounded-control bg-surface border border-border text-xs font-sans leading-relaxed transition-all",
+                transcript.isFinal
+                  ? "text-foreground font-medium"
+                  : "text-foreground-muted italic"
+              )}
+            >
               &ldquo;{transcript.text}&rdquo;
+              {!transcript.isFinal && (
+                <span className="inline-block w-0.5 h-3.5 bg-accent-cyan ml-0.5 animate-pulse align-text-bottom" />
+              )}
             </div>
           </div>
         ) : (
           <div className="text-center py-2 text-xs font-mono text-foreground-muted">
             {isListening
               ? "Listening for operational voice command..."
+              : isBusy
+              ? "Processing command..."
               : "Ready. Click Start Listening or choose a command."}
+          </div>
+        )}
+
+        {/* Processing / Executing Indicator */}
+        {(isProcessing || isExecuting) && (
+          <div className="flex items-center gap-2 py-1 text-[10px] font-mono text-accent-cyan animate-in fade-in duration-200">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            <span>
+              {isProcessing ? "GEMINI INTERPRETING COMMAND..." : "EXECUTING OPERATIONAL ACTIONS..."}
+            </span>
           </div>
         )}
 
@@ -278,6 +329,9 @@ export function AgniPanel({
               <span className="flex items-center gap-1 font-bold">
                 <Sparkles className="w-3 h-3" />
                 <span>AGNI DISPATCH</span>
+                {isSpeaking && (
+                  <Volume2 className="w-3 h-3 ml-0.5 text-accent animate-pulse" />
+                )}
               </span>
               <div className="flex items-center gap-1.5">
                 {response.confidence !== undefined && (
@@ -356,11 +410,12 @@ export function AgniPanel({
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder="Type command or query..."
-          className="flex-1 bg-[#0b1015] text-[#f2f5f7] border border-[#252c35] px-2.5 py-1.5 rounded text-xs font-mono placeholder:text-[#737e89] caret-[#39ff88] focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 selection:bg-accent/30 selection:text-white"
+          disabled={isBusy}
+          className="flex-1 bg-[#0b1015] text-[#f2f5f7] border border-[#252c35] px-2.5 py-1.5 rounded text-xs font-mono placeholder:text-[#737e89] caret-[#39ff88] focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 selection:bg-accent/30 selection:text-white disabled:opacity-50"
         />
         <button
           type="submit"
-          disabled={!inputText.trim()}
+          disabled={!inputText.trim() || isBusy}
           aria-label="Send command"
           className="px-2 py-1 bg-accent/15 hover:bg-accent/25 border border-accent/40 text-accent disabled:opacity-40 rounded text-xs font-mono font-bold flex items-center justify-center transition-colors"
         >
@@ -393,8 +448,8 @@ export function AgniPanel({
                 key={preset.id}
                 type="button"
                 onClick={() => onExecuteDemoPreset(preset)}
-                disabled={isProcessing}
-                className="text-left px-2.5 py-1.5 rounded bg-surface hover:bg-surface-hover border border-border hover:border-accent/40 text-xs font-mono text-foreground-secondary hover:text-accent transition-all flex items-center justify-between group"
+                disabled={isBusy}
+                className="text-left px-2.5 py-1.5 rounded bg-surface hover:bg-surface-hover border border-border hover:border-accent/40 text-xs font-mono text-foreground-secondary hover:text-accent transition-all flex items-center justify-between group disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="truncate">{preset.label}</span>
                 <span className="text-[9px] text-foreground-muted group-hover:text-accent/80 shrink-0 ml-1">
