@@ -36,6 +36,8 @@ SUPPORTED_MODEL_TYPES: tuple[str, ...] = (
     "LogisticRegressionClassifier",
     "DecisionTreeClassifier",
     "RandomForestClassifier",
+    "XGBoostClassifier",
+    "LightGBMClassifier",
 )
 
 
@@ -146,6 +148,14 @@ class ModelRegistry:
             model = DecisionTreeClassifier(random_seed=artifact.metadata.random_seed)
         elif m_type == "RandomForestClassifier":
             model = RandomForestClassifier(random_seed=artifact.metadata.random_seed)
+        elif m_type == "XGBoostClassifier":
+            from services.ml.models.xgboost_model import XGBoostClassifier
+
+            model = XGBoostClassifier(random_seed=artifact.metadata.random_seed)
+        elif m_type == "LightGBMClassifier":
+            from services.ml.models.lightgbm_model import LightGBMClassifier
+
+            model = LightGBMClassifier(random_seed=artifact.metadata.random_seed)
         else:
             raise ValueError(f"Unknown model type '{m_type}' in artifact.")
 
