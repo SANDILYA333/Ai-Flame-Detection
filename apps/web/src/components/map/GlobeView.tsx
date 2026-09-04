@@ -6,6 +6,9 @@ import { GLOBE_CONFIG } from "@/lib/map/globe-config";
 import { ThermalEvent } from "@/types/event";
 import { createFireMarkerElement, updateFireMarkerSelection } from "./FireMarkerElement";
 import { WebGLFallback } from "./WebGLFallback";
+import { useEventContext } from "@/context/EventContext";
+import { fetchForestsGeoJson, ForestGeoJsonFeatureCollection } from "@/lib/api/forests";
+import { DEMO_FORESTS_GEOJSON } from "@/features/forests/mock/demo-forests";
 import { cn } from "@/lib/utils";
 
 export interface GlobeViewProps {
@@ -49,6 +52,10 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
     const [isLoaded, setIsLoaded] = useState(false);
     const autoRotateTimerRef = useRef<NodeJS.Timeout | null>(null);
     const isInteractingRef = useRef<boolean>(false);
+
+    const { activeLayers } = useEventContext();
+    const isForestLayerActive = activeLayers?.["indian-forest-reserves"] ?? true;
+    const [forestData, setForestData] = useState<ForestGeoJsonFeatureCollection>(DEMO_FORESTS_GEOJSON);
 
     const initialCameraRef = useRef({
       lat: initialLat,
@@ -100,6 +107,17 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
       }),
       []
     );
+
+    // Initial forest load for 3D globe
+    useEffect(() => {
+      fetchForestsGeoJson({ limit: 100 })
+        .then((data) => {
+          if (data && Array.isArray(data.features)) {
+            setForestData(data);
+          }
+        })
+        .catch(() => {});
+    }, []);
 
     // 1. Initialize Globe Instance Once on Mount
     useEffect(() => {
@@ -226,7 +244,6 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
               const renderer = g.renderer?.();
               if (renderer) {
                 renderer.dispose();
-                // NOTE: Do not call forceContextLoss() during React cleanup as it breaks WebGL across remounts
               }
             } catch (cleanupErr) {
               console.warn("Globe cleanup warning:", cleanupErr);
@@ -310,7 +327,46 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
         .ringRepeatPeriod(2400);
     }, [events, selectedEvent, isLoaded]);
 
-    // 4. Smooth Camera Fly-To on Event Selection
+    // 4. Render 3D Forest Polygons on Globe
+    useEffect(() => {
+      if (!globeInstanceRef.current || !isLoaded) return;
+      const globe = globeInstanceRef.current as any;
+
+      if (!isForestLayerActive || !forestData?.features?.length) {
+        globe.polygonsData([]);
+        return;
+      }
+
+      globe
+        .polygonsData(forestData.features)
+        .polygonGeoJsonGeometry((d: any) => d.geometry)
+        .polygonCapColor((d: any) => {
+          const lvl = d.properties?.threat_level;
+          if (lvl === "ACTIVE_FIRE") return "rgba(239, 68, 68, 0.55)";
+          if (lvl === "CRITICAL") return "rgba(220, 38, 38, 0.45)";
+          if (lvl === "WARNING") return "rgba(245, 158, 11, 0.40)";
+          return "rgba(34, 197, 94, 0.35)";
+        })
+        .polygonSideColor(() => "rgba(22, 163, 74, 0.15)")
+        .polygonStrokeColor((d: any) => {
+          const lvl = d.properties?.threat_level;
+          if (lvl === "ACTIVE_FIRE") return "#ef4444";
+          if (lvl === "CRITICAL") return "#dc2626";
+          if (lvl === "WARNING") return "#f59e0b";
+          return "#16a34a";
+        })
+        .polygonAltitude(0.008)
+        .polygonLabel(
+          (d: any) => `
+          <div style="background:#0f172a; border:1px solid #334155; padding:6px 10px; border-radius:4px; font-family:monospace; font-size:11px; color:#f8fafc;">
+            <strong>${d.properties?.name || d.properties?.name_en || "Monitored Forest"}</strong><br/>
+            <span style="color:#94a3b8;">${d.properties?.forest_type || "Forest"} • ${d.properties?.country_code || "GLOBAL"}</span>
+          </div>
+        `
+        );
+    }, [forestData, isForestLayerActive, isLoaded]);
+
+    // 5. Smooth Camera Fly-To on Event Selection
     useEffect(() => {
       if (!globeInstanceRef.current || !selectedEvent) return;
       const globe = globeInstanceRef.current;
