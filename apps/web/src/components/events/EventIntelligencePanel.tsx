@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { ThermalEvent } from "@/types/event";
 import { useEventDetail } from "@/hooks/useEventDetail";
 import { useEventDispersion } from "@/hooks/useEventDispersion";
@@ -40,7 +41,7 @@ import {
   Compass,
   ArrowUpRight,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useEventContext } from "@/context/EventContext";
 
 export interface EventIntelligencePanelProps {
   event: ThermalEvent | null;
@@ -63,8 +64,22 @@ export function EventIntelligencePanel({
   onClose,
   className,
 }: EventIntelligencePanelProps) {
-  const [isDossierModalOpen, setIsDossierModalOpen] = useState(false);
-  const [isResponseCenterOpen, setIsResponseCenterOpen] = useState(false);
+  const eventContext = useEventContext();
+  const [localDossierOpen, setLocalDossierOpen] = useState(false);
+  const [localResponseCenterOpen, setLocalResponseCenterOpen] = useState(false);
+
+  const isDossierModalOpen = eventContext?.isDossierOpen || localDossierOpen;
+  const setIsDossierModalOpen = (open: boolean) => {
+    setLocalDossierOpen(open);
+    eventContext?.setIsDossierOpen(open);
+  };
+
+  const isResponseCenterOpen = eventContext?.isResponseCenterOpen || localResponseCenterOpen;
+  const setIsResponseCenterOpen = (open: boolean) => {
+    setLocalResponseCenterOpen(open);
+    eventContext?.setIsResponseCenterOpen(open);
+  };
+
 
   const {
     evidence,

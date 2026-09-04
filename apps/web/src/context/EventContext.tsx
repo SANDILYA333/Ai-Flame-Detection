@@ -56,6 +56,10 @@ export interface EventContextType {
   setSelectedEvent: (event: ThermalEvent | null) => void;
   isDetailOpen: boolean;
   setIsDetailOpen: (isOpen: boolean) => void;
+  isDossierOpen: boolean;
+  setIsDossierOpen: (isOpen: boolean) => void;
+  isResponseCenterOpen: boolean;
+  setIsResponseCenterOpen: (isOpen: boolean) => void;
   activeLayers: Record<string, boolean>;
   toggleLayer: (layerId: string) => void;
   timeRange: string;
@@ -97,7 +101,10 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
   const [selectedPriority, setSelectedPriority] = useState<string>("ALL");
   const [selectedEvent, setSelectedEvent] = useState<ThermalEvent | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState<boolean>(true);
+  const [isDossierOpen, setIsDossierOpen] = useState<boolean>(false);
+  const [isResponseCenterOpen, setIsResponseCenterOpen] = useState<boolean>(false);
   const [timeRange, setTimeRangeState] = useState<string>("ALL");
+
 
   // Temporal Playback Engine State
   const [playbackMode, setPlaybackMode] = useState<PlaybackMode>("LIVE");
@@ -446,6 +453,10 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       setSelectedEvent,
       isDetailOpen,
       setIsDetailOpen,
+      isDossierOpen,
+      setIsDossierOpen,
+      isResponseCenterOpen,
+      setIsResponseCenterOpen,
       activeLayers,
       toggleLayer,
       timeRange,
@@ -485,10 +496,13 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       selectedPriority,
       selectedEvent,
       isDetailOpen,
+      isDossierOpen,
+      isResponseCenterOpen,
       activeLayers,
       toggleLayer,
       timeRange,
       setTimeRange,
+
       playbackMode,
       isPlaying,
       playbackSpeed,
