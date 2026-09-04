@@ -7,6 +7,7 @@ import { EventClassificationHeader } from "./EventClassificationHeader";
 import { ClassProbabilityBreakdown } from "./ClassProbabilityBreakdown";
 import { EventOverviewGrid } from "./EventOverviewGrid";
 import { IndustrialAssetSection } from "./IndustrialAssetSection";
+import { ForestProximityCard } from "./ForestProximityCard";
 import { ExplainableAiSection } from "./ExplainableAiSection";
 import { PlanckPyrometrySection } from "./PlanckPyrometrySection";
 import { HistoricalCurveSection } from "./HistoricalCurveSection";
@@ -362,6 +363,9 @@ export function EventIntelligencePanel({
               event={event}
               evidence={evidence}
             />
+
+            {/* Level 4.5: Forest Proximity Detection & Threat Warnings */}
+            <ForestProximityCard event={event} />
 
             {/* Level 4: Sub-Pixel Pyrometry (Planck Curve & Flare Radiance) */}
             <PlanckPyrometrySection

@@ -8,6 +8,8 @@ import {
   Cpu,
   Clock,
   FilterX,
+  Trees,
+  Flame,
 } from "lucide-react";
 import { Panel } from "@/components/ui/Panel";
 import { Badge } from "@/components/ui/Badge";
@@ -17,6 +19,8 @@ import { calculateOperationalRisk } from "@/lib/risk/scoring";
 import { useEventContext } from "@/context/EventContext";
 import { APP_CONFIG } from "@/config/ui";
 import { cn } from "@/lib/utils";
+import { GlobalForestMonitoringHub } from "./GlobalForestMonitoringHub";
+import { ForestThreatDetailDrawer } from "./ForestThreatDetailDrawer";
 
 export type EventSortOption = "newest" | "risk" | "frp" | "confidence" | "detections";
 
@@ -55,6 +59,8 @@ export function EventIntelligenceFeed({
   const events = propEvents || contextEvents;
   const selectedEvent = propSelectedEvent !== undefined ? propSelectedEvent : contextSelectedEvent;
 
+  const [activeFeedTab, setActiveFeedTab] = useState<"THERMAL_EVENTS" | "FOREST_MONITORING">("THERMAL_EVENTS");
+  const [inspectedForestId, setInspectedForestId] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState<EventSortOption>("risk");
   const listContainerRef = useRef<HTMLDivElement>(null);
 
@@ -95,52 +101,95 @@ export function EventIntelligenceFeed({
   };
 
   return (
-    <Panel
-      variant="glass"
-      className={cn(
-        "w-96 max-h-[88vh] flex flex-col p-3 shadow-panel select-none font-mono",
-        className
-      )}
-    >
-      {/* 1. Feed Header with Live Ingestion & Refresh Trigger */}
-      <div className="flex items-center justify-between border-b border-border/80 pb-2.5 mb-2.5">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-control bg-accent/15 border border-accent/30 flex items-center justify-center text-accent">
-            <Radio className="w-3.5 h-3.5 animate-pulse" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              <span>LIVE INTELLIGENCE</span>
-              <Badge variant="thermal" size="sm" className="text-[9px] py-0">
-                {events.length} ACTIVE
-              </Badge>
-            </div>
-            <div className="text-[10px] text-foreground-muted">
-              {isLiveBackend ? "FastAPI Ingestion Active" : "Multi-Source Telemetry"}
-            </div>
-          </div>
+    <>
+      <Panel
+        variant="glass"
+        className={cn(
+          "w-[420px] max-h-[88vh] flex flex-col p-3 shadow-panel select-none font-mono",
+          className
+        )}
+      >
+        {/* Top Intelligence Tab Selector */}
+        <div className="grid grid-cols-2 gap-1 mb-2.5 p-1 rounded-lg bg-surface border border-border">
+          <button
+            onClick={() => setActiveFeedTab("THERMAL_EVENTS")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-bold transition-all",
+              activeFeedTab === "THERMAL_EVENTS"
+                ? "bg-accent/20 text-accent border border-accent/40 shadow-sm"
+                : "text-foreground-muted hover:text-foreground"
+            )}
+          >
+            <Flame className="w-3.5 h-3.5 text-accent" />
+            <span>THERMAL FIRES ({events.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveFeedTab("FOREST_MONITORING")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-bold transition-all",
+              activeFeedTab === "FOREST_MONITORING"
+                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm"
+                : "text-foreground-muted hover:text-foreground"
+            )}
+          >
+            <Trees className="w-3.5 h-3.5 text-emerald-400" />
+            <span>FOREST MONITORING</span>
+          </button>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => refetch()}
-            disabled={isFetching}
-            title="Refresh event stream"
-            className="p-1.5 rounded-control bg-surface hover:bg-surface-raised border border-border text-foreground-muted hover:text-foreground transition-colors disabled:opacity-50"
-          >
-            <RotateCw className={cn("w-3.5 h-3.5", isFetching && "animate-spin text-accent")} />
-          </button>
-          {onClose && (
-            <button
-              onClick={onClose}
-              title="Close Intelligence Feed"
-              className="p-1.5 rounded-control bg-surface hover:bg-surface-raised border border-border text-foreground-muted hover:text-foreground transition-colors text-xs font-semibold px-2"
-            >
-              ✕
-            </button>
-          )}
-        </div>
-      </div>
+        {activeFeedTab === "FOREST_MONITORING" ? (
+          <div className="flex-1 overflow-hidden">
+            <GlobalForestMonitoringHub
+              onSelectForest={(forestId) => {
+                setInspectedForestId(forestId);
+              }}
+              onOpenForestDetail={(forestId) => {
+                setInspectedForestId(forestId);
+              }}
+            />
+          </div>
+        ) : (
+          <>
+            {/* 1. Feed Header with Live Ingestion & Refresh Trigger */}
+            <div className="flex items-center justify-between border-b border-border/80 pb-2.5 mb-2.5">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-control bg-accent/15 border border-accent/30 flex items-center justify-center text-accent">
+                  <Radio className="w-3.5 h-3.5 animate-pulse" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                    <span>LIVE INTELLIGENCE</span>
+                    <Badge variant="thermal" size="sm" className="text-[9px] py-0">
+                      {events.length} ACTIVE
+                    </Badge>
+                  </div>
+                  <div className="text-[10px] text-foreground-muted">
+                    {isLiveBackend ? "FastAPI Ingestion Active" : "Multi-Source Telemetry"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => refetch()}
+                  disabled={isFetching}
+                  title="Refresh event stream"
+                  className="p-1.5 rounded-control bg-surface hover:bg-surface-raised border border-border text-foreground-muted hover:text-foreground transition-colors disabled:opacity-50"
+                >
+                  <RotateCw className={cn("w-3.5 h-3.5", isFetching && "animate-spin text-accent")} />
+                </button>
+                {onClose && (
+                  <button
+                    onClick={onClose}
+                    title="Close Intelligence Feed"
+                    className="p-1.5 rounded-control bg-surface hover:bg-surface-raised border border-border text-foreground-muted hover:text-foreground transition-colors text-xs font-semibold px-2"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+
 
       {/* 2. Operational Priority Quick Filter Buttons */}
       <div className="grid grid-cols-5 gap-1 mb-2.5 text-[9.5px]">
@@ -287,6 +336,25 @@ export function EventIntelligenceFeed({
           <Clock className="w-2.5 h-2.5 text-foreground-muted" /> {APP_CONFIG.featureSchema}
         </span>
       </div>
-    </Panel>
+          </>
+        )}
+      </Panel>
+
+      {/* Forest Threat Detail Drawer */}
+      {inspectedForestId && (
+        <ForestThreatDetailDrawer
+          forestId={inspectedForestId}
+          onClose={() => setInspectedForestId(null)}
+          onNavigateToEvent={(eventId) => {
+            const targetEvt = events.find((e) => e.event_id === eventId);
+            if (targetEvt) {
+              handleSelect(targetEvt);
+              setActiveFeedTab("THERMAL_EVENTS");
+            }
+          }}
+        />
+      )}
+    </>
   );
 }
+
