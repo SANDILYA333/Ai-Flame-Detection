@@ -1,0 +1,530 @@
+{
+  "model_id": "real_xgboostclassifier_target_industrial_segregation_v1.0.0",
+  "model_type": "XGBoostClassifier",
+  "model_role": "Phase 1 Experimental Candidate (Gradient Boosted Trees)",
+  "model_version": "v1.0.0-experimental",
+  "artifact_path": "artifacts/real/experimental/real_xgboostclassifier_target_industrial_segregation_v1.0.0.json",
+  "artifact_hash": "1d74df505ff297e5883c1202713accca9d7a668f300c9000d8804cb99a5669b5",
+  "train_samples": 1557,
+  "val_samples": 287,
+  "test_samples": 341,
+  "positive_class": "industrial",
+  "accuracy": 0.8826979472140762,
+  "balanced_accuracy": 0.8333605286774904,
+  "precision": 0.8795180722891566,
+  "recall": 0.7087378640776699,
+  "f1_score": 0.7849462365591398,
+  "macro_f1": 0.8521505376344086,
+  "roc_auc": 0.9267765358570613,
+  "pr_auc": 0.9017598885272472,
+  "brier_score": 0.21699625713407508,
+  "log_loss": 0.3795517556483606,
+  "expected_calibration_error": 0.17267225525421132,
+  "confidence_intervals": {
+    "macro_f1": [
+      0.8102,
+      0.8938
+    ],
+    "balanced_accuracy": [
+      0.7894,
+      0.8797
+    ],
+    "accuracy": [
+      0.8475,
+      0.9179
+    ],
+    "precision": [
+      0.8065,
+      0.9487
+    ],
+    "recall": [
+      0.6238,
+      0.8
+    ],
+    "roc_auc": [
+      0.8898,
+      0.9597
+    ]
+  },
+  "confusion_matrix": {
+    "true_positives": 73,
+    "false_positives": 10,
+    "true_negatives": 228,
+    "false_negatives": 30,
+    "positive_class": "industrial"
+  },
+  "per_class_metrics": {
+    "industrial": {
+      "class_name": "industrial",
+      "true_positives": 73,
+      "false_positives": 10,
+      "false_negatives": 30,
+      "true_negatives": 228,
+      "support": 103,
+      "precision": 0.8795180722891566,
+      "recall": 0.7087378640776699,
+      "f1_score": 0.7849462365591398
+    },
+    "non_industrial": {
+      "class_name": "non_industrial",
+      "true_positives": 228,
+      "false_positives": 30,
+      "false_negatives": 10,
+      "true_negatives": 73,
+      "support": 238,
+      "precision": 0.8837209302325582,
+      "recall": 0.957983193277311,
+      "f1_score": 0.9193548387096775
+    }
+  },
+  "top_features_by_gain": {
+    "num_persistence_active_days": 0.24587010595458206,
+    "bool_is_near_industrial_facility": 0.11645550630645127,
+    "cat_facility_context_type_NONE": 0.1072275111980089,
+    "num_persistence_recurrence_ratio": 0.07259650921386832,
+    "num_persistence_total_events": 0.06160957045079641,
+    "num_daynight_ratio": 0.056715492388949656,
+    "num_time_since_previous_event_hours": 0.04855076752647331,
+    "num_brightness_mean_kelvin": 0.04177714412928257,
+    "num_detection_count": 0.03478040279007836,
+    "num_temporal_density": 0.033104287754152945
+  },
+  "abstention_curve": [
+    {
+      "confidence_threshold": 0.5,
+      "coverage": 1.0,
+      "abstention_rate": 0.0,
+      "accepted_samples": 341,
+      "selective_accuracy": 0.8827,
+      "selective_precision": 0.8795,
+      "selective_recall": 0.7087,
+      "selective_macro_f1": 0.8522
+    },
+    {
+      "confidence_threshold": 0.6,
+      "coverage": 0.9326,
+      "abstention_rate": 0.0674,
+      "accepted_samples": 318,
+      "selective_accuracy": 0.9151,
+      "selective_precision": 0.8795,
+      "selective_recall": 0.8111,
+      "selective_macro_f1": 0.8928
+    },
+    {
+      "confidence_threshold": 0.7,
+      "coverage": 0.7683,
+      "abstention_rate": 0.2317,
+      "accepted_samples": 262,
+      "selective_accuracy": 0.9198,
+      "selective_precision": 0.878,
+      "selective_recall": 0.8675,
+      "selective_macro_f1": 0.9071
+    },
+    {
+      "confidence_threshold": 0.8,
+      "coverage": 0.3519,
+      "abstention_rate": 0.6481,
+      "accepted_samples": 120,
+      "selective_accuracy": 0.975,
+      "selective_precision": 0.971,
+      "selective_recall": 0.9853,
+      "selective_macro_f1": 0.9745
+    },
+    {
+      "confidence_threshold": 0.9,
+      "coverage": 0.0,
+      "abstention_rate": 1.0,
+      "accepted_samples": 0,
+      "selective_accuracy": 0.0,
+      "selective_precision": 0.0,
+      "selective_recall": 0.0,
+      "selective_macro_f1": 0.0
+    }
+  ],
+  "calibration_bins": [
+    {
+      "bin_lower": 0.0,
+      "bin_upper": 0.1,
+      "sample_count": 0,
+      "mean_confidence": 0.05,
+      "observed_accuracy": 0.0,
+      "calibration_gap": 0.0
+    },
+    {
+      "bin_lower": 0.1,
+      "bin_upper": 0.2,
+      "sample_count": 51,
+      "mean_confidence": 0.1837,
+      "observed_accuracy": 0.0196,
+      "calibration_gap": 0.1641
+    },
+    {
+      "bin_lower": 0.2,
+      "bin_upper": 0.3,
+      "sample_count": 129,
+      "mean_confidence": 0.2358,
+      "observed_accuracy": 0.0775,
+      "calibration_gap": 0.1583
+    },
+    {
+      "bin_lower": 0.3,
+      "bin_upper": 0.4,
+      "sample_count": 55,
+      "mean_confidence": 0.3415,
+      "observed_accuracy": 0.1091,
+      "calibration_gap": 0.2324
+    },
+    {
+      "bin_lower": 0.4,
+      "bin_upper": 0.5,
+      "sample_count": 23,
+      "mean_confidence": 0.4522,
+      "observed_accuracy": 0.5652,
+      "calibration_gap": 0.113
+    },
+    {
+      "bin_lower": 0.5,
+      "bin_upper": 0.6,
+      "sample_count": 0,
+      "mean_confidence": 0.55,
+      "observed_accuracy": 0.0,
+      "calibration_gap": 0.0
+    },
+    {
+      "bin_lower": 0.6,
+      "bin_upper": 0.7,
+      "sample_count": 1,
+      "mean_confidence": 0.6574,
+      "observed_accuracy": 1.0,
+      "calibration_gap": 0.3426
+    },
+    {
+      "bin_lower": 0.7,
+      "bin_upper": 0.8,
+      "sample_count": 13,
+      "mean_confidence": 0.76,
+      "observed_accuracy": 0.3846,
+      "calibration_gap": 0.3753
+    },
+    {
+      "bin_lower": 0.8,
+      "bin_upper": 0.9,
+      "sample_count": 69,
+      "mean_confidence": 0.8335,
+      "observed_accuracy": 0.971,
+      "calibration_gap": 0.1375
+    },
+    {
+      "bin_lower": 0.9,
+      "bin_upper": 1.0,
+      "sample_count": 0,
+      "mean_confidence": 0.95,
+      "observed_accuracy": 0.0,
+      "calibration_gap": 0.0
+    }
+  ],
+  "geographic_stratification": [
+    {
+      "stratum_name": "Amazon Basin",
+      "sample_count": 179,
+      "industrial_count": 0,
+      "non_industrial_count": 179,
+      "status": "VALID",
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "balanced_accuracy": 1.0
+    },
+    {
+      "stratum_name": "Persian Gulf",
+      "sample_count": 103,
+      "industrial_count": 103,
+      "non_industrial_count": 0,
+      "status": "VALID",
+      "accuracy": 0.7087,
+      "macro_f1": 0.4148,
+      "balanced_accuracy": 0.3544
+    },
+    {
+      "stratum_name": "California WUI",
+      "sample_count": 36,
+      "industrial_count": 0,
+      "non_industrial_count": 36,
+      "status": "VALID",
+      "accuracy": 0.7222,
+      "macro_f1": 0.4194,
+      "balanced_accuracy": 0.3611
+    },
+    {
+      "stratum_name": "Australia Southeast",
+      "sample_count": 22,
+      "industrial_count": 0,
+      "non_industrial_count": 22,
+      "status": "VALID",
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "balanced_accuracy": 1.0
+    },
+    {
+      "stratum_name": "Angul-Talcher",
+      "sample_count": 0,
+      "industrial_count": 0,
+      "non_industrial_count": 0,
+      "status": "INSUFFICIENT_SAMPLE",
+      "accuracy": null,
+      "macro_f1": null,
+      "balanced_accuracy": null
+    },
+    {
+      "stratum_name": "Jamnagar-Kutch",
+      "sample_count": 1,
+      "industrial_count": 0,
+      "non_industrial_count": 1,
+      "status": "INSUFFICIENT_SAMPLE",
+      "accuracy": null,
+      "macro_f1": null,
+      "balanced_accuracy": null
+    },
+    {
+      "stratum_name": "Singrauli-Sonbhadra",
+      "sample_count": 0,
+      "industrial_count": 0,
+      "non_industrial_count": 0,
+      "status": "INSUFFICIENT_SAMPLE",
+      "accuracy": null,
+      "macro_f1": null,
+      "balanced_accuracy": null
+    },
+    {
+      "stratum_name": "Punjab Agricultural",
+      "sample_count": 0,
+      "industrial_count": 0,
+      "non_industrial_count": 0,
+      "status": "INSUFFICIENT_SAMPLE",
+      "accuracy": null,
+      "macro_f1": null,
+      "balanced_accuracy": null
+    }
+  ],
+  "sensor_stratification": [
+    {
+      "stratum_name": "VIIRS",
+      "sample_count": 341,
+      "industrial_count": 103,
+      "non_industrial_count": 238,
+      "status": "VALID",
+      "accuracy": 0.8827,
+      "macro_f1": 0.8522,
+      "balanced_accuracy": 0.8334
+    },
+    {
+      "stratum_name": "MODIS",
+      "sample_count": 0,
+      "industrial_count": 0,
+      "non_industrial_count": 0,
+      "status": "INSUFFICIENT_SAMPLE",
+      "accuracy": null,
+      "macro_f1": null,
+      "balanced_accuracy": null
+    },
+    {
+      "stratum_name": "HYBRID",
+      "sample_count": 0,
+      "industrial_count": 0,
+      "non_industrial_count": 0,
+      "status": "INSUFFICIENT_SAMPLE",
+      "accuracy": null,
+      "macro_f1": null,
+      "balanced_accuracy": null
+    }
+  ],
+  "temporal_stratification": [
+    {
+      "stratum_name": "Early Period (March - April)",
+      "sample_count": 113,
+      "industrial_count": 28,
+      "non_industrial_count": 85,
+      "status": "VALID",
+      "accuracy": 0.8673,
+      "macro_f1": 0.8198,
+      "balanced_accuracy": 0.816
+    },
+    {
+      "stratum_name": "Middle Period (May - June)",
+      "sample_count": 113,
+      "industrial_count": 43,
+      "non_industrial_count": 70,
+      "status": "VALID",
+      "accuracy": 0.885,
+      "macro_f1": 0.8703,
+      "balanced_accuracy": 0.8533
+    },
+    {
+      "stratum_name": "Late Period (July - August)",
+      "sample_count": 115,
+      "industrial_count": 32,
+      "non_industrial_count": 83,
+      "status": "VALID",
+      "accuracy": 0.8957,
+      "macro_f1": 0.8584,
+      "balanced_accuracy": 0.8317
+    }
+  ],
+  "paired_comparison_table": [
+    {
+      "model_type": "MajorityClassClassifier",
+      "role": "B0 Baseline (Majority Class)",
+      "accuracy": 0.6979,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "macro_f1": 0.4111,
+      "roc_auc": 0.5284,
+      "pr_auc": 0.2875,
+      "brier_score": 0.4655,
+      "ece": 0.1481,
+      "ci_95_macro_f1": "[0.394, 0.426]"
+    },
+    {
+      "model_type": "DeterministicContextualClassifier",
+      "role": "B2 Reference (Deterministic)",
+      "accuracy": 0.6979,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "macro_f1": 0.4111,
+      "roc_auc": 0.5284,
+      "pr_auc": 0.2875,
+      "brier_score": 0.4679,
+      "ece": 0.1521,
+      "ci_95_macro_f1": "[0.394, 0.426]"
+    },
+    {
+      "model_type": "LogisticRegressionClassifier",
+      "role": "B3 Candidate (Softmax Linear)",
+      "accuracy": 0.8416,
+      "balanced_accuracy": 0.826,
+      "precision": 0.7168,
+      "recall": 0.7864,
+      "macro_f1": 0.8171,
+      "roc_auc": 0.9064,
+      "pr_auc": 0.8436,
+      "brier_score": 0.2312,
+      "ece": 0.112,
+      "ci_95_macro_f1": "[0.766, 0.856]"
+    },
+    {
+      "model_type": "DecisionTreeClassifier",
+      "role": "B4-DT Candidate (CART Decision Tree)",
+      "accuracy": 0.912,
+      "balanced_accuracy": 0.8544,
+      "precision": 1.0,
+      "recall": 0.7087,
+      "macro_f1": 0.8851,
+      "roc_auc": 0.9388,
+      "pr_auc": 0.9232,
+      "brier_score": 0.1351,
+      "ece": 0.0435,
+      "ci_95_macro_f1": "[0.843, 0.927]"
+    },
+    {
+      "model_type": "RandomForestClassifier",
+      "role": "B4-RF Candidate (Random Forest)",
+      "accuracy": 0.8886,
+      "balanced_accuracy": 0.8376,
+      "precision": 0.9012,
+      "recall": 0.7087,
+      "macro_f1": 0.8586,
+      "roc_auc": 0.8839,
+      "pr_auc": 0.8573,
+      "brier_score": 0.2107,
+      "ece": 0.1432,
+      "ci_95_macro_f1": "[0.816, 0.902]"
+    },
+    {
+      "model_type": "XGBoostClassifier",
+      "role": "Phase 1 Experimental Candidate (XGBoost)",
+      "accuracy": 0.8827,
+      "balanced_accuracy": 0.8334,
+      "precision": 0.8795,
+      "recall": 0.7087,
+      "macro_f1": 0.8522,
+      "roc_auc": 0.9268,
+      "pr_auc": 0.9018,
+      "brier_score": 0.217,
+      "ece": 0.1727,
+      "ci_95_macro_f1": "[0.810, 0.894]"
+    }
+  ],
+  "historical_next007_comparison": [
+    {
+      "model_type": "MajorityClassClassifier",
+      "role": "B0 Baseline (Majority Class)",
+      "accuracy": 0.5424,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "macro_f1": 0.3517,
+      "roc_auc": 0.5049,
+      "pr_auc": 0.4549,
+      "brier_score": 0.4965,
+      "ece": 0.0074,
+      "ci_95_macro_f1": "[0.326, 0.376]"
+    },
+    {
+      "model_type": "DeterministicContextualClassifier",
+      "role": "B2 Reference (Deterministic)",
+      "accuracy": 0.5424,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "macro_f1": 0.3517,
+      "roc_auc": 0.5049,
+      "pr_auc": 0.4549,
+      "brier_score": 0.6856,
+      "ece": 0.3076,
+      "ci_95_macro_f1": "[0.326, 0.376]"
+    },
+    {
+      "model_type": "LogisticRegressionClassifier",
+      "role": "B3 Candidate (Softmax Linear)",
+      "accuracy": 0.7638,
+      "balanced_accuracy": 0.7665,
+      "precision": 0.7174,
+      "recall": 0.7984,
+      "macro_f1": 0.7636,
+      "roc_auc": 0.8443,
+      "pr_auc": 0.7808,
+      "brier_score": 0.3135,
+      "ece": 0.0935,
+      "ci_95_macro_f1": "[0.711, 0.811]"
+    },
+    {
+      "model_type": "DecisionTreeClassifier",
+      "role": "B4-DT Candidate (CART Decision Tree)",
+      "accuracy": 0.8303,
+      "balanced_accuracy": 0.8145,
+      "precision": 1.0,
+      "recall": 0.629,
+      "macro_f1": 0.8185,
+      "roc_auc": 0.9741,
+      "pr_auc": 0.9687,
+      "brier_score": 0.1706,
+      "ece": 0.1098,
+      "ci_95_macro_f1": "[0.769, 0.868]"
+    },
+    {
+      "model_type": "RandomForestClassifier",
+      "role": "B4-RF Candidate (Random Forest)",
+      "accuracy": 0.7675,
+      "balanced_accuracy": 0.7567,
+      "precision": 0.8211,
+      "recall": 0.629,
+      "macro_f1": 0.7586,
+      "roc_auc": 0.8596,
+      "pr_auc": 0.8704,
+      "brier_score": 0.2868,
+      "ece": 0.1524,
+      "ci_95_macro_f1": "[0.710, 0.809]"
+    }
+  ]
+}
