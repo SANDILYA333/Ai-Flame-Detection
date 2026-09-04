@@ -134,6 +134,42 @@ class NotificationService:
         )
 
     @classmethod
+    def format_forest_proximity_message(
+        cls,
+        *,
+        event_id: str,
+        forest_name: str,
+        distance_km: float,
+        threat_level: str,
+        inside_forest: bool = False,
+        mode: NotificationMode = NotificationMode.SIMULATED,
+    ) -> str:
+        """Format operational forest proximity alert SMS/WhatsApp text."""
+        mode_footer = (
+            "\n\nThis is a simulated prototype notification."
+            if mode == NotificationMode.SIMULATED
+            else ""
+        )
+        if inside_forest or threat_level == "INSIDE_FOREST":
+            return (
+                "FOREST FIRE ALERT: CRITICAL\n\n"
+                f"Thermal anomaly detected INSIDE monitored forest boundary: {forest_name}.\n"
+                "Threat Level: FIRE INSIDE FOREST (0.0 km)\n"
+                f"Event ID: {event_id}\n\n"
+                "Immediate forest ranger deployment and containment recommended."
+                f"{mode_footer}"
+            )
+
+        return (
+            f"FOREST PROXIMITY ALERT: {threat_level}\n\n"
+            f"Thermal anomaly detected {distance_km:.1f} km from {forest_name}.\n"
+            f"Threat Level: {threat_level}\n"
+            f"Event ID: {event_id}\n\n"
+            "Immediate forest boundary monitoring recommended."
+            f"{mode_footer}"
+        )
+
+    @classmethod
     def dispatch_multichannel(
         cls,
         *,
