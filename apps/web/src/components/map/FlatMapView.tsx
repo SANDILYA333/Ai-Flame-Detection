@@ -678,6 +678,7 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       return () => {
         cleanup?.();
       };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initCount]);
 
     useEffect(() => {
@@ -710,7 +711,7 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
       return () => {
         isCancelled = true;
       };
-    }, []);
+    }, [isForestLayerActive, reconcileForestLayers]);
 
     // Reconcile forest layer whenever activeLayers or forestData changes
     useEffect(() => {
