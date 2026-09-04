@@ -17,6 +17,7 @@ import { EventDetailError } from "./EventDetailError";
 import { generateXaiExplanation } from "@/lib/xai/explainer";
 import { calculateOperationalRisk, getRiskLevelStyles } from "@/lib/risk/scoring";
 import { EmergencyResponseSection } from "./EmergencyResponse/EmergencyResponseSection";
+import { EmergencyResponseModal } from "./EmergencyResponse/EmergencyResponseModal";
 import { TacticalDossierModal } from "@/components/dossier/TacticalDossierModal";
 import { APP_CONFIG } from "@/config/ui";
 import {
@@ -30,6 +31,7 @@ import {
   CheckCircle2,
   Cpu,
   FileText,
+  Siren,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -55,6 +57,7 @@ export function EventIntelligencePanel({
   className,
 }: EventIntelligencePanelProps) {
   const [isDossierModalOpen, setIsDossierModalOpen] = useState(false);
+  const [isResponseCenterOpen, setIsResponseCenterOpen] = useState(false);
 
   const {
     evidence,
@@ -208,6 +211,110 @@ export function EventIntelligencePanel({
           <span>OPEN TACTICAL INCIDENT BRIEFING (DOSSIER)</span>
         </button>
 
+        {/* 🚨 TOP PROMINENT ENTRY POINT: EMERGENCY RESPONSE & REGULATION */}
+        <div
+          data-testid="top-emergency-response-card"
+          className={cn(
+            "p-3 rounded-control font-mono space-y-2.5 shadow-sm border transition-all duration-200",
+            risk.level === "CRITICAL"
+              ? "bg-state-error/10 border-state-error/40"
+              : risk.level === "HIGH"
+              ? "bg-accent/10 border-accent/40"
+              : "bg-surface/90 border-border/80"
+          )}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Siren
+                className={cn(
+                  "w-4 h-4 shrink-0",
+                  risk.level === "CRITICAL"
+                    ? "text-state-error animate-pulse-subtle"
+                    : "text-accent"
+                )}
+              />
+              <span className="text-[11px] font-bold text-foreground uppercase tracking-wider truncate">
+                EMERGENCY RESPONSE & REGULATION
+              </span>
+            </div>
+            <span
+              className={cn(
+                "text-[9px] px-2 py-0.5 rounded border font-bold uppercase shrink-0",
+                risk.level === "CRITICAL"
+                  ? "bg-state-error/20 text-state-error border-state-error/40"
+                  : risk.level === "HIGH"
+                  ? "bg-accent/20 text-accent border-accent/40"
+                  : "bg-surface-hover text-foreground-muted border-border"
+              )}
+            >
+              {risk.level === "CRITICAL"
+                ? "CRITICAL ESCALATION"
+                : risk.level === "HIGH"
+                ? "RESPONSE AVAILABLE"
+                : "STANDBY"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-[10px] bg-background/90 p-2.5 rounded-control border border-border/60">
+            <div>
+              <span className="text-foreground-muted block text-[9px] uppercase tracking-wider">
+                Decision Confidence
+              </span>
+              <span className="font-bold text-foreground text-xs">
+                {(event.confidence * (event.confidence <= 1 ? 100 : 1)).toFixed(1)}%
+              </span>
+            </div>
+            <div>
+              <span className="text-foreground-muted block text-[9px] uppercase tracking-wider">
+                Operational Attention
+              </span>
+              <span
+                className={cn(
+                  "font-bold text-xs",
+                  risk.level === "CRITICAL"
+                    ? "text-state-error"
+                    : risk.level === "HIGH"
+                    ? "text-accent"
+                    : "text-foreground"
+                )}
+              >
+                {risk.level} {risk.isIndeterminate ? "" : `(${risk.score}/100)`}
+              </span>
+            </div>
+            <div className="col-span-2 pt-1.5 border-t border-border/40 flex items-center justify-between">
+              <span className="text-foreground-muted text-[9px] uppercase tracking-wider">
+                Medical Escalation
+              </span>
+              <span
+                className={cn(
+                  "font-bold text-[10px]",
+                  risk.level === "CRITICAL" || event.frp_mw > 50
+                    ? "text-state-error"
+                    : "text-foreground-muted"
+                )}
+              >
+                {risk.level === "CRITICAL" || event.frp_mw > 50
+                  ? "REQUIRED (Burn ICU)"
+                  : "STANDBY"}
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsResponseCenterOpen(true)}
+            className={cn(
+              "w-full py-2 px-3 rounded-control font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm",
+              risk.level === "CRITICAL"
+                ? "bg-state-error hover:bg-state-error/90 text-white"
+                : "bg-accent hover:bg-accent/90 text-background"
+            )}
+          >
+            <ShieldAlert className="w-3.5 h-3.5" />
+            <span>OPEN RESPONSE CENTER</span>
+          </button>
+        </div>
+
         {isLoading && !evidence ? (
           <EventDetailSkeleton />
         ) : (
@@ -221,27 +328,11 @@ export function EventIntelligencePanel({
             {/* Level 2: Calibrated Class Probabilities */}
             <ClassProbabilityBreakdown probabilities={xai.probabilities} />
 
+            {/* Level 2.5: Full Detailed Emergency Response Workspace */}
+            <EmergencyResponseSection event={event} evidence={evidence} />
+
             {/* Level 3: Geographic Centroid, FRP, Detections, Satellite */}
             <EventOverviewGrid event={event} />
-
-            {/* Level 4: Nearby Industrial Assets & Proximity Intelligence */}
-            <IndustrialAssetSection event={event} evidence={evidence} />
-
-            {/* Level 4: Planck Dual-Band Thermal Pyrometry */}
-            <PlanckPyrometrySection event={event} />
-
-            {/* Level 4: 90-Day Historical Longitudinal Curve & Recurrence */}
-            <HistoricalCurveSection event={event} />
-
-            {/* Level 4: CAMEO-NIOSH Chemical Hazards */}
-            <HazmatRiskCard event={event} evidence={evidence} />
-
-            {/* Level 4: Grounded Explainable AI Evidence Signals */}
-            <ExplainableAiSection
-              event={event}
-              evidence={evidence}
-              intelligence={intelligence}
-            />
 
             {/* Level 4: Operational Risk & Hazard Evaluation */}
             <div className="p-2.5 rounded-control bg-surface/90 border border-border/80 font-mono space-y-2">
@@ -252,56 +343,47 @@ export function EventIntelligencePanel({
                 </span>
                 <span
                   className={cn(
-                    "text-[10px] px-2 py-0.5 rounded border font-bold",
+                    "font-bold text-[10.5px] px-1.5 py-0.2 rounded border uppercase",
                     riskStyles.bg,
                     riskStyles.text,
                     riskStyles.border
                   )}
                 >
-                  {risk.level} {risk.isIndeterminate ? "" : `(${risk.score}/100)`}
+                  {risk.level}
                 </span>
               </div>
-
-              {!risk.isIndeterminate && (
-                <div className="w-full h-1.5 bg-background rounded-full overflow-hidden border border-border/40">
-                  <div
-                    className={cn(
-                      "h-full transition-all duration-300",
-                      risk.level === "CRITICAL"
-                        ? "bg-state-error"
-                        : risk.level === "HIGH"
-                        ? "bg-accent"
-                        : risk.level === "MEDIUM"
-                        ? "bg-state-warning"
-                        : "bg-state-success"
-                    )}
-                    style={{ width: `${risk.score}%` }}
-                  />
-                </div>
-              )}
-
-              <div className="space-y-1 pt-1 border-t border-border/40 text-[10px]">
-                <div className="text-[9px] uppercase tracking-wider text-foreground-muted font-semibold">
-                  Contributing Drivers (Why?)
-                </div>
-                {risk.factors.map((f, i) => (
-                  <div key={i} className="flex items-center justify-between text-foreground-secondary">
-                    <span className="truncate max-w-[200px]">{f.description}</span>
-                    <span className="font-semibold text-foreground shrink-0 ml-1">
-                      +{f.points} pts
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex items-start gap-1 text-[8.5px] text-foreground-muted/80 leading-tight pt-1">
-                <Info className="w-2.5 h-2.5 text-accent-cyan shrink-0 mt-0.5" />
-                <span>{risk.disclaimer}</span>
-              </div>
+              <p className="text-[10px] text-foreground-secondary leading-relaxed">
+                {risk.summary}
+              </p>
             </div>
 
-            {/* Level 5: Emergency Response & Analyst-Confirmed Notification */}
-            <EmergencyResponseSection event={event} evidence={evidence} />
+            {/* Level 4: Nearby Critical Infrastructure & Land Cover Exposure */}
+            <IndustrialAssetSection
+              event={event}
+              evidence={evidence}
+            />
+
+            {/* Level 4: Sub-Pixel Pyrometry (Planck Curve & Flare Radiance) */}
+            <PlanckPyrometrySection
+              event={event}
+              pyrometry={intelligence?.pyrometry}
+            />
+
+            {/* Level 4: 90-Day Historical Longitudinal Curve & Recurrence */}
+            <HistoricalCurveSection
+              event={event}
+              baseline={intelligence?.temporal_baseline}
+            />
+
+            {/* Level 4: CAMEO-NIOSH Chemical Hazards */}
+            <HazmatRiskCard event={event} evidence={evidence} />
+
+            {/* Level 4: Grounded Explainable AI Evidence Signals */}
+            <ExplainableAiSection
+              event={event}
+              evidence={evidence}
+              intelligence={intelligence}
+            />
 
             {/* Level 6: Model Provenance & Verification Lineage */}
             <ModelProvenanceCollapsible provenance={xai.provenance} />
@@ -320,6 +402,14 @@ export function EventIntelligencePanel({
           </>
         )}
       </div>
+
+      {/* Dedicated Emergency Response Center Modal */}
+      <EmergencyResponseModal
+        isOpen={isResponseCenterOpen}
+        event={event}
+        evidence={evidence}
+        onClose={() => setIsResponseCenterOpen(false)}
+      />
 
       {/* Tactical Incident Dossier Modal */}
       <TacticalDossierModal
