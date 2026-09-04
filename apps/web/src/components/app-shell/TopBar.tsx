@@ -17,6 +17,7 @@ import { APP_CONFIG } from "@/config/ui";
 import { formatUtcDateTime } from "@/lib/format/dates";
 import { useEventContext } from "@/context/EventContext";
 import { AiSimulationLabModal } from "@/components/simulation/AiSimulationLabModal";
+import { AgniAssistant } from "@/components/agni";
 import { cn } from "@/lib/utils";
 
 const CLASSIFICATION_FILTERS = [
@@ -146,8 +147,11 @@ export function TopBar() {
           </div>
         </div>
 
-        {/* 3. Right: AI Simulation Lab Trigger, Live Clock & Telemetry */}
+        {/* 3. Right: AGNI Voice Assistant, AI Simulation Lab Trigger, Live Clock & Telemetry */}
         <div className="flex items-center gap-2.5 shrink-0">
+          {/* AGNI AI Voice Intelligence Assistant */}
+          <AgniAssistant onOpenSimLab={() => setIsSimLabOpen(true)} />
+
           {/* AI Simulation Lab Button */}
           <button
             onClick={() => setIsSimLabOpen(true)}
