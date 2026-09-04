@@ -278,7 +278,7 @@ class TestForestApiEndpoints:
     def test_09_get_forest_detail_by_id(self, client: TestClient) -> None:
         """Test 9: GET /forests/{forest_id} returns single canonical forest entity."""
         # Query list first to get a real ID
-        list_res = client.get("/forests?limit=1")
+        list_res = client.get("/forests?country=IN&limit=1")
         assert list_res.status_code == 200
         first_id = list_res.json()["features"][0]["properties"]["forest_id"]
 
