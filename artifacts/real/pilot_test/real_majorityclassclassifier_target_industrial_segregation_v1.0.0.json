@@ -4,7 +4,7 @@
   ],
   "metadata": {
     "artifact_hash": "7b937b26b677f0de5c0673628b3e0a81d0a667d80a6d4759aad68de90777b784",
-    "dataset_hash": "0336147d05e2cc3d9bb456afacad54a583d0008d89d7e1259a3976cc2d08e2a4",
+    "dataset_hash": "364bd6278c71ff2d562cc570f1d7ed15415a64836bb7827d7fb13f76b5f058d8",
     "dataset_id": "feat_ds_real_supervised_v1.0.0",
     "dataset_version": "v1.0.0",
     "feature_dimensionality": 30,
@@ -58,7 +58,7 @@
       "test_samples": 2
     },
     "train_record_count": 1,
-    "training_timestamp": "2026-09-04T02:22:07.682480Z",
+    "training_timestamp": "2026-09-04T04:11:55.372912Z",
     "validation_metrics": {
       "circularity_warning": "Reference labels are derived from contextual proximity to industrial infrastructure. Models trained on this data without feature ablation risk learning the attribution rule rather than thermal anomaly physics. Rigorous feature ablation required.",
       "is_production_ready": false,
