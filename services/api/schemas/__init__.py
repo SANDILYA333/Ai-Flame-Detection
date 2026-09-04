@@ -5,6 +5,10 @@ from services.api.schemas.detections import (
     DetectionPagination,
     DetectionsResponse,
 )
+from services.api.schemas.dispersion import (
+    DispersionCalculationRequest,
+    DispersionCalculationResponse,
+)
 from services.api.schemas.events import (
     EventDetailResponse,
     EventEvidenceResponse,
@@ -61,6 +65,10 @@ from services.api.schemas.version import (
     VersionContracts,
     VersionResponse,
 )
+from services.api.schemas.weather import (
+    EventWeatherResponse,
+    WeatherResponse,
+)
 
 __all__ = [
     "BatchPredictionRequestBody",
@@ -70,6 +78,8 @@ __all__ = [
     "DependencyStatus",
     "DetectionPagination",
     "DetectionsResponse",
+    "DispersionCalculationRequest",
+    "DispersionCalculationResponse",
     "EmergencyResponder",
     "EventDetailResponse",
     "EventEvidenceResponse",
@@ -78,6 +88,7 @@ __all__ = [
     "EventResponse",
     "EventResponseRecommendation",
     "EventTimelineResponse",
+    "EventWeatherResponse",
     "EventsResponse",
     "FirmsCsvPredictionRequestBody",
     "FirmsCsvPredictionResponseBody",
@@ -108,4 +119,5 @@ __all__ = [
     "TimelineObservation",
     "VersionContracts",
     "VersionResponse",
+    "WeatherResponse",
 ]
