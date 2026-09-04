@@ -129,6 +129,105 @@ class EvidenceCompleteness(BaseDomainModel):
         return self
 
 
+class TemporalBaselineTelemetry(BaseDomainModel):
+    """Telemetry and anomaly metrics from 90-day rolling baseline."""
+
+    recurrence_90d: float = Field(
+        ..., ge=0.0, le=1.0, description="Fraction of active calendar days in 90-day window."
+    )
+    historical_mean_frp: float = Field(
+        ..., ge=0.0, description="Mean historical FRP in MW."
+    )
+    historical_std_frp: float = Field(
+        ..., ge=0.0, description="Sample standard deviation of historical FRP in MW."
+    )
+    sample_count: int = Field(..., ge=0, description="Count of historical observations.")
+    active_calendar_days: int = Field(
+        ..., ge=0, description="Number of unique active calendar days."
+    )
+    frp_z_score: float = Field(..., description="FRP Z-score anomaly metric.")
+    frp_surge_ratio: float = Field(..., description="Ratio of current FRP to historical mean.")
+    operational_status: str = Field(
+        ..., description="Operational interpretation (e.g. ROUTINE_PERSISTENT_FLARING)."
+    )
+    is_critical_anomaly: bool = Field(
+        default=False, description="Whether event qualifies as critical thermal surge."
+    )
+    window_days: int = Field(default=90, description="Historical window span in days.")
+    radius_km: float = Field(default=1.0, description="Spatial search radius in km.")
+    is_cold_start: bool = Field(
+        default=False, description="Whether baseline operates in cold-start regime."
+    )
+
+
+class PyrometryTelemetry(BaseDomainModel):
+    """Planck / Dozier dual-band radiance pyrometry telemetry."""
+
+    available: bool = Field(
+        default=True, description="Whether dual-band radiometric inversion was possible."
+    )
+    emitter_temp_k: float = Field(
+        ..., description="True flame/emitter temperature in Kelvin."
+    )
+    emitter_area_m2: float = Field(
+        ..., description="Sub-pixel flame area in square meters."
+    )
+    fractional_area_p: float | None = Field(
+        None, description="Fractional sub-pixel area ratio p."
+    )
+    background_temp_k: float = Field(
+        default=295.0, description="Ambient background temperature in Kelvin."
+    )
+    mwir_radiance_observed: float | None = Field(
+        None, description="Observed MWIR radiance."
+    )
+    lwir_radiance_observed: float | None = Field(
+        None, description="Observed LWIR radiance."
+    )
+    radiance_residual: float | None = Field(
+        None, description="Relative radiance optimization residual loss."
+    )
+    is_valid: bool = Field(
+        default=True, description="Whether solver converged within physical bounds."
+    )
+    convergence_status: str = Field(
+        default="CONVERGED", description="Solver convergence status tag."
+    )
+    phenomenon_tag: str = Field(
+        default="INTERMEDIATE_COMBUSTION_SOURCE",
+        description="Physical phenomenon classification tag.",
+    )
+
+
+class FeatureAttributionTelemetry(BaseDomainModel):
+    """Individual feature Shapley attribution."""
+
+    feature: str = Field(..., description="Human-readable feature name.")
+    raw_feature_name: str = Field(..., description="Internal feature key.")
+    value: str | float | int | bool | None = Field(
+        None, description="Observed feature value."
+    )
+    shap_value: float = Field(..., description="Raw Shapley attribution value.")
+    impact: str = Field(
+        ..., description="Directional impact ('supports_predicted', 'opposes_predicted', 'neutral')."
+    )
+    description: str = Field(..., description="Operational / physical interpretation.")
+
+
+class ShapExplanationTelemetry(BaseDomainModel):
+    """Container for XAI feature attribution explanation."""
+
+    target_class: str = Field(..., description="Class explained by attributions.")
+    base_value: float = Field(default=0.5, description="Expected base value probability.")
+    predicted_probability: float = Field(..., description="Model predicted probability.")
+    attribution_method: str = Field(
+        default="TREE_SHAP", description="Attribution method (e.g. TREE_SHAP or DOMAIN_FALLBACK)."
+    )
+    attributions: list[FeatureAttributionTelemetry] = Field(
+        default_factory=list, description="Ranked feature attributions."
+    )
+
+
 class IntelligenceResult(BaseDomainModel):
     """Canonical Intelligence Result preserving the orthogonal ontology.
 
@@ -139,6 +238,9 @@ class IntelligenceResult(BaseDomainModel):
     4. Attribution: Association strength with contextual facilities
     5. Uncertainty: Explicit calibrated confidence and abstention state
     6. Evidence Completeness: Detailed breakdown of available/missing evidence
+    7. Temporal Baseline: 90-day historical window & anomaly metrics
+    8. Pyrometry: Sub-pixel Planck/Dozier temperature and area
+    9. XAI / SHAP: Shapley feature attributions
     """
 
     intelligence_id: str = Field(
@@ -178,6 +280,20 @@ class IntelligenceResult(BaseDomainModel):
     created_at: UtcDatetime = Field(
         ...,
         description="Timestamp when intelligence result was generated in UTC.",
+    )
+
+    # Scientific Intelligence Capabilities
+    temporal_baseline: TemporalBaselineTelemetry | None = Field(
+        None,
+        description="Rolling 90-day historical baseline and anomaly metrics.",
+    )
+    pyrometry: PyrometryTelemetry | None = Field(
+        None,
+        description="Sub-pixel Planck/Dozier pyrometry inversion results.",
+    )
+    xai: ShapExplanationTelemetry | None = Field(
+        None,
+        description="SHAP feature attribution explanations.",
     )
 
     # Optional linkage and provenance
