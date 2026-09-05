@@ -60,15 +60,80 @@ coverage.xml
 *.py,cover
 
 # ==============================================================================
-# Environment, Secrets & Local Overrides
+# Environment, Secrets, Keys & Credentials
 # ==============================================================================
+# Environment files
 .env
 .env.*
+.envrc
 !.env.example
+!.env.template
+
+# Secret & Credential files
+*secret*.json
+*secret*.yaml
+*secret*.yml
+*secret*.toml
+*secret*.txt
+*secret*.env
+*.secret
+*.secrets
+secrets/
+secret/
+*credential*.json
+*credentials*.json
+credentials/
+*token*.json
+*.token
+tokens/
+service-account*.json
+client_secret*.json
+google-credentials*.json
+
+# Cryptographic Keys, Certificates & Keystores
 *.pem
 *.key
+*.pkcs12
+*.p12
+*.pfx
 *.cert
 *.crt
+*.der
+*.kdbx
+*.keystore
+*.jks
+*.gpg
+*.asc
+
+# SSH Keys
+id_rsa
+id_rsa.pub
+id_dsa
+id_dsa.pub
+id_ed25519
+id_ed25519.pub
+id_ecdsa
+id_ecdsa.pub
+
+# Package Manager & Cloud Auth Tokens
+.netrc
+.npmrc
+.pypirc
+.htpasswd
+.dockercfg
+.aws/
+.gcp/
+
+# ==============================================================================
+# Logs & Process Artifacts
+# ==============================================================================
+*.log
+*.log.*
+backend.log
+logs/
+*.pid
+*.seed
+*.pid.lock
 
 # ==============================================================================
 # Local Data, Geospatial Artifacts & Databases
@@ -77,6 +142,41 @@ coverage.xml
 *.sqlite
 *.sqlite3
 *.db
+*.db-shm
+*.db-wal
+*.rdb
+dump.rdb
+*.parquet
+
+# Large Raw Archives & Datasets
+sri/data/raw_thermal/
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.gz
+*.rar
+*.7z
+
+# ==============================================================================
+# Machine Learning & Model Checkpoints
+# ==============================================================================
+*.pkl
+*.pickle
+*.joblib
+*.pt
+*.pth
+*.onnx
+*.safetensors
+*.bin
+*.h5
+*.hdf5
+*.ckpt
+checkpoints/
+runs/
+wandb/
+lightning_logs/
+tensorboard/
 
 # ==============================================================================
 # Node & Frontend (apps/web)
@@ -92,6 +192,8 @@ out/
 .nuxt/
 .cache/
 .turbo/
+.vercel
+.output/
 
 # TypeScript Build Cache
 *.tsbuildinfo
@@ -116,6 +218,8 @@ Thumbs.db
 *.swp
 *.swo
 *~
+.fleet/
+.zed/
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -123,9 +227,6 @@ Thumbs.db
 !.vscode/extensions.json
 stat-index.json
 
-# Raw large archives
-sri/data/raw_thermal/
-*.zip
-
-# Planning documents
+# Planning documents & Scratch
 Plan/
+scratch/
