@@ -379,6 +379,16 @@ class Settings(BaseSettings):
         default=True,
         description="Whether Fast2SMS integration is enabled",
     )
+
+    # Contextual External Intelligence & Media (Server-Side Only)
+    YOUTUBE_API_KEY: SecretStr | None = Field(
+        default=None,
+        description="Google YouTube Data API v3 key for contextual briefing retrieval (secret, server-side only)",
+    )
+    NEWS_API_KEY: SecretStr | None = Field(
+        default=None,
+        description="External News search provider API key (secret, server-side only)",
+    )
     FAST2SMS_BASE_URL: str = Field(
         default="https://www.fast2sms.com/dev/bulkV2",
         description="Fast2SMS bulk API endpoint",

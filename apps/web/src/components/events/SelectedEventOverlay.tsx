@@ -4,6 +4,7 @@ import React from "react";
 import { ThermalEvent } from "@/types/event";
 import { Badge } from "@/components/ui/Badge";
 import { formatCoordinate } from "@/lib/format/coordinates";
+import { formatHumanReadableLocation } from "@/lib/location/locationFilter";
 import { formatFrp, formatPercent } from "@/lib/format/numbers";
 import { formatUtcDateTime } from "@/lib/format/dates";
 import {
@@ -133,16 +134,14 @@ export function SelectedEventOverlay({
       {/* Geographic & Contextual Metadata */}
       <div className="space-y-2 text-[11px] font-mono border-t border-border pt-2.5">
         <div className="flex items-start gap-1.5 text-foreground-secondary">
-          <MapPin className="w-3.5 h-3.5 text-accent-cyan shrink-0 mt-0.5" />
+          <MapPin className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
           <div>
             <div className="font-semibold text-foreground">
-              {formatCoordinate(event.latitude, event.longitude)}
+              {formatHumanReadableLocation(event)}
             </div>
-            {event.location_name && (
-              <div className="text-[10px] text-foreground-muted">
-                {event.location_name}
-              </div>
-            )}
+            <div className="text-[10px] text-foreground-muted">
+              Coordinates: {formatCoordinate(event.latitude, event.longitude)}
+            </div>
           </div>
         </div>
 

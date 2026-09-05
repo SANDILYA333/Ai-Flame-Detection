@@ -7,6 +7,10 @@ import {
   Flame,
   Sliders,
   ShieldAlert,
+  ChevronLeft,
+  LayoutDashboard,
+  Compass,
+  MapPin,
 } from "lucide-react";
 import { StatusDot } from "@/components/ui/StatusDot";
 import { SearchInput } from "@/components/ui/SearchInput";
@@ -33,6 +37,12 @@ export function TopBar() {
   const [isSimLabOpen, setIsSimLabOpen] = useState(false);
 
   const {
+    activeViewMode,
+    setActiveViewMode,
+    selectedCountry,
+    selectedState,
+    selectedDistrict,
+    returnToDashboard,
     searchQuery,
     setSearchQuery,
     selectedClassification,
@@ -40,7 +50,6 @@ export function TopBar() {
     filteredEvents,
     rawEvents,
     isLiveBackend,
-    stats,
   } = useEventContext();
 
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -68,7 +77,7 @@ export function TopBar() {
   return (
     <>
       <header className="h-12 w-full bg-surface border-b border-border flex items-center justify-between px-3 z-40 select-none shrink-0 shadow-panel gap-2">
-        {/* 1. Left: Brand Identity & Live Status */}
+        {/* 1. Left: Brand Identity, Return Action & View Switcher */}
         <div className="flex items-center gap-2.5 shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-control bg-thermal/15 border border-thermal/40 flex items-center justify-center text-thermal glow-thermal">
@@ -95,13 +104,56 @@ export function TopBar() {
 
           <div className="h-4 w-[1px] bg-border mx-1 hidden sm:block" />
 
-          {/* Live Status indicator */}
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-pill bg-accent/10 border border-accent/30 text-accent text-[10px] font-mono">
-            <StatusDot status="live" pulse size="sm" />
-            <span className="font-semibold tracking-wider">
-              {isLiveBackend ? "LIVE FASTAPI" : "DEMO READY"}
-            </span>
+          {/* Primary View Mode Switcher (Level 1 Dashboard vs Level 2 Advanced Mission Control) */}
+          <div className="flex items-center bg-surface-raised p-0.5 rounded-control border border-border">
+            <button
+              onClick={() => setActiveViewMode("DASHBOARD")}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1 text-[10px] font-mono font-bold rounded-sm transition-all",
+                activeViewMode === "DASHBOARD"
+                  ? "bg-accent text-background shadow-sm"
+                  : "text-foreground-secondary hover:text-foreground"
+              )}
+            >
+              <LayoutDashboard className="w-3 h-3" />
+              <span>DASHBOARD</span>
+            </button>
+            <button
+              onClick={() => setActiveViewMode("MISSION_CONTROL")}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1 text-[10px] font-mono font-bold rounded-sm transition-all",
+                activeViewMode === "MISSION_CONTROL"
+                  ? "bg-accent text-background shadow-sm"
+                  : "text-foreground-secondary hover:text-foreground"
+              )}
+            >
+              <Compass className="w-3 h-3" />
+              <span>ADVANCED ANALYSIS</span>
+            </button>
           </div>
+
+          {/* Return to Dashboard Quick Action when in Advanced Mission Control */}
+          {activeViewMode === "MISSION_CONTROL" && (
+            <button
+              onClick={returnToDashboard}
+              title="Return to Simple Fire Intelligence Dashboard"
+              className="hidden lg:flex items-center gap-1 px-2 py-1 text-[10px] font-mono font-semibold rounded bg-surface-raised hover:bg-surface-hover border border-border text-accent transition-colors"
+            >
+              <ChevronLeft className="w-3 h-3" />
+              <span>Back to Dashboard</span>
+            </button>
+          )}
+
+          {/* Active Scope Indicator Badge */}
+          {selectedState !== "ALL" && (
+            <div className="hidden xl:flex items-center gap-1 px-2 py-0.5 rounded-control bg-accent-cyan/10 border border-accent-cyan/30 text-accent-cyan text-[10px] font-mono font-semibold">
+              <MapPin className="w-3 h-3" />
+              <span>
+                {selectedState}
+                {selectedDistrict !== "ALL" ? ` > ${selectedDistrict}` : ""}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* 2. Center: Search & Quick Classification Chips */}
@@ -117,36 +169,38 @@ export function TopBar() {
             />
           </div>
 
-          {/* Quick classification filter pills */}
-          <div className="hidden xl:flex items-center gap-1 bg-surface-raised p-0.5 rounded-control border border-border">
-            {CLASSIFICATION_FILTERS.map((filter) => {
-              const isSelected = selectedClassification === filter.id;
-              return (
-                <button
-                  key={filter.id}
-                  onClick={() => setSelectedClassification(filter.id)}
-                  className={cn(
-                    "px-2 py-0.5 text-[10px] font-mono rounded-sm transition-all duration-150",
-                    isSelected
-                      ? filter.id === "ALL"
-                        ? "bg-accent text-background font-bold shadow-sm"
-                        : filter.id === "INDUSTRIAL"
-                        ? "bg-accent text-background font-bold shadow-sm"
-                        : filter.id === "NON_INDUSTRIAL"
-                        ? "bg-state-warning text-background font-bold shadow-sm"
-                        : filter.id === "UNKNOWN"
-                        ? "bg-accent-cyan text-background font-bold shadow-sm"
-                        : filter.id === "REVIEW_REQUIRED"
-                        ? "bg-state-error text-white font-bold shadow-sm"
-                        : "bg-accent text-background font-bold shadow-sm"
-                      : "text-foreground-muted hover:text-foreground hover:bg-surface-hover/60"
-                  )}
-                >
-                  {filter.label}
-                </button>
-              );
-            })}
-          </div>
+          {/* Quick classification filter pills (when in Mission Control) */}
+          {activeViewMode === "MISSION_CONTROL" && (
+            <div className="hidden xl:flex items-center gap-1 bg-surface-raised p-0.5 rounded-control border border-border">
+              {CLASSIFICATION_FILTERS.map((filter) => {
+                const isSelected = selectedClassification === filter.id;
+                return (
+                  <button
+                    key={filter.id}
+                    onClick={() => setSelectedClassification(filter.id)}
+                    className={cn(
+                      "px-2 py-0.5 text-[10px] font-mono rounded-sm transition-all duration-150",
+                      isSelected
+                        ? filter.id === "ALL"
+                          ? "bg-accent text-background font-bold shadow-sm"
+                          : filter.id === "INDUSTRIAL"
+                          ? "bg-accent text-background font-bold shadow-sm"
+                          : filter.id === "NON_INDUSTRIAL"
+                          ? "bg-state-warning text-background font-bold shadow-sm"
+                          : filter.id === "UNKNOWN"
+                          ? "bg-accent-cyan text-background font-bold shadow-sm"
+                          : filter.id === "REVIEW_REQUIRED"
+                          ? "bg-state-error text-white font-bold shadow-sm"
+                          : "bg-accent text-background font-bold shadow-sm"
+                        : "text-foreground-muted hover:text-foreground hover:bg-surface-hover/60"
+                    )}
+                  >
+                    {filter.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* 3. Right: AGNI Voice Assistant, AI Simulation Lab Trigger, Live Clock & Telemetry */}
@@ -160,8 +214,7 @@ export function TopBar() {
             className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono font-bold rounded bg-accent/15 hover:bg-accent/25 border border-accent/40 text-accent transition-colors shadow-sm"
           >
             <Sliders className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">AI SIMULATION LAB</span>
-            <span className="sm:hidden">SIM LAB</span>
+            <span className="hidden sm:inline">AI SIM LAB</span>
           </button>
 
           {/* Filter matches badge */}

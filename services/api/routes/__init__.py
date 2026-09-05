@@ -15,6 +15,7 @@ from services.api.routes.historical import router as historical_router
 from services.api.routes.industrial import router as industrial_router
 from services.api.routes.inference import router as inference_router
 from services.api.routes.layers import router as layers_router
+from services.api.routes.media import router as media_router
 from services.api.routes.readiness import router as readiness_router
 from services.api.routes.responders import router as responders_router
 from services.api.routes.simulation import router as simulation_router
@@ -29,6 +30,7 @@ api_router.include_router(version_router)
 api_router.include_router(sources_router)
 api_router.include_router(detections_router)
 api_router.include_router(events_router)
+api_router.include_router(media_router)
 api_router.include_router(layers_router)
 api_router.include_router(inference_router)
 api_router.include_router(responders_router)
@@ -58,6 +60,7 @@ __all__ = [
     "industrial_router",
     "inference_router",
     "layers_router",
+    "media_router",
     "readiness_router",
     "responders_router",
     "simulation_router",

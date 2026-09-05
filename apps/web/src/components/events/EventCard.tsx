@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/Badge";
 import { ThermalEvent } from "@/types/event";
 import { calculateOperationalRisk, getRiskLevelStyles } from "@/lib/risk/scoring";
 import { formatCoordinate } from "@/lib/format/coordinates";
+import { formatHumanReadableLocation } from "@/lib/location/locationFilter";
 import { formatFrp } from "@/lib/format/numbers";
 import { formatRelativeSecondsAgo, formatUtcTime } from "@/lib/format/dates";
 import { cn } from "@/lib/utils";
@@ -132,7 +133,7 @@ export function EventCard({
       {/* 2. Spatial Context: Location & Coordinate Datum */}
       <div className="mb-2">
         <div className="text-xs font-semibold text-foreground group-hover:text-accent transition-colors truncate">
-          {event.location_name || `Thermal Target ${event.event_id}`}
+          {formatHumanReadableLocation(event)}
         </div>
         <div className="text-[11px] text-foreground-muted flex items-center gap-1 mt-0.5">
           <MapPin className="w-3 h-3 text-accent-cyan shrink-0" />
