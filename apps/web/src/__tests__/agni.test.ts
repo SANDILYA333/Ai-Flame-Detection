@@ -257,7 +257,7 @@ describe("AGNI Voice Intelligence Architecture & State Machine Suite", () => {
     };
 
     const res = await agniService.interpretTranscript("Switch to satellite view");
-    assert.ok(res.command.intent === "MAP_ACTION" || res.command.intent === "CHANGE_BASEMAP");
+    assert.ok(res.command.intent === "MAP_ACTION");
     if (!res.command.basemap) {
       res.command.basemap = "satellite";
     }

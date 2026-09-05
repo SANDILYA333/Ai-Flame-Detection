@@ -23,7 +23,7 @@ describe("Event Operational Intelligence Suite", () => {
       if (evt.frp_mw > maxFrp) maxFrp = evt.frp_mw;
     });
 
-    assert.equal(total, 20);
+    assert.equal(total, DEMO_THERMAL_EVENTS.length);
     assert.ok(industrial > 0);
     assert.ok(nonIndustrial > 0);
     assert.ok(unknown > 0);

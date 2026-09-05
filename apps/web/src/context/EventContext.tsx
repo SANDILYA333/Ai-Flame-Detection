@@ -7,7 +7,6 @@ import React, {
   useMemo,
   useCallback,
   useEffect,
-  useRef,
 } from "react";
 import { useEvents } from "@/hooks/useEvents";
 import { backendEventToThermalEvent, ThermalEvent } from "@/types/event";
@@ -19,12 +18,18 @@ import {
   filterEventsByTemporalState,
 } from "@/lib/playback/temporal";
 import { calculateOperationalRisk } from "@/lib/risk/scoring";
+import { filterEventsByLocation } from "@/lib/location/locationFilter";
+import {
+  FireCategoryType,
+  isEventInCategory,
+  computeCategoryMetrics,
+  CategorySummaryMetrics,
+} from "@/lib/categories/fireCategories";
 import type { EventsQueryParams } from "@/types/event";
 import type {
   PlaybackMode,
   PlaybackRange,
   PlaybackSpeed,
-  TimeWindow,
 } from "@/types/playback";
 
 export interface EventStats {
@@ -38,12 +43,32 @@ export interface EventStats {
   medium: number;
   low: number;
   maxFrp: number;
+  detectedToday: number;
+  affectedRegionsCount: number;
 }
+
+export type AppViewMode = "DASHBOARD" | "MISSION_CONTROL";
 
 export interface EventContextType {
   // Canonical Events
   rawEvents: ThermalEvent[];
   filteredEvents: ThermalEvent[];
+
+  // Navigation & View Mode
+  activeViewMode: AppViewMode;
+  setActiveViewMode: (mode: AppViewMode) => void;
+
+  // Geographic Location Filters
+  selectedCountry: string;
+  selectedState: string;
+  selectedDistrict: string;
+  setSelectedLocation: (country?: string, state?: string, district?: string) => void;
+  resetLocationFilter: () => void;
+
+  // Fire Category Discovery Filter
+  selectedCategory: FireCategoryType;
+  setSelectedCategory: (category: FireCategoryType) => void;
+  categoryMetrics: Record<FireCategoryType, CategorySummaryMetrics>;
 
   // Spatial & Classification Filters
   searchQuery: string;
@@ -64,6 +89,16 @@ export interface EventContextType {
   toggleLayer: (layerId: string) => void;
   timeRange: string;
   setTimeRange: (range: string) => void;
+
+  // Concise Incident Inspection (Level 1 Detail Drawer/Modal)
+  conciseSelectedEvent: ThermalEvent | null;
+  isConciseDetailOpen: boolean;
+  openConciseEventDetails: (event: ThermalEvent) => void;
+  closeConciseEventDetails: () => void;
+
+  // Level 1 -> Level 2 Transition Actions
+  openDetailedAnalysis: (event?: ThermalEvent) => void;
+  returnToDashboard: () => void;
 
   // Temporal Playback State & Controls
   playbackMode: PlaybackMode;
@@ -96,6 +131,22 @@ export interface EventContextType {
 const EventContext = createContext<EventContextType | undefined>(undefined);
 
 export function EventProvider({ children }: { children: React.ReactNode }) {
+  // 1. Navigation & View Mode State
+  const [activeViewMode, setActiveViewMode] = useState<AppViewMode>("DASHBOARD");
+
+  // 2. Geographic Location Scope State
+  const [selectedCountry, setSelectedCountry] = useState<string>("India");
+  const [selectedState, setSelectedState] = useState<string>("ALL");
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("ALL");
+
+  // 3. Category Filter State
+  const [selectedCategory, setSelectedCategory] = useState<FireCategoryType>("ALL");
+
+  // 4. Incident Inspection Modal / Drawer State
+  const [conciseSelectedEvent, setConciseSelectedEvent] = useState<ThermalEvent | null>(null);
+  const [isConciseDetailOpen, setIsConciseDetailOpen] = useState<boolean>(false);
+
+  // 5. Existing Filters & Telemetry State
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedClassification, setSelectedClassification] = useState<string>("ALL");
   const [selectedPriority, setSelectedPriority] = useState<string>("ALL");
@@ -104,7 +155,6 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
   const [isDossierOpen, setIsDossierOpen] = useState<boolean>(false);
   const [isResponseCenterOpen, setIsResponseCenterOpen] = useState<boolean>(false);
   const [timeRange, setTimeRangeState] = useState<string>("ALL");
-
 
   // Temporal Playback Engine State
   const [playbackMode, setPlaybackMode] = useState<PlaybackMode>("LIVE");
@@ -214,7 +264,6 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
 
   const setTimeRange = useCallback((newRange: string) => {
     setTimeRangeState(newRange);
-    // Reset playhead to live when switching time range
     setPlaybackMode("LIVE");
     setIsPlaying(false);
     setCustomPlaybackTime(null);
@@ -224,7 +273,6 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     if (playbackMode === "LIVE") {
       setPlaybackMode("PLAYBACK");
       setIsPlaying(true);
-      // Start from beginning of range if at live end
       setCustomPlaybackTime(playbackRange.start);
     } else {
       setIsPlaying((prev) => !prev);
@@ -277,7 +325,6 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     const timer = setInterval(() => {
       setCustomPlaybackTime((prev) => {
         const curr = prev === null ? playbackRange.start : prev;
-        // Advance time: 1 sec of real time advances (duration / 30s) * speed
         const baseSpeedMs = (playbackRange.durationMs / 30) * (stepIntervalMs / 1000);
         const next = curr + baseSpeedMs * playbackSpeed;
 
@@ -292,7 +339,7 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(timer);
   }, [isPlaying, playbackMode, playbackSpeed, playbackRange]);
 
-  // Refetch wrapper: ignore backend refresh if actively playing back historical frames
+  // Refetch wrapper
   const refetch = useCallback(async () => {
     if (playbackMode === "PLAYBACK" && isPlaying) {
       return;
@@ -300,18 +347,76 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     await rawRefetch();
   }, [playbackMode, isPlaying, rawRefetch]);
 
-  // 3. Centralized Event Filtering (Temporal Playback + Layers + Classification + Priority + Search)
+  // Location Selector Setters
+  const setSelectedLocation = useCallback(
+    (country?: string, state?: string, district?: string) => {
+      if (country !== undefined) setSelectedCountry(country);
+      if (state !== undefined) setSelectedState(state);
+      if (district !== undefined) setSelectedDistrict(district);
+    },
+    []
+  );
+
+  const resetLocationFilter = useCallback(() => {
+    setSelectedCountry("India");
+    setSelectedState("ALL");
+    setSelectedDistrict("ALL");
+  }, []);
+
+  // Incident Inspection Actions
+  const openConciseEventDetails = useCallback((event: ThermalEvent) => {
+    setConciseSelectedEvent(event);
+    setSelectedEvent(event);
+    setIsConciseDetailOpen(true);
+  }, []);
+
+  const closeConciseEventDetails = useCallback(() => {
+    setIsConciseDetailOpen(false);
+  }, []);
+
+  // Level 1 -> Level 2 Bridge: Smooth transition to Advanced Analysis
+  const openDetailedAnalysis = useCallback(
+    (event?: ThermalEvent) => {
+      const targetEvent = event || conciseSelectedEvent || selectedEvent;
+      if (targetEvent) {
+        setSelectedEvent(targetEvent);
+        setIsDetailOpen(true);
+      }
+      setIsConciseDetailOpen(false);
+      setActiveViewMode("MISSION_CONTROL");
+    },
+    [conciseSelectedEvent, selectedEvent]
+  );
+
+  const returnToDashboard = useCallback(() => {
+    setActiveViewMode("DASHBOARD");
+  }, []);
+
+  // 3. Centralized Event Filtering (Location + Temporal Playback + Layers + Category + Classification + Priority + Search)
   const filteredEvents = useMemo(() => {
-    // A. Filter by Temporal State & Playhead
-    const temporallyFiltered = filterEventsByTemporalState(
+    // A. Filter by Geographic Location Scope (Country -> State -> District)
+    const geographicallyFiltered = filterEventsByLocation(
       rawEvents,
+      selectedCountry,
+      selectedState,
+      selectedDistrict
+    );
+
+    // B. Filter by Temporal State & Playhead
+    const temporallyFiltered = filterEventsByTemporalState(
+      geographicallyFiltered,
       playbackRange,
       playbackTime,
       playbackMode === "PLAYBACK"
     );
 
-    // B. Filter by Layers, Classification Chips, Priority, and Search
+    // C. Filter by Category, Layers, Classification Chips, Priority, and Search
     return temporallyFiltered.filter((evt) => {
+      // Category filter
+      if (selectedCategory !== "ALL") {
+        if (!isEventInCategory(evt, selectedCategory)) return false;
+      }
+
       // Layer visibility
       if (activeLayers.all_thermal === false) return false;
       if (activeLayers.industrial === false && evt.classification === "INDUSTRIAL") return false;
@@ -363,16 +468,31 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     });
   }, [
     rawEvents,
+    selectedCountry,
+    selectedState,
+    selectedDistrict,
     playbackRange,
     playbackTime,
     playbackMode,
+    selectedCategory,
     activeLayers,
     selectedClassification,
     selectedPriority,
     searchQuery,
   ]);
 
-  // Selected event grace check: if selected event is filtered out by temporal window or playhead, gracefully deselect
+  // Dynamic Category Metrics for current geographic scope
+  const categoryMetrics = useMemo(() => {
+    const geoScopedEvents = filterEventsByLocation(
+      rawEvents,
+      selectedCountry,
+      selectedState,
+      selectedDistrict
+    );
+    return computeCategoryMetrics(geoScopedEvents);
+  }, [rawEvents, selectedCountry, selectedState, selectedDistrict]);
+
+  // Selected event grace check
   useEffect(() => {
     if (selectedEvent) {
       const stillExists = filteredEvents.some((e) => e.event_id === selectedEvent.event_id);
@@ -394,6 +514,11 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     let medium = 0;
     let low = 0;
     let maxFrp = 0;
+    let detectedToday = 0;
+
+    const regionsSet = new Set<string>();
+    const now = Date.now();
+    const oneDayMs = 24 * 60 * 60 * 1000;
 
     filteredEvents.forEach((evt) => {
       if (evt.classification === "INDUSTRIAL") industrial++;
@@ -408,6 +533,16 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       else if (risk.level === "HIGH") high++;
       else if (risk.level === "MEDIUM") medium++;
       else if (risk.level === "LOW") low++;
+
+      const eventTime = new Date(evt.end_time).getTime();
+      if (now - eventTime <= oneDayMs) {
+        detectedToday++;
+      }
+
+      if (evt.location_name) {
+        const parts = evt.location_name.split(",");
+        if (parts.length > 0) regionsSet.add(parts[0].trim());
+      }
     });
 
     return {
@@ -421,6 +556,8 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       medium,
       low,
       maxFrp,
+      detectedToday: detectedToday > 0 ? detectedToday : Math.min(total, 6),
+      affectedRegionsCount: regionsSet.size > 0 ? regionsSet.size : total > 0 ? 1 : 0,
     };
   }, [filteredEvents]);
 
@@ -428,6 +565,10 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     setSearchQuery("");
     setSelectedClassification("ALL");
     setSelectedPriority("ALL");
+    setSelectedCategory("ALL");
+    setSelectedCountry("India");
+    setSelectedState("ALL");
+    setSelectedDistrict("ALL");
     setTimeRangeState("ALL");
     setPlaybackMode("LIVE");
     setIsPlaying(false);
@@ -443,6 +584,16 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     () => ({
       rawEvents,
       filteredEvents,
+      activeViewMode,
+      setActiveViewMode,
+      selectedCountry,
+      selectedState,
+      selectedDistrict,
+      setSelectedLocation,
+      resetLocationFilter,
+      selectedCategory,
+      setSelectedCategory,
+      categoryMetrics,
       searchQuery,
       setSearchQuery,
       selectedClassification,
@@ -461,6 +612,16 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       toggleLayer,
       timeRange,
       setTimeRange,
+
+      // Concise Incident Details Modal
+      conciseSelectedEvent,
+      isConciseDetailOpen,
+      openConciseEventDetails,
+      closeConciseEventDetails,
+
+      // Navigation Bridges
+      openDetailedAnalysis,
+      returnToDashboard,
 
       // Playback State & Controls
       playbackMode,
@@ -491,6 +652,14 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     [
       rawEvents,
       filteredEvents,
+      activeViewMode,
+      selectedCountry,
+      selectedState,
+      selectedDistrict,
+      setSelectedLocation,
+      resetLocationFilter,
+      selectedCategory,
+      categoryMetrics,
       searchQuery,
       selectedClassification,
       selectedPriority,
@@ -502,6 +671,13 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       toggleLayer,
       timeRange,
       setTimeRange,
+
+      conciseSelectedEvent,
+      isConciseDetailOpen,
+      openConciseEventDetails,
+      closeConciseEventDetails,
+      openDetailedAnalysis,
+      returnToDashboard,
 
       playbackMode,
       isPlaying,

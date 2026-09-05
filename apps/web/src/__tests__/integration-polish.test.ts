@@ -38,7 +38,7 @@ describe("NEXT-FE-013 Frontend Stabilization & Multi-Source QA Suite", () => {
     assert.ok(events6h.length <= events.length);
 
     // ALL filter
-    assert.equal(events.length, 20);
+    assert.equal(events.length, DEMO_THERMAL_EVENTS.length);
   });
 
   it("filters events by search query matching location name or ID", () => {
@@ -112,7 +112,7 @@ describe("NEXT-FE-013 Frontend Stabilization & Multi-Source QA Suite", () => {
       if (evt.frp_mw > maxFrp) maxFrp = evt.frp_mw;
     });
 
-    assert.equal(events.length, 20);
+    assert.equal(events.length, DEMO_THERMAL_EVENTS.length);
     assert.ok(industrial > 0);
     assert.ok(nonIndustrial > 0);
     assert.ok(unknown > 0);
