@@ -1,4 +1,4 @@
-import { ForestGeoJsonFeatureCollection } from "@/lib/api/forests";
+import type { ForestGeoJsonFeatureCollection } from "../../../lib/api/forests";
 
 export const DEMO_FORESTS_GEOJSON: ForestGeoJsonFeatureCollection = {
   type: "FeatureCollection",
