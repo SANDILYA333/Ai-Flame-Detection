@@ -1261,65 +1261,6 @@ export const FlatMapView = forwardRef<FlatMapViewHandle, FlatMapViewProps>(
           </div>
         )}
 
-        {/* On-Map Wind Vector & Hazard Corridor HUD */}
-        {selectedEvent && dispersion && (
-          <div className="absolute top-3 left-3 z-10 pointer-events-auto bg-surface-raised/90 backdrop-blur-md border border-border/80 rounded-panel p-2.5 shadow-panel font-mono text-[10px] space-y-1 max-w-[220px] animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="flex items-center justify-between border-b border-border/60 pb-1">
-              <span className="font-bold text-foreground flex items-center gap-1">
-                <Wind className="w-3 h-3 text-accent-cyan" />
-                WIND INTELLIGENCE
-              </span>
-              <span className="text-[9px] text-accent font-bold">
-                {dispersion.wind.speed_ms.toFixed(1)} m/s
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-foreground-secondary text-[9px]">
-              <span>From {dispersion.wind.direction_from_label} ({dispersion.wind.direction_from_deg.toFixed(0)}°)</span>
-              <span className="text-state-error font-bold flex items-center gap-0.5">
-                <ArrowUpRight className="w-2.5 h-2.5" />
-                {dispersion.wind.downwind_direction_label}
-              </span>
-            </div>
-            <div className="text-[9px] text-foreground-muted flex items-center justify-between pt-0.5 border-t border-border/40">
-              <span>Hazard Reach:</span>
-              <span className="text-foreground font-bold">{dispersion.dispersion.max_hazard_distance_km.toFixed(1)} km</span>
-            </div>
-          </div>
-        )}
-
-        {/* Interactive Wind & Cartography Map Legend */}
-        {selectedEvent && dispersion && (
-          <div className="absolute bottom-6 left-3 z-10 pointer-events-auto bg-surface-raised/90 backdrop-blur-md border border-border/80 rounded-panel p-2.5 shadow-panel font-mono text-[9.5px] space-y-1.5 max-w-[210px] animate-in fade-in duration-200 select-none">
-            <div className="font-bold text-foreground flex items-center justify-between border-b border-border/50 pb-1">
-              <span className="uppercase tracking-wider text-[9px]">WIND &amp; PLUME LEGEND</span>
-              <span className="text-[8.5px] text-accent-cyan font-bold">CLASS {dispersion.dispersion.stability_class}</span>
-            </div>
-            <div className="space-y-1 text-foreground-secondary text-[9px]">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-state-error border border-white shrink-0" />
-                <span>Thermal Incident Origin</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full border border-state-error/80 bg-state-error/20 shrink-0" />
-                <span>200m Modeled Isolation</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-2 border border-state-warning border-dashed bg-state-warning/15 shrink-0 rounded-xs" />
-                <span>Evacuation Corridor</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-2 border border-accent-cyan bg-accent-cyan/20 shrink-0 rounded-xs" />
-                <span>Gaussian Hazard Plume</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-0.5 bg-state-error shrink-0" />
-                <span>Downwind Trajectory</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-
         {/* Subtle bottom-right basemap attribution */}
         <div className="absolute bottom-1 right-2 z-10 text-[9px] font-mono text-foreground-muted/60 pointer-events-none select-none">
           © CARTO © Esri © OpenStreetMap contributors
