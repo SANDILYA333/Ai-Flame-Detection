@@ -12,6 +12,7 @@ const config: Config = {
     extend: {
       colors: {
         background: "var(--bg-base)",
+        "bg-base": "var(--bg-base)",
         surface: {
           DEFAULT: "var(--bg-surface)",
           raised: "var(--bg-surface-raised)",
@@ -29,6 +30,7 @@ const config: Config = {
           soft: "var(--accent-primary-soft)",
           cyan: "var(--accent-cyan)",
           blue: "var(--accent-blue)",
+          hover: "var(--accent-hover, #2ee075)",
         },
         state: {
           success: "var(--state-success)",
