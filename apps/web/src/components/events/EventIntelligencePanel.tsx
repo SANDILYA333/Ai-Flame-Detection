@@ -30,6 +30,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   Crosshair,
   ShieldAlert,
   Info,
@@ -67,6 +69,7 @@ export function EventIntelligencePanel({
   const eventContext = useEventContext();
   const [localDossierOpen, setLocalDossierOpen] = useState(false);
   const [localResponseCenterOpen, setLocalResponseCenterOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const isDossierModalOpen = eventContext?.isDossierOpen || localDossierOpen;
   const setIsDossierModalOpen = (open: boolean) => {
@@ -149,12 +152,20 @@ export function EventIntelligencePanel({
     <>
       <div
         className={cn(
-          "w-full sm:w-96 max-h-[60vh] sm:max-h-[86vh] overflow-y-auto bg-surface-raised/95 backdrop-blur-md border border-border rounded-t-panel sm:rounded-panel p-3.5 sm:p-4 shadow-panel pointer-events-auto flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-3 duration-200 select-none scrollbar-thin",
+          "w-full sm:w-96 bg-surface-raised/95 backdrop-blur-md border border-border rounded-t-panel sm:rounded-panel shadow-panel pointer-events-auto flex flex-col select-none transition-all duration-200",
+          isCollapsed
+            ? "p-3 sm:p-3.5"
+            : "max-h-[60vh] sm:max-h-[86vh] overflow-y-auto p-3.5 sm:p-4 gap-3 animate-in fade-in slide-in-from-bottom-3 scrollbar-thin",
           className
         )}
       >
         {/* 1. Header with Event ID, Pagination Navigation & Controls */}
-        <div className="flex items-start justify-between gap-2 border-b border-border pb-2.5">
+        <div
+          className={cn(
+            "flex items-start justify-between gap-2",
+            isCollapsed ? "border-b-0 pb-0" : "border-b border-border pb-2.5"
+          )}
+        >
           <div className="flex items-center gap-2 min-w-0">
             <div
               className={cn(
@@ -219,6 +230,19 @@ export function EventIntelligencePanel({
             )}
             <button
               type="button"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              title={isCollapsed ? "Expand incident details" : "Collapse incident details"}
+              aria-label={isCollapsed ? "Expand incident details" : "Collapse incident details"}
+              className="p-1 text-foreground-muted hover:text-foreground rounded-control hover:bg-surface-hover active:scale-95 transition-all"
+            >
+              {isCollapsed ? (
+                <ChevronDown className="w-3.5 h-3.5" />
+              ) : (
+                <ChevronUp className="w-3.5 h-3.5" />
+              )}
+            </button>
+            <button
+              type="button"
               onClick={onClose}
               title="Minimize / Close Panel (Esc)"
               aria-label="Close event intelligence panel"
@@ -229,21 +253,23 @@ export function EventIntelligencePanel({
           </div>
         </div>
 
-        {/* Tactical Dossier Trigger Button */}
-        <button
-          onClick={() => setIsDossierModalOpen(true)}
-          className="w-full py-1.5 px-3 rounded-control bg-accent/10 hover:bg-accent/20 border border-accent/30 text-accent text-[10px] font-mono font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm"
-        >
-          <FileText className="w-3.5 h-3.5" />
-          <span>OPEN TACTICAL INCIDENT BRIEFING (DOSSIER)</span>
-        </button>
+        {!isCollapsed && (
+          <>
+            {/* Tactical Dossier Trigger Button */}
+            <button
+              onClick={() => setIsDossierModalOpen(true)}
+              className="w-full py-1.5 px-3 rounded-control bg-accent/10 hover:bg-accent/20 border border-accent/30 text-accent text-[10px] font-mono font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>OPEN TACTICAL INCIDENT BRIEFING (DOSSIER)</span>
+            </button>
 
-        {/* 💨 TOP PROMINENT ENTRY POINT: WIND INTELLIGENCE & DOWNWIND PLUME */}
-        <div
-          data-testid="top-wind-intelligence-card"
-          className="p-3 rounded-control font-mono space-y-2.5 shadow-sm border bg-accent-cyan/10 border-accent-cyan/40 transition-all duration-200"
-        >
-          <div className="flex items-center justify-between">
+            {/* 💨 TOP PROMINENT ENTRY POINT: WIND INTELLIGENCE & DOWNWIND PLUME */}
+            <div
+              data-testid="top-wind-intelligence-card"
+              className="p-3 rounded-control font-mono space-y-2.5 shadow-sm border bg-accent-cyan/10 border-accent-cyan/40 transition-all duration-200"
+            >
+              <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 min-w-0">
               <Wind className="w-4 h-4 shrink-0 text-accent-cyan animate-pulse-subtle" />
               <span className="text-[11px] font-bold text-foreground uppercase tracking-wider truncate">
@@ -532,7 +558,9 @@ export function EventIntelligencePanel({
             </div>
           </>
         )}
-      </div>
+      </>
+    )}
+  </div>
 
       {/* Dedicated Emergency Response Center Modal */}
       <EmergencyResponseModal
