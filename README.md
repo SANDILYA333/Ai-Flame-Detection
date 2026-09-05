@@ -44,7 +44,7 @@
 29. [Future Roadmap](#29-future-roadmap)
 30. [Scientific Reproducibility & Audit](#30-scientific-reproducibility--audit)
 31. [Project Information](#31-project-information)
-32. [License](#32-license)
+32. [License & Distribution](#32-license--distribution)
 
 ---
 
@@ -1279,6 +1279,8 @@ python scripts/firms_ml_e2e_smoke_test.py
 
 ---
 
-## 32. License
+## 32. License & Distribution
 
-This project is licensed under the **MIT License**. See the repository license file for details.
+This project was developed for the **Smart India Hackathon (SIH 2026)**. 
+
+No formal open-source license file is currently published in the repository root. All rights are reserved by the project authors unless explicitly specified. For academic, evaluation, or collaboration licensing inquiries, please contact the development team.
