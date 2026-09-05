@@ -9,7 +9,10 @@ import { EventIntelligenceFeed } from "@/components/events/EventIntelligenceFeed
 import { EventIntelligencePanel } from "@/components/events/EventIntelligencePanel";
 import { TimelinePlaybackBar } from "@/components/playback/TimelinePlaybackBar";
 import { MapOverlayContainer } from "./MapOverlayContainer";
+import { FloatingWindIntelligenceCard } from "./FloatingWindIntelligenceCard";
+import { FloatingWindLegendCard } from "./FloatingWindLegendCard";
 import { useEventContext } from "@/context/EventContext";
+import { useEventDispersion } from "@/hooks/useEventDispersion";
 import { ThermalEvent } from "@/types/event";
 import { Compass, Crosshair, Flame, ShieldCheck, Wifi, AlertTriangle, RotateCcw } from "lucide-react";
 import { APP_CONFIG } from "@/config/ui";
@@ -64,6 +67,8 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
     isLiveBackend,
     resetFilters,
   } = useEventContext();
+
+  const { dispersion, isLoading: isDispersionLoading } = useEventDispersion(selectedEvent);
 
   // Current selected event index for Next/Prev navigation
   const selectedIndex = useMemo(() => {
@@ -377,6 +382,21 @@ export function MapWorkspace({ className }: MapWorkspaceProps) {
         <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 w-[96%] sm:w-[640px] max-w-[96vw] z-30">
           <TimelinePlaybackBar />
         </div>
+
+        {/* Floating Wind & Plume Intelligence Overlay Layer */}
+        {selectedEvent && dispersion && (
+          <>
+            <FloatingWindIntelligenceCard
+              event={selectedEvent}
+              dispersion={dispersion}
+              isLoading={isDispersionLoading}
+              onFocusPlume={handleCenterSelected}
+            />
+            <FloatingWindLegendCard
+              dispersion={dispersion}
+            />
+          </>
+        )}
 
         {/* Geographic Projection & Datum annotation */}
         <div className="absolute bottom-3 left-3 z-20 pointer-events-none hidden lg:flex items-center gap-2 bg-surface/75 backdrop-blur-md px-2.5 py-1.5 rounded-control border border-border/80 text-[10px] font-mono text-foreground-muted">
