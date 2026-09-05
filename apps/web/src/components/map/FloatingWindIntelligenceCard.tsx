@@ -152,14 +152,14 @@ export function FloatingWindIntelligenceCard({
 
           {/* Focus Action Button */}
           {onFocusPlume && (
-            <button
-              type="button"
-              onClick={onFocusPlume}
-              className="w-full py-1.5 px-3 rounded-control font-bold text-[10px] bg-accent-cyan hover:bg-accent-cyan/90 text-background flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm"
-            >
-              <Compass className="w-3 h-3" />
-              <span>FOCUS WIND &amp; PLUME DISPERSION</span>
-            </button>
+              <button
+                type="button"
+                onClick={onFocusPlume}
+                className="w-full py-1.5 px-3 rounded-control font-bold text-[10px] bg-accent-cyan hover:bg-accent-cyan/90 text-background flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm"
+              >
+                <Compass className="w-3 h-3 text-background" />
+                <span className="text-background">FOCUS WIND &amp; PLUME DISPERSION</span>
+              </button>
           )}
         </div>
       )}

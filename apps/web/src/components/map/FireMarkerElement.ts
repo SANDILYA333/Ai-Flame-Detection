@@ -139,7 +139,7 @@ export function createFireMarkerElement({
   if (isReviewRequired) {
     const warningBadge = document.createElement("div");
     warningBadge.className =
-      "absolute -top-1 -right-1 w-3.5 h-3.5 bg-state-warning text-bg-base text-[9px] font-mono font-bold rounded-full flex items-center justify-center border border-bg-base";
+      "absolute -top-1 -right-1 w-3.5 h-3.5 bg-state-warning text-background text-[9px] font-mono font-bold rounded-full flex items-center justify-center border border-background";
     warningBadge.innerText = "!";
     core.appendChild(warningBadge);
   }

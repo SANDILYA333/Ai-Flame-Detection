@@ -346,8 +346,8 @@ export function EventIntelligencePanel({
             }}
             className="w-full py-1.5 px-3 rounded-control font-bold text-xs bg-accent-cyan hover:bg-accent-cyan/90 text-background flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm"
           >
-            <Compass className="w-3.5 h-3.5" />
-            <span>FOCUS WIND &amp; PLUME DISPERSION</span>
+            <Compass className="w-3.5 h-3.5 text-background" />
+            <span className="text-background">FOCUS WIND &amp; PLUME DISPERSION</span>
           </button>
         </div>
 
@@ -447,11 +447,11 @@ export function EventIntelligencePanel({
               "w-full py-2 px-3 rounded-control font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm",
               risk.level === "CRITICAL"
                 ? "bg-state-error hover:bg-state-error/90 text-white"
-                : "bg-accent hover:bg-accent/90 text-background"
+                : "bg-accent hover:bg-emerald-400 text-background"
             )}
           >
-            <ShieldAlert className="w-3.5 h-3.5" />
-            <span>OPEN RESPONSE CENTER</span>
+            <ShieldAlert className={cn("w-3.5 h-3.5", risk.level !== "CRITICAL" && "text-background")} />
+            <span className={cn(risk.level !== "CRITICAL" && "text-background")}>OPEN RESPONSE CENTER</span>
           </button>
         </div>
 

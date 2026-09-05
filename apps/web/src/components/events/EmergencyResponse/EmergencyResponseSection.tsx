@@ -451,10 +451,10 @@ export function EmergencyResponseSection({
               <button
                 type="button"
                 onClick={handleApplyPhone}
-                className="px-2.5 py-1 rounded bg-accent text-bg-base font-bold text-[10px] flex items-center gap-1 shadow-panel transition-all active:scale-95 hover:bg-accent/90 shrink-0"
+                className="px-2.5 py-1 rounded bg-accent text-background font-bold text-[10px] flex items-center gap-1 shadow-panel transition-all active:scale-95 hover:bg-emerald-400 shrink-0"
               >
-                <Save className="w-3 h-3" />
-                <span>Save / Apply</span>
+                <Save className="w-3 h-3 text-background" />
+                <span className="text-background">Save / Apply</span>
               </button>
             </div>
             <div className="text-[9px] text-foreground-muted">

@@ -139,37 +139,37 @@ export function GlobalForestMonitoringHub({
       case "ACTIVE_FIRE":
       case "INSIDE_FOREST":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-600/30 text-red-400 border border-red-500/50 animate-pulse">
-            <Flame className="w-3 h-3 text-red-400" />
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-state-error/25 text-state-error border border-state-error/50 animate-pulse font-mono shrink-0">
+            <Flame className="w-3 h-3 text-state-error" />
             ACTIVE FIRE
           </span>
         );
       case "CRITICAL":
       case "HIGH":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/40">
-            <AlertTriangle className="w-3 h-3 text-red-400" />
-            CRITICAL ({`<2 km`})
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-state-error/20 text-state-error border border-state-error/40 font-mono shrink-0">
+            <AlertTriangle className="w-3 h-3 text-state-error" />
+            CRITICAL (&lt;2 km)
           </span>
         );
       case "WARNING":
       case "MODERATE":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40">
-            <AlertTriangle className="w-3 h-3 text-amber-400" />
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-state-warning/20 text-state-warning border border-state-warning/40 font-mono shrink-0">
+            <AlertTriangle className="w-3 h-3 text-state-warning" />
             WARNING (2-5 km)
           </span>
         );
       case "AWARENESS":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
-            <Info className="w-3 h-3 text-blue-400" />
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-accent-cyan/15 text-accent-cyan border border-accent-cyan/30 font-mono shrink-0">
+            <Info className="w-3 h-3 text-accent-cyan" />
             AWARENESS (5-10 km)
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono shrink-0">
             <ShieldCheck className="w-3 h-3 text-emerald-400" />
             SAFE
           </span>
@@ -178,194 +178,211 @@ export function GlobalForestMonitoringHub({
   };
 
   return (
-    <div className={cn("flex flex-col h-full overflow-hidden bg-slate-950/90 text-slate-100", className)}>
-      {/* Header */}
-      <div className="p-4 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 shadow-sm">
-              <Trees className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-semibold tracking-wide text-white flex items-center gap-2">
-                Global Forest Threat Intelligence
-                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
-                  LIVE
-                </span>
-              </h2>
-              <p className="text-xs text-slate-400">
-                Continuous real-time spatial evaluation against NASA FIRMS fire events
-              </p>
-            </div>
+    <div className={cn("flex flex-col h-full overflow-hidden text-foreground", className)}>
+      {/* 1. Header with System Title, LIVE Indicator & Refresh Trigger */}
+      <div className="flex items-start justify-between border-b border-border/80 pb-2.5 mb-2.5">
+        <div className="flex items-start gap-2 min-w-0">
+          <div className="w-7 h-7 rounded-control bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
+            <Trees className="w-4 h-4" />
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => loadData(true)}
-            disabled={isLoading || isRefreshing}
-            className="h-8 px-2.5 bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 border-slate-700"
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <h2 className="text-xs font-bold text-foreground tracking-tight">
+                Global Forest Threat Intelligence
+              </h2>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[9px] font-mono font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                LIVE
+              </span>
+            </div>
+            <p className="text-[10px] text-foreground-muted mt-0.5 leading-snug">
+              Continuous real-time spatial evaluation against NASA FIRMS fire events
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => loadData(true)}
+          disabled={isLoading || isRefreshing}
+          title="Refresh forest threat intelligence"
+          className="p-1.5 rounded-control bg-surface hover:bg-surface-raised border border-border text-foreground-muted hover:text-foreground transition-colors disabled:opacity-50 shrink-0"
+        >
+          <RotateCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin text-emerald-400")} />
+        </button>
+      </div>
+
+      {/* 2. Global Summary Stats Quick Filters */}
+      {summary && (
+        <div className="grid grid-cols-5 gap-1 mb-2.5">
+          {/* Monitored / ALL */}
+          <button
+            onClick={() => setSelectedStatus("ALL")}
+            className={cn(
+              "p-1.5 rounded border text-center transition-all flex flex-col justify-between items-center min-h-[46px]",
+              selectedStatus === "ALL"
+                ? "bg-foreground/15 border-foreground/40 text-foreground font-bold shadow-sm ring-1 ring-foreground/30"
+                : "bg-surface/70 border-border text-foreground-muted hover:text-foreground hover:bg-surface-hover"
+            )}
           >
-            <RotateCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin")} />
-          </Button>
+            <div className="text-[8.5px] uppercase font-mono tracking-wider text-foreground-muted">Monitored</div>
+            <div className="text-sm font-bold font-mono text-foreground">{summary.total_monitored_forests}</div>
+          </button>
+
+          {/* Active Fire */}
+          <button
+            onClick={() => setSelectedStatus(selectedStatus === "ACTIVE_FIRE" ? "ALL" : "ACTIVE_FIRE")}
+            className={cn(
+              "p-1.5 rounded border text-center transition-all flex flex-col justify-between items-center min-h-[46px]",
+              selectedStatus === "ACTIVE_FIRE"
+                ? "bg-state-error/25 border-state-error text-state-error font-bold shadow-sm ring-1 ring-state-error/50"
+                : "bg-surface/70 border-border text-state-error hover:bg-state-error/15"
+            )}
+          >
+            <div className="text-[8.5px] uppercase font-mono tracking-wider text-red-400">Active Fire</div>
+            <div className="text-sm font-bold font-mono text-red-400 flex items-center justify-center gap-0.5">
+              {summary.active_fire_forests > 0 && <Flame className="w-3 h-3 text-red-400 animate-pulse" />}
+              {summary.active_fire_forests}
+            </div>
+          </button>
+
+          {/* Critical */}
+          <button
+            onClick={() => setSelectedStatus(selectedStatus === "CRITICAL" ? "ALL" : "CRITICAL")}
+            className={cn(
+              "p-1.5 rounded border text-center transition-all flex flex-col justify-between items-center min-h-[46px]",
+              selectedStatus === "CRITICAL"
+                ? "bg-state-error/20 border-red-500 text-red-400 font-bold shadow-sm ring-1 ring-red-500/50"
+                : "bg-surface/70 border-border text-red-400/90 hover:bg-state-error/15"
+            )}
+          >
+            <div className="text-[8.5px] uppercase font-mono tracking-wider text-red-400">Critical</div>
+            <div className="text-sm font-bold font-mono text-red-400">{summary.critical_forests}</div>
+          </button>
+
+          {/* Warning */}
+          <button
+            onClick={() => setSelectedStatus(selectedStatus === "WARNING" ? "ALL" : "WARNING")}
+            className={cn(
+              "p-1.5 rounded border text-center transition-all flex flex-col justify-between items-center min-h-[46px]",
+              selectedStatus === "WARNING"
+                ? "bg-state-warning/25 border-state-warning text-state-warning font-bold shadow-sm ring-1 ring-state-warning/50"
+                : "bg-surface/70 border-border text-state-warning hover:bg-state-warning/15"
+            )}
+          >
+            <div className="text-[8.5px] uppercase font-mono tracking-wider text-amber-400">Warning</div>
+            <div className="text-sm font-bold font-mono text-amber-400">{summary.warning_forests}</div>
+          </button>
+
+          {/* Safe */}
+          <button
+            onClick={() => setSelectedStatus(selectedStatus === "SAFE" ? "ALL" : "SAFE")}
+            className={cn(
+              "p-1.5 rounded border text-center transition-all flex flex-col justify-between items-center min-h-[46px]",
+              selectedStatus === "SAFE"
+                ? "bg-emerald-500/20 border-emerald-500 text-emerald-400 font-bold shadow-sm ring-1 ring-emerald-500/50"
+                : "bg-surface/70 border-border text-emerald-400 hover:bg-emerald-500/15"
+            )}
+          >
+            <div className="text-[8.5px] uppercase font-mono tracking-wider text-emerald-400">Safe</div>
+            <div className="text-sm font-bold font-mono text-emerald-400">{summary.safe_forests}</div>
+          </button>
+        </div>
+      )}
+
+      {/* 3. Deterministic Escalation Simulation Demo Box */}
+      <div className="mb-2.5 p-2 rounded-control bg-surface/80 border border-emerald-500/30 flex flex-col gap-2 shadow-sm">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Play className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span className="text-[11px] font-semibold text-emerald-300 truncate">
+              Deterministic Escalation Demo
+            </span>
+          </div>
+          <button
+            onClick={runEscalationDemo}
+            disabled={isDemoRunning}
+            className="px-2.5 py-1 rounded-control bg-accent hover:bg-emerald-400 text-background text-[10px] font-bold shadow-sm transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer disabled:opacity-60"
+          >
+            {isDemoRunning ? (
+              <>
+                <RotateCw className="w-3 h-3 animate-spin text-background" />
+                <span>STEP {demoStep}/4...</span>
+              </>
+            ) : (
+              <span>RUN FIRE ESCALATION DEMO</span>
+            )}
+          </button>
         </div>
 
-        {/* Global Summary Stats Cards */}
-        {summary && (
-          <div className="grid grid-cols-5 gap-2 pt-1">
-            <div
-              onClick={() => setSelectedStatus("ALL")}
-              className={cn(
-                "p-2 rounded-lg border text-center cursor-pointer transition-all",
-                selectedStatus === "ALL"
-                  ? "bg-slate-800 border-slate-600 shadow"
-                  : "bg-slate-900/60 border-slate-800/80 hover:bg-slate-850"
-              )}
-            >
-              <div className="text-[10px] uppercase font-mono text-slate-400">Monitored</div>
-              <div className="text-lg font-bold text-white mt-0.5">{summary.total_monitored_forests}</div>
-            </div>
-            <div
-              onClick={() => setSelectedStatus("ACTIVE_FIRE")}
-              className={cn(
-                "p-2 rounded-lg border text-center cursor-pointer transition-all",
-                selectedStatus === "ACTIVE_FIRE"
-                  ? "bg-red-950/80 border-red-500 shadow-red-900/30"
-                  : "bg-red-950/30 border-red-900/40 hover:bg-red-950/50"
-              )}
-            >
-              <div className="text-[10px] uppercase font-mono text-red-300">Active Fire</div>
-              <div className="text-lg font-bold text-red-400 mt-0.5 flex items-center justify-center gap-1">
-                {summary.active_fire_forests > 0 && <Flame className="w-3.5 h-3.5 animate-pulse" />}
-                {summary.active_fire_forests}
+        {demoStatusLog.length > 0 && (
+          <div className="text-[10px] font-mono text-foreground-secondary bg-background/90 p-2 rounded border border-border max-h-20 overflow-y-auto space-y-1">
+            {demoStatusLog.map((log, idx) => (
+              <div key={idx} className="flex items-start gap-1.5 text-emerald-400">
+                <span className="text-foreground-muted">›</span>
+                <span className="leading-tight">{log}</span>
               </div>
-            </div>
-            <div
-              onClick={() => setSelectedStatus("CRITICAL")}
-              className={cn(
-                "p-2 rounded-lg border text-center cursor-pointer transition-all",
-                selectedStatus === "CRITICAL"
-                  ? "bg-red-950/60 border-red-600 shadow"
-                  : "bg-red-950/20 border-red-900/30 hover:bg-red-950/40"
-              )}
-            >
-              <div className="text-[10px] uppercase font-mono text-red-300">Critical</div>
-              <div className="text-lg font-bold text-red-400 mt-0.5">{summary.critical_forests}</div>
-            </div>
-            <div
-              onClick={() => setSelectedStatus("WARNING")}
-              className={cn(
-                "p-2 rounded-lg border text-center cursor-pointer transition-all",
-                selectedStatus === "WARNING"
-                  ? "bg-amber-950/60 border-amber-500 shadow"
-                  : "bg-amber-950/20 border-amber-900/30 hover:bg-amber-950/40"
-              )}
-            >
-              <div className="text-[10px] uppercase font-mono text-amber-300">Warning</div>
-              <div className="text-lg font-bold text-amber-400 mt-0.5">{summary.warning_forests}</div>
-            </div>
-            <div
-              onClick={() => setSelectedStatus("SAFE")}
-              className={cn(
-                "p-2 rounded-lg border text-center cursor-pointer transition-all",
-                selectedStatus === "SAFE"
-                  ? "bg-emerald-950/60 border-emerald-500 shadow"
-                  : "bg-emerald-950/20 border-emerald-900/30 hover:bg-emerald-950/40"
-              )}
-            >
-              <div className="text-[10px] uppercase font-mono text-emerald-300">Safe</div>
-              <div className="text-lg font-bold text-emerald-400 mt-0.5">{summary.safe_forests}</div>
-            </div>
+            ))}
           </div>
         )}
 
-        {/* Demo Runner Bar */}
-        <div className="mt-3 p-2.5 rounded-lg bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 border border-emerald-800/40 flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs text-emerald-300 font-medium">
-              <Play className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Deterministic Escalation Simulation Demo</span>
-            </div>
-            <Button
-              size="sm"
-              onClick={runEscalationDemo}
-              disabled={isDemoRunning}
-              className="h-7 px-3 bg-accent hover:bg-accent/90 text-bg-base text-xs font-bold shadow-sm transition-all"
-            >
-              {isDemoRunning ? (
-                <span className="flex items-center gap-1.5">
-                  <RotateCw className="w-3 h-3 animate-spin" /> Step {demoStep}/4...
-                </span>
-              ) : (
-                "Run Fire Escalation Demo"
-              )}
-            </Button>
-          </div>
-
-          {demoStatusLog.length > 0 && (
-            <div className="text-[11px] font-mono text-slate-300 bg-black/40 p-2 rounded border border-slate-800/80 max-h-20 overflow-y-auto space-y-1">
-              {demoStatusLog.map((log, idx) => (
-                <div key={idx} className="flex items-start gap-1.5 text-emerald-400">
-                  <span className="text-slate-500">›</span>
-                  <span>{log}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {activeSimAlert && (
-            <div className="p-2 rounded bg-red-950/40 border border-red-800/60 flex items-center justify-between text-xs text-red-200 animate-in fade-in duration-300">
-              <div className="flex items-center gap-2">
-                <BellRing className="w-4 h-4 text-red-400 animate-bounce" />
-                <span>
-                  Alert Dispatched: <strong>{activeSimAlert.alert_id}</strong> (SMS & WhatsApp Delivered)
-                </span>
-              </div>
-              <span className="font-mono text-[10px] text-red-300 bg-red-900/60 px-1.5 py-0.5 rounded">
-                DELIVERED
+        {activeSimAlert && (
+          <div className="p-2 rounded bg-state-error/20 border border-state-error/50 flex items-center justify-between text-[11px] text-red-200 animate-in fade-in duration-300">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <BellRing className="w-3.5 h-3.5 text-red-400 shrink-0 animate-bounce" />
+              <span className="truncate">
+                Alert: <strong className="text-red-100">{activeSimAlert.alert_id}</strong> (SMS & WhatsApp)
               </span>
             </div>
-          )}
-        </div>
-
-        {/* Search & Filter bar */}
-        <div className="mt-3 flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search forests by name, country, or OSM ID..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-8 pl-8 pr-3 text-xs bg-slate-900/80 border border-slate-700/70 rounded-md text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
-            />
+            <span className="font-mono text-[9px] font-bold text-red-300 bg-red-950 px-1.5 py-0.5 rounded border border-red-800 shrink-0">
+              DELIVERED
+            </span>
           </div>
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSearchQuery("")}
-              className="h-8 px-2 text-xs text-slate-400 hover:text-white"
-            >
-              Clear
-            </Button>
-          )}
-        </div>
+        )}
       </div>
 
-      {/* Forest Threat List */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2.5 divide-y divide-slate-800/50">
+      {/* 4. Search & Filter Bar */}
+      <div className="flex items-center gap-1.5 mb-2">
+        <div className="relative flex-1">
+          <Search className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2 text-foreground-muted" />
+          <input
+            type="text"
+            placeholder="Search forests by name, country..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-7 pl-6 pr-2 bg-background/70 border border-border rounded-control text-[11px] text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:border-accent font-mono transition-colors"
+          />
+        </div>
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery("")}
+            className="h-7 px-2 text-[10px] font-mono text-foreground-muted hover:text-foreground bg-surface border border-border rounded-control transition-colors"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {/* 5. Forest Threat Stream */}
+      <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[220px] max-h-[52vh] scrollbar-thin">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-48 text-slate-400 text-xs gap-2">
+          <div className="flex flex-col items-center justify-center h-48 text-foreground-muted text-xs gap-2">
             <RotateCw className="w-5 h-5 animate-spin text-emerald-400" />
-            <span>Evaluating spatial forest intelligence...</span>
+            <span className="font-mono text-[11px]">Evaluating spatial forest intelligence...</span>
           </div>
         ) : forests.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-slate-400 text-xs text-center p-4">
-            <Trees className="w-8 h-8 text-slate-600 mb-2" />
-            <span className="font-medium text-slate-300">No forests matching query</span>
-            <span className="text-[11px] text-slate-500 mt-1">
-              Try adjusting search terms or threat status filters
-            </span>
+          <div className="h-44 flex flex-col items-center justify-center text-center p-4 border border-dashed border-border/80 rounded-control bg-surface/30">
+            <Trees className="w-6 h-6 text-foreground-muted mb-2" />
+            <div className="text-xs font-semibold text-foreground">No Matching Forests</div>
+            <div className="text-[10px] text-foreground-muted mt-1 max-w-[200px]">
+              No monitored forests match the active search or threat filter.
+            </div>
+            {selectedStatus !== "ALL" && (
+              <button
+                onClick={() => setSelectedStatus("ALL")}
+                className="mt-3 px-2.5 py-1 text-[10px] font-mono rounded-control bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 transition-colors"
+              >
+                Reset Filter
+              </button>
+            )}
           </div>
         ) : (
           forests.map((forest) => {
@@ -382,49 +399,52 @@ export function GlobalForestMonitoringHub({
                   }
                 }}
                 className={cn(
-                  "p-3 rounded-xl border transition-all cursor-pointer group pt-3",
+                  "p-2.5 rounded-control border transition-all cursor-pointer group select-none flex flex-col gap-1.5",
                   isThreatened
                     ? forest.threat_level === "ACTIVE_FIRE" || forest.threat_level === "INSIDE_FOREST"
-                      ? "bg-red-950/20 border-red-700/50 hover:bg-red-950/40 hover:border-red-500 shadow-sm"
+                      ? "bg-state-error/10 border-state-error/40 hover:bg-state-error/20 hover:border-state-error shadow-sm"
                       : forest.threat_level === "CRITICAL"
-                      ? "bg-red-950/15 border-red-800/40 hover:bg-red-950/30 hover:border-red-600 shadow-sm"
+                      ? "bg-state-error/5 border-state-error/30 hover:bg-state-error/15 hover:border-state-error/50 shadow-sm"
                       : forest.threat_level === "WARNING"
-                      ? "bg-amber-950/15 border-amber-800/40 hover:bg-amber-950/30 hover:border-amber-600 shadow-sm"
-                      : "bg-blue-950/15 border-blue-800/40 hover:bg-blue-950/30 hover:border-blue-600 shadow-sm"
-                    : "bg-slate-900/40 border-slate-800/60 hover:bg-slate-800/60 hover:border-slate-700"
+                      ? "bg-state-warning/5 border-state-warning/30 hover:bg-state-warning/15 hover:border-state-warning/50 shadow-sm"
+                      : "bg-accent-cyan/5 border-accent-cyan/30 hover:bg-accent-cyan/15 hover:border-accent-cyan/50 shadow-sm"
+                    : "bg-surface/60 border-border hover:bg-surface hover:border-border-strong"
                 )}
               >
-                {/* Forest header row */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm text-white truncate group-hover:text-emerald-300 transition-colors">
-                        {forest.name || "Monitored Forest Area"}
-                      </span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                        {forest.country_code}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
-                      <span>{forest.forest_type}</span>
-                      <span>•</span>
-                      <span>{forest.area_km2.toFixed(1)} km²</span>
-                      <span>•</span>
-                      <span className="font-mono text-[10px] text-slate-500">{forest.osm_identity}</span>
-                    </div>
+                {/* Forest Header Row */}
+                <div className="flex items-start justify-between gap-1.5">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    <span
+                      className="font-semibold text-xs text-foreground truncate group-hover:text-accent transition-colors"
+                      title={forest.name || "Monitored Forest Area"}
+                    >
+                      {forest.name || "Monitored Forest Area"}
+                    </span>
+                    <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-surface-raised text-foreground-secondary border border-border shrink-0">
+                      {forest.country_code}
+                    </span>
                   </div>
-                  <div>{getThreatBadge(forest.threat_level)}</div>
+                  <div className="shrink-0">{getThreatBadge(forest.threat_level)}</div>
                 </div>
 
-                {/* Threat Telemetry Row */}
+                {/* Metadata Subtitle */}
+                <div className="flex items-center gap-1.5 text-[10px] text-foreground-muted font-mono flex-wrap">
+                  <span>{forest.forest_type}</span>
+                  <span>•</span>
+                  <span>{forest.area_km2.toFixed(1)} km²</span>
+                  <span>•</span>
+                  <span className="text-foreground-muted/70">{forest.osm_identity}</span>
+                </div>
+
+                {/* Threat Telemetry (if threatened) */}
                 {isThreatened && (
-                  <div className="mt-2.5 p-2 rounded-lg bg-black/40 border border-slate-800/80 text-xs flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <div className="flex items-center gap-1 text-slate-300">
-                        <Flame className="w-3.5 h-3.5 text-amber-400" />
+                  <div className="p-2 rounded bg-background/80 border border-border text-[10px] font-mono flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-foreground-secondary">
+                        <Flame className="w-3 h-3 text-state-warning shrink-0" />
                         <span>
                           Nearest Fire:{" "}
-                          <strong className="text-white">
+                          <strong className="text-foreground">
                             {forest.inside_forest
                               ? "INSIDE (0.0 km)"
                               : `${forest.primary_distance_km?.toFixed(2)} km`}
@@ -432,19 +452,19 @@ export function GlobalForestMonitoringHub({
                         </span>
                       </div>
                       {forest.primary_frp_mw !== null && forest.primary_frp_mw !== undefined && (
-                        <span className="text-slate-400 font-mono">
-                          FRP: <strong className="text-amber-300">{forest.primary_frp_mw.toFixed(1)} MW</strong>
+                        <span className="text-foreground-muted">
+                          FRP: <strong className="text-amber-400">{forest.primary_frp_mw.toFixed(1)} MW</strong>
                         </span>
                       )}
                     </div>
 
                     {/* Grounded Why-at-risk bullets */}
                     {forest.why_at_risk && forest.why_at_risk.length > 0 && (
-                      <div className="space-y-0.5 pt-1 border-t border-slate-800/60">
+                      <div className="space-y-0.5 pt-1 border-t border-border/60">
                         {forest.why_at_risk.slice(0, 2).map((bullet, bIdx) => (
-                          <div key={bIdx} className="text-[11px] text-slate-300 flex items-start gap-1.5">
-                            <span className="text-emerald-400 mt-0.5">›</span>
-                            <span>{bullet}</span>
+                          <div key={bIdx} className="text-[10px] text-foreground-secondary flex items-start gap-1">
+                            <span className="text-accent mt-0.5">›</span>
+                            <span className="leading-tight">{bullet}</span>
                           </div>
                         ))}
                       </div>
@@ -452,17 +472,17 @@ export function GlobalForestMonitoringHub({
                   </div>
                 )}
 
-                {/* Footer action row */}
-                <div className="mt-2.5 flex items-center justify-between pt-1 border-t border-slate-800/40 text-[11px] text-slate-400">
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="w-3 h-3 text-slate-500" />
+                {/* Footer Action Row */}
+                <div className="flex items-center justify-between pt-1 border-t border-border/40 text-[10px] text-foreground-muted font-mono">
+                  <div className="flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-foreground-muted/70 shrink-0" />
                     <span>
                       {forest.centroid.latitude.toFixed(3)}°, {forest.centroid.longitude.toFixed(3)}°
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-emerald-400 group-hover:translate-x-0.5 transition-transform font-medium">
+                  <div className="flex items-center gap-1 text-accent group-hover:translate-x-0.5 transition-transform font-semibold">
                     <span>Inspect Threat Intelligence</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
+                    <ChevronRight className="w-3 h-3" />
                   </div>
                 </div>
               </div>

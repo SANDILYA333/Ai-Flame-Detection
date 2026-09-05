@@ -360,10 +360,10 @@ export function AiSimulationLabModal({
             <button
               onClick={handleRunInference}
               disabled={isLoading}
-              className="w-full mt-2 py-2 px-3 rounded bg-accent text-bg-base font-bold text-[11px] flex items-center justify-center gap-1.5 hover:bg-accent-hover transition-colors shadow-sm disabled:opacity-50"
+              className="w-full mt-2 py-2 px-3 rounded bg-accent text-background font-bold text-[11px] flex items-center justify-center gap-1.5 hover:bg-emerald-400 transition-colors shadow-sm disabled:opacity-50"
             >
-              <Play className="w-3.5 h-3.5 fill-current" />
-              <span>{isLoading ? "Running Inference..." : "EXECUTE AI CLASSIFICATION"}</span>
+              <Play className="w-3.5 h-3.5 fill-current text-background" />
+              <span className="text-background">{isLoading ? "Running Inference..." : "EXECUTE AI CLASSIFICATION"}</span>
             </button>
           </div>
 
@@ -432,10 +432,10 @@ export function AiSimulationLabModal({
                       });
                       onClose();
                     }}
-                    className="w-full py-2 px-3 rounded bg-accent-cyan text-bg-base font-bold text-[10px] flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity"
+                    className="w-full py-2 px-3 rounded bg-accent-cyan text-background font-bold text-[10px] flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity"
                   >
-                    <Flame className="w-3.5 h-3.5" />
-                    <span>INJECT SIMULATED INCIDENT ONTO MAP</span>
+                    <Flame className="w-3.5 h-3.5 text-background" />
+                    <span className="text-background">INJECT SIMULATED INCIDENT ONTO MAP</span>
                   </button>
                 )}
               </div>

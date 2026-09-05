@@ -181,7 +181,7 @@ export function TimelinePlaybackBar({ className }: TimelinePlaybackBarProps) {
                   className={cn(
                     "h-6 px-2 text-[10px] font-semibold rounded-control transition-colors",
                     isSelected
-                      ? "bg-accent text-bg-base shadow-sm"
+                      ? "bg-accent text-background font-bold shadow-sm"
                       : "text-foreground-muted hover:text-foreground hover:bg-surface-hover"
                   )}
                 >

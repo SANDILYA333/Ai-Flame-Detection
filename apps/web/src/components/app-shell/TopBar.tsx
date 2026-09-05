@@ -128,15 +128,17 @@ export function TopBar() {
                   className={cn(
                     "px-2 py-0.5 text-[10px] font-mono rounded-sm transition-all duration-150",
                     isSelected
-                      ? filter.id === "INDUSTRIAL"
-                        ? "bg-accent text-bg-base font-bold shadow-sm"
+                      ? filter.id === "ALL"
+                        ? "bg-accent text-background font-bold shadow-sm"
+                        : filter.id === "INDUSTRIAL"
+                        ? "bg-accent text-background font-bold shadow-sm"
                         : filter.id === "NON_INDUSTRIAL"
-                        ? "bg-state-warning text-bg-base font-bold shadow-sm"
+                        ? "bg-state-warning text-background font-bold shadow-sm"
                         : filter.id === "UNKNOWN"
-                        ? "bg-accent-cyan text-bg-base font-bold shadow-sm"
+                        ? "bg-accent-cyan text-background font-bold shadow-sm"
                         : filter.id === "REVIEW_REQUIRED"
-                        ? "bg-state-error text-foreground font-bold shadow-sm"
-                        : "bg-surface-hover text-foreground font-bold"
+                        ? "bg-state-error text-white font-bold shadow-sm"
+                        : "bg-accent text-background font-bold shadow-sm"
                       : "text-foreground-muted hover:text-foreground hover:bg-surface-hover/60"
                   )}
                 >

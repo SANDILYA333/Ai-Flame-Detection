@@ -152,17 +152,17 @@ export function TacticalDossierModal({
               onClick={handleExportPdf}
               disabled={isExporting}
               aria-busy={isExporting}
-              className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold rounded bg-accent text-bg-base hover:bg-accent-hover disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold rounded bg-accent text-background hover:bg-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               {isExporting ? (
                 <>
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  <span>GENERATING PDF...</span>
+                  <Loader2 className="w-3 h-3 animate-spin text-background" />
+                  <span className="text-background">GENERATING PDF...</span>
                 </>
               ) : (
                 <>
-                  <Printer className="w-3 h-3" />
-                  <span>PRINT / EXPORT PDF</span>
+                  <Printer className="w-3 h-3 text-background" />
+                  <span className="text-background">PRINT / EXPORT PDF</span>
                 </>
               )}
             </button>
@@ -194,13 +194,13 @@ export function TacticalDossierModal({
         {downloadUrl && (
           <div className="px-4 py-2 bg-state-success/15 border-b border-state-success/30 text-state-success flex items-center justify-between text-[10px]">
             <div className="flex items-center gap-1.5">
-              <Download className="w-3.5 h-3.5 shrink-0" />
+              <Download className="w-3.5 h-3.5 shrink-0 text-state-success" />
               <span>Tactical Dossier PDF generated successfully.</span>
             </div>
             <a
               href={downloadUrl}
               download={`tactical-dossier-${event.event_id}.pdf`}
-              className="px-2 py-0.5 rounded bg-state-success text-bg-base font-bold text-[9px] hover:bg-state-success/90 transition-colors"
+              className="px-2 py-0.5 rounded bg-state-success text-background font-bold text-[9px] hover:bg-emerald-400 transition-colors"
             >
               Download PDF
             </a>

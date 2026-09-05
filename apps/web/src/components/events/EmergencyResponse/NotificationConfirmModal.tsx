@@ -262,7 +262,7 @@ export function NotificationConfirmModal({
               "px-4 py-1.5 text-xs font-mono font-bold rounded-control flex items-center gap-1.5 shadow-panel transition-all active:scale-95 disabled:opacity-50",
               isMobilize
                 ? "bg-state-error text-white hover:bg-state-error/90"
-                : "bg-accent text-bg-base hover:bg-accent/90"
+                : "bg-accent text-background hover:bg-emerald-400"
             )}
           >
             {isSubmitting ? (
@@ -272,8 +272,8 @@ export function NotificationConfirmModal({
               </>
             ) : (
               <>
-                <Send className="w-3.5 h-3.5" />
-                <span>{isMobilize ? "Confirm Mobilization" : "Confirm Notification"}</span>
+                <Send className={cn("w-3.5 h-3.5", !isMobilize && "text-background")} />
+                <span className={cn(!isMobilize && "text-background")}>{isMobilize ? "Confirm Mobilization" : "Confirm Notification"}</span>
               </>
             )}
           </button>
