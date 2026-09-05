@@ -9,6 +9,7 @@ import { WebGLFallback } from "./WebGLFallback";
 import { useEventContext } from "@/context/EventContext";
 import { fetchForestsGeoJson, ForestGeoJsonFeatureCollection } from "@/lib/api/forests";
 import { DEMO_FORESTS_GEOJSON } from "@/features/forests/mock/demo-forests";
+import { normalizeGlobePolygonGeometry, isGlobePolygonValid } from "@/lib/map/globe-geometry";
 import { useIndustrialAssets } from "@/hooks/useIndustrialAssets";
 import { isIndustrialAssetVisible } from "@/lib/api/industrial";
 import { cn } from "@/lib/utils";
@@ -59,6 +60,17 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
     const { activeLayers } = useEventContext();
     const isForestLayerActive = activeLayers?.["indian-forest-reserves"] ?? true;
     const [forestData, setForestData] = useState<ForestGeoJsonFeatureCollection>(DEMO_FORESTS_GEOJSON);
+
+    // Normalize forest polygon geometries for 3D spherical rendering (prevents whole-earth green coverage)
+    const normalizedForestFeatures = useMemo(() => {
+      if (!isForestLayerActive || !forestData?.features?.length) return [];
+      return forestData.features
+        .filter((f) => f && isGlobePolygonValid(f.geometry))
+        .map((f) => ({
+          ...f,
+          geometry: normalizeGlobePolygonGeometry(f.geometry),
+        }));
+    }, [forestData, isForestLayerActive]);
 
     // Industrial Infrastructure Layer State & Dynamic GIS Layer Selection
     const { data: industrialData } = useIndustrialAssets();
@@ -345,13 +357,13 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
       if (!globeInstanceRef.current || !isLoaded) return;
       const globe = globeInstanceRef.current as any;
 
-      if (!isForestLayerActive || !forestData?.features?.length) {
+      if (!isForestLayerActive || !normalizedForestFeatures.length) {
         globe.polygonsData([]);
         return;
       }
 
       globe
-        .polygonsData(forestData.features)
+        .polygonsData(normalizedForestFeatures)
         .polygonGeoJsonGeometry((d: any) => d.geometry)
         .polygonCapColor((d: any) => {
           const lvl = d.properties?.threat_level;
@@ -377,7 +389,7 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
           </div>
         `
         );
-    }, [forestData, isForestLayerActive, isLoaded]);
+    }, [normalizedForestFeatures, isForestLayerActive, isLoaded]);
 
     // 4b. Render 3D Industrial Infrastructure Points on Globe
     const renderIndustrialPoints = useCallback(() => {
