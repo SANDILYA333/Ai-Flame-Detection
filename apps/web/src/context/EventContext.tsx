@@ -49,6 +49,13 @@ export interface EventStats {
 
 export type AppViewMode = "DASHBOARD" | "MISSION_CONTROL";
 
+export type MetricFilterType =
+  | "NONE"
+  | "ACTIVE_FIRES"
+  | "DETECTED_TODAY"
+  | "HIGH_CRITICAL"
+  | "REGIONS_AFFECTED";
+
 export interface EventContextType {
   // Canonical Events
   rawEvents: ThermalEvent[];
@@ -69,6 +76,11 @@ export interface EventContextType {
   selectedCategory: FireCategoryType;
   setSelectedCategory: (category: FireCategoryType) => void;
   categoryMetrics: Record<FireCategoryType, CategorySummaryMetrics>;
+
+  // Interactive Dashboard Metric Filter
+  activeMetricFilter: MetricFilterType;
+  setActiveMetricFilter: (filter: MetricFilterType) => void;
+  handleMetricCardClick: (metricId: string) => void;
 
   // Spatial & Classification Filters
   searchQuery: string;
@@ -141,6 +153,9 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
 
   // 3. Category Filter State
   const [selectedCategory, setSelectedCategory] = useState<FireCategoryType>("ALL");
+
+  // 3.5 Interactive Metric Filter State
+  const [activeMetricFilter, setActiveMetricFilter] = useState<MetricFilterType>("NONE");
 
   // 4. Incident Inspection Modal / Drawer State
   const [conciseSelectedEvent, setConciseSelectedEvent] = useState<ThermalEvent | null>(null);
@@ -404,12 +419,46 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
 
   const returnToDashboard = useCallback(() => {
     setActiveViewMode("DASHBOARD");
+    setActiveMetricFilter("NONE");
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
       url.searchParams.set("view", "dashboard");
       window.history.pushState({ view: "DASHBOARD" }, "", url.toString());
     }
   }, []);
+
+  // Actionable Metric Card Navigation Handlers
+  const handleMetricCardClick = useCallback(
+    (metricId: string) => {
+      if (metricId === "active-fires") {
+        setActiveMetricFilter("ACTIVE_FIRES");
+        setSelectedCategory("ALL");
+      } else if (metricId === "detected-today") {
+        setActiveMetricFilter("DETECTED_TODAY");
+        setSelectedCategory("ALL");
+      } else if (metricId === "high-severity") {
+        setActiveMetricFilter("HIGH_CRITICAL");
+        setSelectedCategory("ALL");
+      } else if (metricId === "regions-affected") {
+        setActiveMetricFilter("REGIONS_AFFECTED");
+        setSelectedCategory("ALL");
+      } else if (metricId === "max-frp") {
+        const geoScoped = filterEventsByLocation(
+          rawEvents,
+          selectedCountry,
+          selectedState,
+          selectedDistrict
+        );
+        if (geoScoped.length > 0) {
+          const peakEvent = [...geoScoped].sort((a, b) => b.frp_mw - a.frp_mw)[0];
+          if (peakEvent) {
+            openConciseEventDetails(peakEvent);
+          }
+        }
+      }
+    },
+    [rawEvents, selectedCountry, selectedState, selectedDistrict, openConciseEventDetails]
+  );
 
   // Initial URL Parameter hydration & Deep Linking
   useEffect(() => {
@@ -470,7 +519,7 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [rawEvents]);
 
-  // 3. Centralized Event Filtering (Location + Temporal Playback + Layers + Category + Classification + Priority + Search)
+  // 3. Centralized Event Filtering (Location + Temporal Playback + Layers + Category + Classification + Priority + Metric Filter + Search)
   const filteredEvents = useMemo(() => {
     // A. Filter by Geographic Location Scope (Country -> State -> District)
     const geographicallyFiltered = filterEventsByLocation(
@@ -488,8 +537,14 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       playbackMode === "PLAYBACK"
     );
 
-    // C. Filter by Category, Layers, Classification Chips, Priority, and Search
+    // C. Filter by Metric Card Shortcuts, Category, Layers, Classification Chips, Priority, and Search
     return temporallyFiltered.filter((evt) => {
+      // Metric Filter shortcuts
+      if (activeMetricFilter === "HIGH_CRITICAL") {
+        const risk = calculateOperationalRisk(evt);
+        if (risk.level !== "CRITICAL" && risk.level !== "HIGH") return false;
+      }
+
       // Category filter
       if (selectedCategory !== "ALL") {
         if (!isEventInCategory(evt, selectedCategory)) return false;
@@ -552,6 +607,7 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     playbackRange,
     playbackTime,
     playbackMode,
+    activeMetricFilter,
     selectedCategory,
     activeLayers,
     selectedClassification,
@@ -580,9 +636,15 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     }
   }, [rawEvents, selectedEvent]);
 
-  // Compute dynamic aggregate stats reflecting current filtered events
+  // Compute dynamic aggregate stats reflecting current geographic scope
   const stats = useMemo<EventStats>(() => {
-    const total = filteredEvents.length;
+    const geoScopedEvents = filterEventsByLocation(
+      rawEvents,
+      selectedCountry,
+      selectedState,
+      selectedDistrict
+    );
+    const total = geoScopedEvents.length;
     let industrial = 0;
     let nonIndustrial = 0;
     let unknown = 0;
@@ -598,7 +660,7 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     const now = Date.now();
     const oneDayMs = 24 * 60 * 60 * 1000;
 
-    filteredEvents.forEach((evt) => {
+    geoScopedEvents.forEach((evt) => {
       if (evt.classification === "INDUSTRIAL") industrial++;
       else if (evt.classification === "NON_INDUSTRIAL") nonIndustrial++;
       else unknown++;
@@ -637,13 +699,14 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       detectedToday: detectedToday > 0 ? detectedToday : Math.min(total, 6),
       affectedRegionsCount: regionsSet.size > 0 ? regionsSet.size : total > 0 ? 1 : 0,
     };
-  }, [filteredEvents]);
+  }, [rawEvents, selectedCountry, selectedState, selectedDistrict]);
 
   const resetFilters = useCallback(() => {
     setSearchQuery("");
     setSelectedClassification("ALL");
     setSelectedPriority("ALL");
     setSelectedCategory("ALL");
+    setActiveMetricFilter("NONE");
     setSelectedCountry("India");
     setSelectedState("ALL");
     setSelectedDistrict("ALL");
@@ -672,6 +735,12 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       selectedCategory,
       setSelectedCategory,
       categoryMetrics,
+
+      // Interactive Dashboard Metric Filter
+      activeMetricFilter,
+      setActiveMetricFilter,
+      handleMetricCardClick,
+
       searchQuery,
       setSearchQuery,
       selectedClassification,
@@ -738,6 +807,9 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       resetLocationFilter,
       selectedCategory,
       categoryMetrics,
+      activeMetricFilter,
+      setActiveMetricFilter,
+      handleMetricCardClick,
       searchQuery,
       selectedClassification,
       selectedPriority,

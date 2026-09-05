@@ -7,11 +7,17 @@ import { FireCategorySection } from "./FireCategorySection";
 import { DashboardMapCard } from "./DashboardMapCard";
 import { RecentDetectionsSection } from "./RecentDetectionsSection";
 import { CategoryMonitoringView } from "./CategoryMonitoringView";
+import { MetricDrilldownView } from "./MetricDrilldownView";
 import { ConciseEventModal } from "./ConciseEventModal";
 import { useEventContext } from "@/context/EventContext";
 
 export function FireIntelligenceDashboard() {
-  const { selectedCategory, setSelectedCategory } = useEventContext();
+  const {
+    selectedCategory,
+    setSelectedCategory,
+    activeMetricFilter,
+    setActiveMetricFilter,
+  } = useEventContext();
 
   return (
     <div className="relative flex-1 w-full h-full overflow-y-auto bg-background text-foreground p-3 sm:p-5 flex flex-col gap-4 max-w-7xl mx-auto font-mono select-none">
@@ -22,7 +28,9 @@ export function FireIntelligenceDashboard() {
       <DashboardStatsGrid />
 
       {/* 3. Main Operational Content */}
-      {selectedCategory !== "ALL" ? (
+      {activeMetricFilter !== "NONE" ? (
+        <MetricDrilldownView onBack={() => setActiveMetricFilter("NONE")} />
+      ) : selectedCategory !== "ALL" ? (
         <CategoryMonitoringView
           category={selectedCategory}
           onBack={() => setSelectedCategory("ALL")}

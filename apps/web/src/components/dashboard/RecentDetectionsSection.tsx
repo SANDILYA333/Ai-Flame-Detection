@@ -14,6 +14,7 @@ import { useEventContext } from "@/context/EventContext";
 import { ThermalEvent } from "@/types/event";
 import { calculateOperationalRisk } from "@/lib/risk/scoring";
 import { derivePrimaryCategory, FIRE_CATEGORIES } from "@/lib/categories/fireCategories";
+import { formatHumanReadableLocation } from "@/lib/location/locationFilter";
 import { formatRelativeSecondsAgo } from "@/lib/format/dates";
 import { cn } from "@/lib/utils";
 
@@ -135,8 +136,8 @@ export function RecentDetectionsSection({
 
                   {/* Location & Context */}
                   <div className="flex items-start gap-1.5 text-xs text-foreground font-semibold mb-2 line-clamp-1">
-                    <MapPin className="w-3.5 h-3.5 text-foreground-muted shrink-0 mt-0.5" />
-                    <span className="truncate">{evt.location_name || "Thermal Incident"}</span>
+                    <MapPin className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
+                    <span className="truncate">{formatHumanReadableLocation(evt)}</span>
                   </div>
 
                   {/* Metadata Row: Relative Detection Time & Confidence */}

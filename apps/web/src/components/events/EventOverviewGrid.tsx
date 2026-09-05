@@ -3,6 +3,7 @@
 import React from "react";
 import { ThermalEvent } from "@/types/event";
 import { formatCoordinate } from "@/lib/format/coordinates";
+import { formatHumanReadableLocation } from "@/lib/location/locationFilter";
 import { formatFrp } from "@/lib/format/numbers";
 import { formatUtcDateTime } from "@/lib/format/dates";
 import {
@@ -50,12 +51,15 @@ export function EventOverviewGrid({ event, className }: EventOverviewGridProps) 
       {/* 2. Geographic Centroid & Spatial Provenance */}
       <div className="p-2.5 rounded-control bg-surface/50 border border-border/60 space-y-1.5 text-[11px]">
         <div className="flex items-start gap-2 text-foreground-secondary">
-          <MapPin className="w-3.5 h-3.5 text-accent-cyan shrink-0 mt-0.5" />
+          <MapPin className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
           <div className="leading-tight">
             <div className="font-semibold text-foreground">
-              {formatCoordinate(event.latitude, event.longitude)}
+              {formatHumanReadableLocation(event)}
             </div>
-            <div className="text-[9.5px] text-foreground-muted">
+            <div className="text-[10px] text-accent font-semibold mt-0.5">
+              Coordinates: {formatCoordinate(event.latitude, event.longitude)}
+            </div>
+            <div className="text-[9.5px] text-foreground-muted mt-0.5">
               Centroid: WGS-84 Datum (EPSG:4326) · High Precision Spatial Fix
             </div>
           </div>

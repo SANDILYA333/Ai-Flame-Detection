@@ -17,6 +17,7 @@ import { useEventContext } from "@/context/EventContext";
 import { calculateOperationalRisk } from "@/lib/risk/scoring";
 import { formatCoordinate } from "@/lib/format/coordinates";
 import { derivePrimaryCategory } from "@/lib/categories/fireCategories";
+import { formatHumanReadableLocation } from "@/lib/location/locationFilter";
 import { cn } from "@/lib/utils";
 
 export function ConciseEventModal() {
@@ -103,9 +104,9 @@ export function ConciseEventModal() {
               <MapPin className="w-4 h-4 text-thermal shrink-0 mt-0.5" />
               <div>
                 <h3 className="text-sm font-bold text-foreground leading-tight">
-                  {event.location_name || "Thermal Anomaly"}
+                  {formatHumanReadableLocation(event)}
                 </h3>
-                <span className="text-[11px] text-accent-cyan font-semibold">
+                <span className="text-[11px] text-accent font-semibold">
                   Coordinates: {formattedCoords}
                 </span>
               </div>

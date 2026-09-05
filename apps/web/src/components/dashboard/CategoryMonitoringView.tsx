@@ -21,6 +21,7 @@ import { DashboardMapCard } from "./DashboardMapCard";
 import { formatCompactCount } from "@/lib/format/numbers";
 import { calculateOperationalRisk } from "@/lib/risk/scoring";
 import { derivePrimaryCategory } from "@/lib/categories/fireCategories";
+import { formatHumanReadableLocation } from "@/lib/location/locationFilter";
 import { cn } from "@/lib/utils";
 import type { ThermalEvent } from "@/types/event";
 
@@ -226,8 +227,8 @@ export function CategoryMonitoringView({
 
                     {/* Location & Relative Time */}
                     <div className="flex items-start gap-1 text-xs text-foreground font-semibold mb-1 truncate">
-                      <MapPin className="w-3 h-3 text-foreground-muted shrink-0 mt-0.5" />
-                      <span className="truncate">{evt.location_name || "Thermal Incident"}</span>
+                      <MapPin className="w-3 h-3 text-accent shrink-0 mt-0.5" />
+                      <span className="truncate">{formatHumanReadableLocation(evt)}</span>
                     </div>
 
                     {/* Status & Timing */}

@@ -21,6 +21,7 @@ import { EventDetailSkeleton } from "./EventDetailSkeleton";
 import { EventDetailError } from "./EventDetailError";
 import { generateXaiExplanation } from "@/lib/xai/explainer";
 import { calculateOperationalRisk, getRiskLevelStyles } from "@/lib/risk/scoring";
+import { formatHumanReadableLocation } from "@/lib/location/locationFilter";
 import { EmergencyResponseSection } from "./EmergencyResponse/EmergencyResponseSection";
 import { EmergencyResponseModal } from "./EmergencyResponse/EmergencyResponseModal";
 import { TacticalDossierModal } from "@/components/dossier/TacticalDossierModal";
@@ -198,7 +199,7 @@ export function EventIntelligencePanel({
                 )}
               </div>
               <div className="text-[10px] font-mono text-foreground-muted truncate max-w-[170px]">
-                {event.location_name || "Spatial Anomaly Cluster"}
+                {formatHumanReadableLocation(event)}
               </div>
             </div>
           </div>

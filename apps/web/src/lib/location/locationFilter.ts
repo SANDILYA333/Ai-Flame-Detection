@@ -295,3 +295,49 @@ export function extractAvailableLocations(events: ThermalEvent[]) {
 
   return { countries, states, districts };
 }
+
+/**
+ * Formats a clean, human-readable primary location string (e.g. "Nalgonda, Telangana")
+ * Prioritizes: District/City, State over raw coordinates or generic anomaly strings.
+ */
+export function formatHumanReadableLocation(event: {
+  location_name?: string;
+  latitude?: number;
+  longitude?: number;
+}): string {
+  if (!event) return "Regional Incident";
+
+  const loc = (event.location_name || "").trim();
+  const isGeneric =
+    loc.length === 0 ||
+    loc.startsWith("Thermal Anomaly") ||
+    loc.startsWith("Spatial Anomaly") ||
+    loc.startsWith("Lat:");
+
+  const state = deriveStateFromLocation(loc, event.latitude, event.longitude);
+  const district = deriveDistrictFromLocation(loc);
+
+  if (!isGeneric) {
+    if (district && state) {
+      return `${district}, ${state}`;
+    }
+    const parts = loc.split(",").map((p) => p.trim());
+    if (parts.length >= 2) {
+      return `${parts[0]}, ${parts[1]}`;
+    }
+    return loc;
+  }
+
+  // If generic anomaly string, derive from resolved district/state
+  if (district && state) {
+    return `${district}, ${state}`;
+  }
+  if (state) {
+    return `${state}, India`;
+  }
+  if (district) {
+    return `${district}, India`;
+  }
+
+  return "Regional Thermal Incident";
+}
