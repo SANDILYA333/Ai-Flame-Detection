@@ -384,13 +384,91 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
       }
       setIsConciseDetailOpen(false);
       setActiveViewMode("MISSION_CONTROL");
+
+      // Push history state so browser navigation works seamlessly
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.set("view", "analysis");
+        if (targetEvent) {
+          url.searchParams.set("event", targetEvent.event_id);
+        }
+        window.history.pushState(
+          { view: "MISSION_CONTROL", eventId: targetEvent?.event_id },
+          "",
+          url.toString()
+        );
+      }
     },
     [conciseSelectedEvent, selectedEvent]
   );
 
   const returnToDashboard = useCallback(() => {
     setActiveViewMode("DASHBOARD");
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("view", "dashboard");
+      window.history.pushState({ view: "DASHBOARD" }, "", url.toString());
+    }
   }, []);
+
+  // Initial URL Parameter hydration & Deep Linking
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const viewParam = params.get("view");
+    const eventParam = params.get("event") || params.get("event_id");
+    const stateParam = params.get("state");
+    const districtParam = params.get("district");
+    const categoryParam = params.get("category");
+
+    if (stateParam) setSelectedState(stateParam);
+    if (districtParam) setSelectedDistrict(districtParam);
+    if (categoryParam) setSelectedCategory(categoryParam as FireCategoryType);
+
+    if (viewParam === "analysis" || viewParam === "mission_control") {
+      setActiveViewMode("MISSION_CONTROL");
+    }
+
+    if (eventParam && rawEvents.length > 0) {
+      const match = rawEvents.find(
+        (e) => e.event_id.toLowerCase() === eventParam.toLowerCase()
+      );
+      if (match) {
+        setSelectedEvent(match);
+        setIsDetailOpen(true);
+      }
+    }
+  }, [rawEvents]);
+
+  // Browser Navigation (Back / Forward popstate synchronization)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const viewParam = params.get("view");
+      const eventParam = params.get("event") || params.get("event_id");
+
+      if (viewParam === "analysis" || viewParam === "mission_control") {
+        setActiveViewMode("MISSION_CONTROL");
+      } else {
+        setActiveViewMode("DASHBOARD");
+      }
+
+      if (eventParam) {
+        const match = rawEvents.find(
+          (e) => e.event_id.toLowerCase() === eventParam.toLowerCase()
+        );
+        if (match) {
+          setSelectedEvent(match);
+          setIsDetailOpen(true);
+        }
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [rawEvents]);
 
   // 3. Centralized Event Filtering (Location + Temporal Playback + Layers + Category + Classification + Priority + Search)
   const filteredEvents = useMemo(() => {
@@ -492,15 +570,15 @@ export function EventProvider({ children }: { children: React.ReactNode }) {
     return computeCategoryMetrics(geoScopedEvents);
   }, [rawEvents, selectedCountry, selectedState, selectedDistrict]);
 
-  // Selected event grace check
+  // Selected event grace check: preserve canonical event as long as it exists in rawEvents catalog
   useEffect(() => {
     if (selectedEvent) {
-      const stillExists = filteredEvents.some((e) => e.event_id === selectedEvent.event_id);
+      const stillExists = rawEvents.some((e) => e.event_id === selectedEvent.event_id);
       if (!stillExists) {
         setSelectedEvent(null);
       }
     }
-  }, [filteredEvents, selectedEvent]);
+  }, [rawEvents, selectedEvent]);
 
   // Compute dynamic aggregate stats reflecting current filtered events
   const stats = useMemo<EventStats>(() => {

@@ -318,5 +318,53 @@
     "location_name": "Athabasca Oil Sands, Alberta, Canada",
     "context_summary": "Bitumen upgrading thermal cogeneration facility",
     "satellite_instrument": "VIIRS NOAA-21"
+  },
+  {
+    "event_id": "EVT-2026-0831-21",
+    "latitude": 17.0500,
+    "longitude": 79.2700,
+    "classification": "NON_INDUSTRIAL",
+    "confidence": 0.880,
+    "frp_mw": 265.0,
+    "detection_count": 8,
+    "start_time": "2026-08-31T13:23:00Z",
+    "end_time": "2026-08-31T13:35:00Z",
+    "source_id": null,
+    "is_persistent": false,
+    "location_name": "Nalgonda Reserve Forest, Telangana, India",
+    "context_summary": "Wildfire thermal signature in reserve forest buffer zone with rapid spread vector",
+    "satellite_instrument": "VIIRS NOAA-20"
+  },
+  {
+    "event_id": "EVT-2026-0831-22",
+    "latitude": 19.6667,
+    "longitude": 78.5333,
+    "classification": "NON_INDUSTRIAL",
+    "confidence": 0.820,
+    "frp_mw": 68.2,
+    "detection_count": 5,
+    "start_time": "2026-08-31T13:08:00Z",
+    "end_time": "2026-08-31T13:35:00Z",
+    "source_id": null,
+    "is_persistent": false,
+    "location_name": "Adilabad Forest Range, Telangana, India",
+    "context_summary": "Moderate dry deciduous forest anomaly cluster under monitoring",
+    "satellite_instrument": "VIIRS SNPP"
+  },
+  {
+    "event_id": "EVT-2026-0831-23",
+    "latitude": 17.5500,
+    "longitude": 78.4800,
+    "classification": "INDUSTRIAL",
+    "confidence": 0.950,
+    "frp_mw": 115.0,
+    "detection_count": 11,
+    "start_time": "2026-08-31T09:00:00Z",
+    "end_time": "2026-08-31T13:30:00Z",
+    "source_id": "SRC-IND-HYD-001",
+    "is_persistent": true,
+    "location_name": "Hyderabad Industrial Corridor, Telangana, India",
+    "context_summary": "Chemical processing facility flare stack with continuous recurrence",
+    "satellite_instrument": "MODIS Aqua"
   }
 ]
