@@ -126,3 +126,6 @@ stat-index.json
 # Raw large archives
 sri/data/raw_thermal/
 *.zip
+
+# Planning documents
+Plan/
