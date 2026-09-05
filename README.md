@@ -1283,4 +1283,5 @@ python scripts/firms_ml_e2e_smoke_test.py
 
 This project was developed for the **Smart India Hackathon (SIH 2026)**. 
 
-No formal open-source license file is currently published in the repository root. All rights are reserved by the project authors unless explicitly specified. For academic, evaluation, or collaboration licensing inquiries, please contact the development team.
+No formal open-source license file is currently published in the repository root. All rights are reserved by the project authors unless explicitly specified.
+For academic, evaluation, or collaboration licensing inquiries, please contact the development team.
