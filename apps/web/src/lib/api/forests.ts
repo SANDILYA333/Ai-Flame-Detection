@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import { DEMO_FORESTS_GEOJSON } from "@/features/forests/mock/demo-forests";
+import { DEMO_FORESTS_GEOJSON } from "../../features/forests/mock/demo-forests";
 
 export interface ForestFeatureProperties {
   forest_id: string;
