@@ -3,8 +3,8 @@
     "industrial"
   ],
   "metadata": {
-    "artifact_hash": "7b937b26b677f0de5c0673628b3e0a81d0a667d80a6d4759aad68de90777b784",
-    "dataset_hash": "b4b09bd935b565b9685cc81d6dc49809436e912ff98f15ecfbc939b97bc7c3d0",
+    "artifact_hash": "79d1bba29fdc1c861d53063a846686f3eb2a24aa141af7f1d1914b1c808d4851",
+    "dataset_hash": "c53b44b6c1cd75e06a9b20e5ae574066e7db2f9fed0ba41df135ed493befdccd",
     "dataset_id": "feat_ds_real_supervised_v1.0.0",
     "dataset_version": "v1.0.0",
     "feature_dimensionality": 30,
@@ -37,7 +37,7 @@
       "bool_is_protected_area",
       "cat_facility_context_type_oil_gas",
       "cat_landcover_class_UNKNOWN",
-      "cat_persistence_state_insufficient_history",
+      "cat_persistence_state_transient",
       "cat_sensor_instrument_VIIRS"
     ],
     "feature_set_version": "feat_v1.0.0",
@@ -58,7 +58,7 @@
       "test_samples": 2
     },
     "train_record_count": 1,
-    "training_timestamp": "2026-09-04T18:08:05.336106Z",
+    "training_timestamp": "2026-09-05T08:08:04.357164Z",
     "validation_metrics": {
       "circularity_warning": "Reference labels are derived from contextual proximity to industrial infrastructure. Models trained on this data without feature ablation risk learning the attribution rule rather than thermal anomaly physics. Rigorous feature ablation required.",
       "is_production_ready": false,
@@ -96,7 +96,7 @@
         "UNKNOWN"
       ],
       "persistence_state": [
-        "insufficient_history"
+        "transient"
       ],
       "sensor_instrument": [
         "VIIRS"
@@ -161,53 +161,53 @@
       "water_distance_meters"
     ],
     "numeric_means": {
-      "brightness_max_kelvin": 370.2,
-      "brightness_mean_kelvin": 354.1,
-      "daynight_ratio": 1.0,
-      "detection_count": 2.0,
+      "brightness_max_kelvin": 345.8,
+      "brightness_mean_kelvin": 345.8,
+      "daynight_ratio": 0.0,
+      "detection_count": 1.0,
       "duration_hours": 0.0,
-      "facility_distance_meters": 1237.5418866544687,
-      "frp_max_mw": 58.3,
-      "frp_mean_mw": 35.15,
-      "frp_min_mw": 12.0,
-      "frp_std_mw": 32.739043968937146,
-      "frp_sum_mw": 70.3,
+      "facility_distance_meters": 410.52034069939265,
+      "frp_max_mw": 19.4,
+      "frp_mean_mw": 19.4,
+      "frp_min_mw": 19.4,
+      "frp_std_mw": 0.0,
+      "frp_sum_mw": 19.4,
       "persistence_active_days": 1.0,
       "persistence_recurrence_ratio": 1.0,
-      "persistence_total_events": 1.0,
-      "power_plant_distance_meters": 641.6175117836345,
-      "prior_event_count_24h": 2.0,
-      "prior_event_count_30d": 2.0,
-      "prior_event_count_7d": 2.0,
+      "persistence_total_events": 2.0,
+      "power_plant_distance_meters": 981.1232771724059,
+      "prior_event_count_24h": 1.0,
+      "prior_event_count_30d": 1.0,
+      "prior_event_count_7d": 1.0,
       "satellite_platform_diversity": 1.0,
-      "spatial_extent_radius_meters": 122.49210650865564,
-      "temporal_density": 2.0,
-      "time_since_previous_event_hours": 11.5,
+      "spatial_extent_radius_meters": 0.0,
+      "temporal_density": 1.0,
+      "time_since_previous_event_hours": 11.75,
       "water_distance_meters": 0.0
     },
     "numeric_medians": {
-      "brightness_max_kelvin": 370.2,
-      "brightness_mean_kelvin": 354.1,
-      "daynight_ratio": 1.0,
-      "detection_count": 2.0,
+      "brightness_max_kelvin": 345.8,
+      "brightness_mean_kelvin": 345.8,
+      "daynight_ratio": 0.0,
+      "detection_count": 1.0,
       "duration_hours": 0.0,
-      "facility_distance_meters": 1237.5418866544687,
-      "frp_max_mw": 58.3,
-      "frp_mean_mw": 35.15,
-      "frp_min_mw": 12.0,
-      "frp_std_mw": 32.739043968937146,
-      "frp_sum_mw": 70.3,
+      "facility_distance_meters": 410.52034069939265,
+      "frp_max_mw": 19.4,
+      "frp_mean_mw": 19.4,
+      "frp_min_mw": 19.4,
+      "frp_std_mw": 0.0,
+      "frp_sum_mw": 19.4,
       "persistence_active_days": 1.0,
       "persistence_recurrence_ratio": 1.0,
-      "persistence_total_events": 1.0,
-      "power_plant_distance_meters": 641.6175117836345,
-      "prior_event_count_24h": 2.0,
-      "prior_event_count_30d": 2.0,
-      "prior_event_count_7d": 2.0,
+      "persistence_total_events": 2.0,
+      "power_plant_distance_meters": 981.1232771724059,
+      "prior_event_count_24h": 1.0,
+      "prior_event_count_30d": 1.0,
+      "prior_event_count_7d": 1.0,
       "satellite_platform_diversity": 1.0,
-      "spatial_extent_radius_meters": 122.49210650865564,
-      "temporal_density": 2.0,
-      "time_since_previous_event_hours": 11.5,
+      "spatial_extent_radius_meters": 0.0,
+      "temporal_density": 1.0,
+      "time_since_previous_event_hours": 11.75,
       "water_distance_meters": 0.0
     },
     "numeric_stds": {
@@ -264,9 +264,9 @@
       "bool_is_protected_area",
       "cat_facility_context_type_oil_gas",
       "cat_landcover_class_UNKNOWN",
-      "cat_persistence_state_insufficient_history",
+      "cat_persistence_state_transient",
       "cat_sensor_instrument_VIIRS"
     ]
   },
-  "sha256_hash": "7b937b26b677f0de5c0673628b3e0a81d0a667d80a6d4759aad68de90777b784"
+  "sha256_hash": "79d1bba29fdc1c861d53063a846686f3eb2a24aa141af7f1d1914b1c808d4851"
 }

@@ -2,12 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  webpack: (config, { dev }) => {
-    if (dev) {
-      config.cache = false;
-    }
-    return config;
-  },
+  transpilePackages: ["globe.gl", "three-globe", "three-conic-polygon-geometry", "kframe", "three"],
   async rewrites() {
     return [
       {

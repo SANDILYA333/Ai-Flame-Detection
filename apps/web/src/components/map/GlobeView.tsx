@@ -168,7 +168,16 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
       const height = container.clientHeight || window.innerHeight;
 
       try {
-        const globe = new (Globe as any)(container)
+        const GlobeConstructor =
+          (typeof Globe === "function" ? Globe : (Globe as any)?.default) || Globe;
+        let globeInstance: any;
+        try {
+          globeInstance = GlobeConstructor()(container);
+        } catch {
+          globeInstance = new (GlobeConstructor as any)(container);
+        }
+
+        const globe = globeInstance
           .width(width)
           .height(height)
           .backgroundColor(GLOBE_CONFIG.colors.ocean)
@@ -265,8 +274,8 @@ export const GlobeView = forwardRef<GlobeViewHandle, GlobeViewProps>(
               if (typeof g.pauseAnimation === "function") {
                 g.pauseAnimation();
               }
-              const renderer = g.renderer?.();
-              if (renderer) {
+              const renderer = typeof g.renderer === "function" ? g.renderer() : null;
+              if (renderer && typeof renderer.dispose === "function") {
                 renderer.dispose();
               }
             } catch (cleanupErr) {

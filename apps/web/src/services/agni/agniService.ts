@@ -1327,8 +1327,9 @@ export class AgniService implements IAgniService {
             handlers.setViewMode(command.viewMode as "2D" | "3D");
             return true;
           }
-          if (command.basemap && handlers.setBasemap) {
-            handlers.setBasemap(command.basemap);
+          const basemap = command.basemap || (command as any).parameters?.basemap || ((command as any).action?.toLowerCase() === "satellite" ? "satellite" : undefined);
+          if (basemap && handlers.setBasemap) {
+            handlers.setBasemap(basemap);
             return true;
           }
           return true;
@@ -1349,9 +1350,11 @@ export class AgniService implements IAgniService {
 
         case "SHOW_LAYER":
         case "HIDE_LAYER":
-        case "TOGGLE_LAYER": {
-          if (command.layerId && handlers.toggleLayer) {
-            handlers.toggleLayer(command.layerId, command.enabled ?? undefined);
+        case "TOGGLE_LAYER":
+        case "SHOW_RESPONDERS": {
+          const layerId = command.layerId || ((command as any).intent === "SHOW_RESPONDERS" ? "india-emergency-services" : undefined);
+          if (layerId && handlers.toggleLayer) {
+            handlers.toggleLayer(layerId, command.enabled ?? true);
             return true;
           }
           return false;
