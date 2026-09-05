@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Play,
   Pause,
@@ -11,6 +11,8 @@ import {
   Flame,
   Radio,
   FastForward,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { useEventContext } from "@/context/EventContext";
 import {
@@ -28,6 +30,7 @@ const TIME_WINDOWS: TimeWindow[] = ["1H", "6H", "24H", "48H", "7D", "ALL"];
 const SPEEDS: PlaybackSpeed[] = [1, 2, 4, 8];
 
 export function TimelinePlaybackBar({ className }: TimelinePlaybackBarProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const {
     timeRange,
     setTimeRange,
@@ -68,6 +71,66 @@ export function TimelinePlaybackBar({ className }: TimelinePlaybackBarProps) {
     }
   };
 
+  if (isCollapsed) {
+    return (
+      <div
+        className={cn(
+          "pointer-events-auto select-none font-mono bg-surface-raised/95 backdrop-blur-md border border-border rounded-panel shadow-panel px-3.5 py-2 flex items-center justify-between transition-all duration-200",
+          className
+        )}
+      >
+        {/* Left: Mode Indicator & Summary */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              if (isLive) {
+                togglePlayPause();
+              } else {
+                resetToLive();
+              }
+            }}
+            title={isLive ? "Click to start Temporal Playback" : "Click to return to LIVE mode"}
+            className={cn(
+              "h-7 px-2.5 rounded-control text-[10px] font-bold border flex items-center gap-1.5 transition-all shadow-sm",
+              isLive
+                ? "bg-state-success/15 border-state-success/40 text-state-success hover:bg-state-success/25"
+                : "bg-accent/15 border-accent/40 text-accent hover:bg-accent/25"
+            )}
+          >
+            <span
+              className={cn(
+                "w-2 h-2 rounded-full",
+                isLive ? "bg-state-success animate-pulse" : "bg-accent animate-ping-once"
+              )}
+            />
+            <span>{isLive ? "LIVE STREAM" : "TEMPORAL PLAYBACK"}</span>
+          </button>
+
+          <div className="hidden sm:flex items-center gap-2 text-foreground font-semibold px-2 py-0.5 rounded bg-surface border border-border/60 text-[9px]">
+            <Clock className="w-2.5 h-2.5 text-accent-cyan" />
+            <span>{currentStamp}</span>
+            <span className="text-border-strong">|</span>
+            <span className="text-thermal-primary flex items-center gap-0.5">
+              <Flame className="w-2.5 h-2.5" />
+              {filteredEvents.length} / {rawEvents.length} Events
+            </span>
+          </div>
+        </div>
+
+        {/* Right: Expand Control */}
+        <button
+          type="button"
+          onClick={() => setIsCollapsed(false)}
+          title="Expand timeline"
+          aria-label="Expand timeline"
+          className="w-6 h-6 flex items-center justify-center rounded-control text-foreground-muted hover:text-foreground hover:bg-surface-hover active:scale-95 transition-all"
+        >
+          <ChevronDown className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -75,7 +138,7 @@ export function TimelinePlaybackBar({ className }: TimelinePlaybackBarProps) {
         className
       )}
     >
-      {/* 1. Top Control Bar: Mode Badge, Window Selector, Transport, Speed */}
+      {/* 1. Top Control Bar: Mode Badge, Window Selector, Transport, Speed, Collapse */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         {/* Mode Indicator & Window Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
@@ -129,7 +192,7 @@ export function TimelinePlaybackBar({ className }: TimelinePlaybackBarProps) {
           </div>
         </div>
 
-        {/* Transport Controls & Playhead Info */}
+        {/* Transport Controls, Playhead Info & Collapse Button */}
         <div className="flex items-center gap-2">
           {/* Transport Buttons */}
           <div className="flex items-center gap-1 bg-surface border border-border/80 rounded-control p-0.5">
@@ -200,6 +263,17 @@ export function TimelinePlaybackBar({ className }: TimelinePlaybackBarProps) {
               </button>
             ))}
           </div>
+
+          {/* Collapse Button */}
+          <button
+            type="button"
+            onClick={() => setIsCollapsed(true)}
+            title="Collapse timeline"
+            aria-label="Collapse timeline"
+            className="w-6 h-6 flex items-center justify-center rounded-control text-foreground-muted hover:text-foreground hover:bg-surface-hover active:scale-95 transition-all"
+          >
+            <ChevronUp className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
@@ -237,3 +311,4 @@ export function TimelinePlaybackBar({ className }: TimelinePlaybackBarProps) {
     </div>
   );
 }
+
