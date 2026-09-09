@@ -2,7 +2,7 @@
 
 **AI-Powered Satellite Thermal Anomaly Detection & Geospatial Intelligence Platform for Industrial Flame Segregation, Physical Pyrometry, Atmospheric Plume Modeling, and Multi-Agency Emergency Response.**
 
-Live Deployed on : https://pyrosat-web.onrender.com/
+Live Deployed on  : https://pyrosat-web.onrender.com/
 
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
